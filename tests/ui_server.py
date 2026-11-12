@@ -50,7 +50,7 @@ for fa, origine, domanda, risposta, durata, azioni in [
     (300, "alexa", "come si cucina il risotto alla milanese", "Fai tostare il riso nel burro con la cipolla, sfuma col vino "
      "bianco, poi aggiungi il brodo un mestolo alla volta e lo zafferano a metà cottura. Manteca con burro e parmigiano.", 3.8, []),
 ]:
-    admin.STORICO.append({"t": ora - fa, "utente": "4f2a9c1e" if origine == "alexa" else "chat", "origine": origine,
+    admin.aggiungi_voce({"t": ora - fa, "utente": "4f2a9c1e" if origine == "alexa" else "chat", "origine": origine,
                           "domanda": domanda, "risposta": risposta, "errore": None, "durata": durata, "azioni": azioni})
 admin.AVVIO = ora - 2 * 86400 - 3600
 _stati = [{"entity_id": e, "state": st, "attributes": {"friendly_name": n}} for e, st, n in [
@@ -59,5 +59,7 @@ _stati = [{"entity_id": e, "state": st, "attributes": {"friendly_name": n}} for 
     ("switch.cancello", "off", "Cancello"), ("lock.porta", "locked", "Porta di casa"), ("scene.notte", "scening", "Scena notte"),
     ("script.allarme", "off", "Attiva allarme")]]
 home_tools.stati = lambda: _stati
+A.llm.modelli = lambda timeout=8: [{"id": "claude-haiku-5-5", "nome": "Claude Haiku 5.5"},
+                                   {"id": "claude-sonnet-5-5", "nome": "Claude Sonnet 5.5"}]
 A.log.info("demo: admin page ready")
 A.app.run(host="127.0.0.1", port=int(sys.argv[1]), threaded=True)

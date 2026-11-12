@@ -34,7 +34,7 @@ def _start(**env):
     ({"HA_URL": "ftp://ha"}, "HA_URL) must be an http:// or https:// address"),
     ({"ATTESA_MAX": "inf"}, "ATTESA_MAX) must be a number between 1 and 7.5"),
     ({"ADMIN_HISTORY": "molti"}, "ADMIN_HISTORY) must be a number"),
-    ({"LANGUAGE": "fr"}, "LANGUAGE must be 'it' (Italian) or 'en' (English)"),
+    ({"LANGUAGE": "fr"}, "LANGUAGE must be 'auto' (the language of each request), 'it' or 'en'"),
 ])
 def test_configuration_errors_are_clear(env, message):
     r = _start(**env)

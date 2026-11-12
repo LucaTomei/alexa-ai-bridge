@@ -1,14 +1,32 @@
-"""Language of the assistant: Italian (it) or English (en), set with LANGUAGE.
+"""Language of the assistant: Italian (it) or English (en).
 
-Every text the user hears, every instruction to the model and every tool description lives here. The Alexa skill must
-use the interaction model of the same language (skill/interaction-model.it-IT.json or .en-US.json)."""
+LANGUAGE=auto (the default) answers in the language of each Alexa request (its locale), so one skill with an Italian
+and an English interaction model speaks both; LANGUAGE=it or en forces one. Every text the user hears, every
+instruction to the model and every tool description lives here."""
 import os
 import re
+import threading
 
 LINGUE = ("it", "en")
-LINGUA = (os.environ.get("LANGUAGE") or "it").strip().lower()[:2]
-if LINGUA not in LINGUE:
-    raise SystemExit("LANGUAGE must be 'it' (Italian) or 'en' (English), not %r" % os.environ.get("LANGUAGE"))
+SCELTA = (os.environ.get("LANGUAGE") or "auto").strip().lower()
+if SCELTA not in LINGUE + ("auto",):
+    raise SystemExit("LANGUAGE must be 'auto' (the language of each request), 'it' or 'en', not %r" % os.environ.get("LANGUAGE"))
+LINGUA = SCELTA if SCELTA in LINGUE else "it"      # when a request does not say (admin page, scripts)
+_tl = threading.local()
+
+
+def da_locale(locale):
+    """The assistant's language for an Alexa locale such as it-IT or en-GB."""
+    return "it" if (locale or "").lower().startswith("it") else "en"
+
+
+def imposta(lingua):
+    """Language for what this thread does next (None: the default). Set for every request and background answer."""
+    _tl.lingua = lingua
+
+
+def attuale():
+    return getattr(_tl, "lingua", None) or LINGUA
 
 TESTI = {
     # ---- spoken by Alexa
@@ -144,11 +162,11 @@ NOTA_AZIONI = re.compile(r"\[(?:azioni eseguite|actions done):[^\]]*\]")
 
 def t(chiave, lingua=None):
     it, en = TESTI[chiave]
-    return en if (lingua or LINGUA) == "en" else it
+    return en if (lingua or attuale()) == "en" else it
 
 
 def data(n, lingua=None):
-    lingua = lingua or LINGUA
+    lingua = lingua or attuale()
     if lingua == "en":
         return "%s %d %s %d, %02d:%02d" % (GIORNI["en"][n.weekday()], n.day, MESI["en"][n.month - 1], n.year, n.hour, n.minute)
     return "%s %d %s %d, ore %02d:%02d" % (GIORNI["it"][n.weekday()], n.day, MESI["it"][n.month - 1], n.year, n.hour, n.minute)

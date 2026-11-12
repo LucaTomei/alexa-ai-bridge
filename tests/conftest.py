@@ -132,7 +132,15 @@ def _web_post(h, body):
     return 401, {}
 
 
-LLM_PORT = _server(post=lambda h, b: LLM.handle(b, h.path, h.headers))
+def _llm_get(h):
+    if h.path.split("?")[0].endswith("/models"):
+        if "anthropic-version" in h.headers and h.headers.get("x-api-key") != "test-key":
+            return 401, {"error": "bad key"}
+        return 200, {"data": [{"id": "model-test", "display_name": "Model Test"}, {"id": "model-fast"}, {"id": "model-test"}]}
+    return 404, {}
+
+
+LLM_PORT = _server(get=_llm_get, post=lambda h, b: LLM.handle(b, h.path, h.headers))
 WEB_PORT = _server(get=_web_get, post=_web_post)
 HA_PORT = _server(get=_ha_get, post=_ha_post)
 os.environ.update(
@@ -159,7 +167,7 @@ def clean():
     APP._lavori.clear(); APP.WEB = WEB_DEFAULT
     LLM_MOD.API = "anthropic"; LLM_MOD.STATO.update(web_nativo=True, strumenti=True, max_completion=False, thinking=True)
     HOME.ATTIVO = True; HOME._cache["t"] = 0; HOME.imposta_simulazione(False)
-    ADMIN.STORICO.clear(); ADMIN._tentativi.clear(); ADMIN.RITARDO = 0
+    ADMIN.svuota(); ADMIN._tentativi.clear(); ADMIN.RITARDO = 0
     yield
 
 

@@ -31,7 +31,7 @@ const TESTI = {
     "stat.lente": "oltre %s s (\"ci sto pensando\")", "stat.errori": "errori", "stat.azioni": "azioni sulla casa",
     "durata.giorni": "giorni",
     "conv.cerca": "Cerca nelle domande e nelle risposte", "conv.tutte": "Tutte",
-    "conv.nota": "Tenute solo in memoria: si azzerano al riavvio. Gli utenti sono anonimizzati.",
+    "conv.nota": "Salvate nel volume dati del servizio, restano dopo riavvii e aggiornamenti. Gli utenti sono anonimizzati.",
     "conv.nessuna": "Ancora nessuna domanda. Prova a parlare con Alexa o usa la chat di prova.",
     "conv.nessuna_filtro": "Nessuna conversazione corrisponde al filtro.", "conv.allora": "consegnata con \"allora?\"",
     "conv.errore": "Errore: ", "conv.svuota_conferma": "Svuotare lo storico delle conversazioni?",
@@ -60,7 +60,7 @@ const TESTI = {
     "imp.applicata": "Configurazione applicata.", "imp.salvate_riavvia": "Salvate. Riavvia il servizio per applicarle.",
     "sis.alexa": "Alexa", "sis.skill_id": "Skill ID", "sis.endpoint": "Endpoint da inserire nella console Alexa",
     "sis.endpoint_mancante": "Imposta PUBLIC_HOST nel .env per vederlo qui.", "sis.lingua": "Lingua dell'assistente",
-    "sis.modello_desc": "Incollalo nel JSON Editor della console Alexa. Usa quello della stessa lingua dell'assistente e crea la skill in quella lingua.",
+    "sis.modello_desc": "Incollalo nel JSON Editor della console Alexa, nella lingua corrispondente. Con la lingua automatica la stessa skill può avere entrambi: italiano in Italian (IT), inglese in English (US).",
     "sis.scarica": "Scarica %s", "sis.copia": "Copia", "sis.copiato": "Copiato.",
     "sis.servizio": "Servizio", "sis.versione": "Versione", "sis.attivo_da": "Attivo da", "sis.aggiornamenti": "Controlla aggiornamenti",
     "sis.aggiornato": "Hai l'ultima versione (%s).", "sis.nuova": "È disponibile la versione %s.", "sis.vedi": "Vedi la release",
@@ -83,6 +83,24 @@ const TESTI = {
     "sis.non_impostato": "non impostato",
     "reg.tutti": "Tutti i livelli", "reg.avvisi": "Solo avvisi ed errori", "reg.auto": "Aggiornamento automatico", "reg.vuoto": "Nessuna riga.",
     "err.sessione": "Sessione scaduta",
+    "sub.panoramica": "Lo stato del servizio e una prova rapida di ogni sua parte.",
+    "sub.conversazioni": "Le ultime domande ad Alexa, alla chat di prova e ai test, con le azioni eseguite sulla casa.",
+    "sub.chat": "Parla con l'assistente per iscritto: stesso modello, stessi strumenti e stesse regole dell'Echo.",
+    "sub.casa": "Le entità di Home Assistant che l'assistente può vedere e le regole che le proteggono. Puoi vietarne altre o chiedere sempre un sì a voce.",
+    "sub.impostazioni": "Ogni impostazione con la sua spiegazione. Al salvataggio i valori vengono controllati e il servizio si riavvia da solo.",
+    "sub.sistema": "Quello che serve alla console Alexa, la versione, l'accesso al pannello e il backup.",
+    "sub.registro": "Le ultime righe scritte dal servizio.",
+    "conv.e2e": "Test e2e",
+    "imp.predefinita_valore": "predefinita: %s", "imp.vale": "predefinito: %s", "imp.vuota": "vuota",
+    "imp.altro_modello": "Altro… (scrivilo a mano)", "imp.modelli_n": "Elenco dal fornitore: %s modelli.",
+    "imp.modelli_errore": "Elenco dei modelli non disponibile (%s): scrivi il nome a mano.",
+    "imp.non_impostata_c": "non impostata",
+    "opt.LANGUAGE.auto": "Automatica: la lingua in cui parla l'Echo", "opt.LANGUAGE.it": "Italiano", "opt.LANGUAGE.en": "Inglese",
+    "opt.LLM_API.": "Automatico (dall'URL)", "opt.LLM_API.anthropic": "Anthropic (Claude)", "opt.LLM_API.openai": "Compatibile OpenAI",
+    "opt.WEB_SEARCH.auto": "Automatica", "opt.WEB_SEARCH.native": "Nativa di Claude", "opt.WEB_SEARCH.searxng": "SearXNG",
+    "opt.WEB_SEARCH.brave": "Brave Search", "opt.WEB_SEARCH.tavily": "Tavily", "opt.WEB_SEARCH.off": "Spenta",
+    "opt.HA_TOOLS.1": "Attivi", "opt.HA_TOOLS.0": "Spenti",
+    "sis.lingua_auto": "Automatica: italiano o inglese, come parla l'Echo",
   },
   en: {
     "login.sub": "Admin page", "login.password": "Password", "login.entra": "Log in",
@@ -109,7 +127,7 @@ const TESTI = {
     "stat.lente": "over %s s (\"let me think\")", "stat.errori": "errors", "stat.azioni": "home actions",
     "durata.giorni": "days",
     "conv.cerca": "Search questions and answers", "conv.tutte": "All",
-    "conv.nota": "Kept in memory only: cleared at every restart. Users are anonymised.",
+    "conv.nota": "Kept in the service's data volume: they survive restarts and updates. Users are anonymised.",
     "conv.nessuna": "No questions yet. Talk to Alexa or use the test chat.",
     "conv.nessuna_filtro": "No conversation matches the filter.", "conv.allora": "delivered on \"so?\"",
     "conv.errore": "Error: ", "conv.svuota_conferma": "Clear the conversation history?",
@@ -138,7 +156,7 @@ const TESTI = {
     "imp.applicata": "Settings applied.", "imp.salvate_riavvia": "Saved. Restart the service to apply them.",
     "sis.alexa": "Alexa", "sis.skill_id": "Skill ID", "sis.endpoint": "Endpoint to enter in the Alexa console",
     "sis.endpoint_mancante": "Set PUBLIC_HOST in .env to see it here.", "sis.lingua": "Assistant language",
-    "sis.modello_desc": "Paste it in the JSON Editor of the Alexa console. Use the one in the assistant's language and create the skill in that language.",
+    "sis.modello_desc": "Paste it in the JSON Editor of the Alexa console, in the matching language. With the automatic language one skill can have both: Italian in Italian (IT), English in English (US).",
     "sis.scarica": "Download %s", "sis.copia": "Copy", "sis.copiato": "Copied.",
     "sis.servizio": "Service", "sis.versione": "Version", "sis.attivo_da": "Up for", "sis.aggiornamenti": "Check for updates",
     "sis.aggiornato": "You have the latest version (%s).", "sis.nuova": "Version %s is available.", "sis.vedi": "See the release",
@@ -161,6 +179,24 @@ const TESTI = {
     "sis.non_impostato": "not set",
     "reg.tutti": "All levels", "reg.avvisi": "Warnings and errors only", "reg.auto": "Auto refresh", "reg.vuoto": "No lines.",
     "err.sessione": "Session expired",
+    "sub.panoramica": "The state of the service, and a quick check of each part of it.",
+    "sub.conversazioni": "The latest questions to Alexa, the test chat and the checks, with the home actions they ran.",
+    "sub.chat": "Talk to the assistant in writing: same model, same tools and same rules as on the Echo.",
+    "sub.casa": "The Home Assistant entities the assistant can see and the rules that protect them. Forbid more of them, or always require a spoken yes.",
+    "sub.impostazioni": "Every setting with its explanation. Saving checks the values and restarts the service by itself.",
+    "sub.sistema": "What the Alexa console needs, the version, access to this page and backup.",
+    "sub.registro": "The latest lines written by the service.",
+    "conv.e2e": "E2E test",
+    "imp.predefinita_valore": "default: %s", "imp.vale": "default: %s", "imp.vuota": "empty",
+    "imp.altro_modello": "Other… (type it)", "imp.modelli_n": "List from the provider: %s models.",
+    "imp.modelli_errore": "Model list not available (%s): type the name.",
+    "imp.non_impostata_c": "not set",
+    "opt.LANGUAGE.auto": "Automatic: the language the Echo speaks", "opt.LANGUAGE.it": "Italian", "opt.LANGUAGE.en": "English",
+    "opt.LLM_API.": "Automatic (from the URL)", "opt.LLM_API.anthropic": "Anthropic (Claude)", "opt.LLM_API.openai": "OpenAI-compatible",
+    "opt.WEB_SEARCH.auto": "Automatic", "opt.WEB_SEARCH.native": "Claude's native search", "opt.WEB_SEARCH.searxng": "SearXNG",
+    "opt.WEB_SEARCH.brave": "Brave Search", "opt.WEB_SEARCH.tavily": "Tavily", "opt.WEB_SEARCH.off": "Off",
+    "opt.HA_TOOLS.1": "On", "opt.HA_TOOLS.0": "Off",
+    "sis.lingua_auto": "Automatic: Italian or English, as the Echo speaks",
   },
 };
 
@@ -188,7 +224,8 @@ function cambiaLingua(l) {
   traduciPagina();
   if ($("#shell").hidden) return;
   caricaStato();
-  const tab = location.hash.slice(1) || "panoramica";
+  const tab = document.getElementById("tab-" + location.hash.slice(1)) ? location.hash.slice(1) : "panoramica";
+  intestazione(tab);
   if (tab === "conversazioni") disegnaStorico();
   if (tab === "impostazioni") caricaImpostazioni();
   if (tab === "casa") disegnaCasa();
@@ -287,6 +324,7 @@ function vaiA(tab) {
   if (!document.getElementById("tab-" + tab)) tab = "panoramica";
   document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
   document.querySelectorAll(".tab").forEach((s) => { s.hidden = s.id !== "tab-" + tab; });
+  intestazione(tab);
   if (location.hash !== "#" + tab) history.replaceState(null, "", "#" + tab);
   clearInterval(timerRegistro);
   if (tab === "conversazioni") caricaStorico();
@@ -298,6 +336,11 @@ function vaiA(tab) {
     if (!conversazione.length && !$("#messaggi").children.length) messaggioVuoto(t("chat.vuoto"));
     setTimeout(() => $("#chat-testo").focus(), 50);
   }
+}
+
+function intestazione(tab) {
+  $("#titolo-pagina").textContent = t("tab." + tab);
+  $("#sottotitolo-pagina").textContent = t("sub." + tab);
 }
 
 // ---------- overview
@@ -381,7 +424,8 @@ function disegnaStorico() {
   $("#storico").replaceChildren(...voci.map((v) => el("article", { class: "voce" },
     el("div", { class: "voce-meta" },
       el("time", { text: quando(v.t) }),
-      el("span", { class: "chip " + (v.origine === "chat" ? "accent" : ""), text: v.origine === "chat" ? t("tab.chat") : "Alexa · " + v.utente }),
+      el("span", { class: "chip " + (v.origine === "alexa" ? "" : "accent"),
+        text: v.origine === "chat" ? t("tab.chat") : v.origine === "e2e" ? t("conv.e2e") : "Alexa · " + v.utente }),
       el("span", { class: "chip " + (v.errore ? "bad" : v.durata > lenta ? "warn" : "ok"), text: v.durata + " s" }),
       v.durata > lenta && !v.errore ? el("span", { class: "chip warn", text: t("conv.allora") }) : null),
     el("div", { class: "q", text: v.domanda }),
@@ -413,7 +457,7 @@ async function invia(ev) {
   aggiungi(el("div", { class: "msg user", text: testo }));
   const attesa = aggiungi(el("div", { class: "typing", "aria-label": "…" }, el("i"), el("i"), el("i")));
   try {
-    const r = await api("POST", "chat", { testo, storia: conversazione, simula: $("#simula").checked });
+    const r = await api("POST", "chat", { testo, storia: conversazione, simula: $("#simula").checked, lingua });
     attesa.remove();
     if (r.risposta) {
       conversazione = r.storia;
@@ -491,9 +535,9 @@ function disegnaCasa() {
   });
   const righe = voci.map((e) => {
     const bloccata = e.fissa || e.vietataOra;
-    const etichetta = e.fissa ? el("span", { class: "chip bad", text: t("casa.blocco." + e.blocco) })
-      : e.vietataOra ? el("span", { class: "chip bad", text: t("casa.blocco.pagina") })
-      : el("span", { class: "chip ok", text: t("casa.comandabile") });
+    const etichetta = e.fissa ? el("span", { class: "stato-testo bad", text: t("casa.blocco." + e.blocco) })
+      : e.vietataOra ? el("span", { class: "stato-testo bad", text: t("casa.blocco.pagina") })
+      : el("span", { class: "stato-testo ok", text: t("casa.comandabile") });
     return el("div", { class: "entita" + (bloccata ? " bloccata" : "") },
       el("div", { class: "entita-info" },
         el("div", { class: "entita-nome", text: e.nome }),
@@ -521,20 +565,59 @@ async function salvaCasa() {
 }
 
 // ---------- settings
-let campi = [], modifiche = {}, configurabile = false;
+let campi = [], modifiche = {}, configurabile = false, elencoModelli = null;
 
 async function caricaImpostazioni() {
   let d;
+  const elenco = api("GET", "modelli").catch((e) => ({ modelli: [], errore: e.message }));
   try { d = await api("GET", "impostazioni"); } catch (e) { toast(e.message); return; }
   campi = d.campi; configurabile = d.configurabile; modifiche = {};
   $("#impostazioni-avviso").replaceChildren(...(configurabile ? [] : [el("div", { class: "notice" },
     el("strong", { text: t("imp.sola_lettura") }), t("imp.sola_lettura_desc", d.cartella))]));
   disegnaImpostazioni();
+  elencoModelli = await elenco;
+  sceltaModello(elencoModelli);
+}
+
+// the model field becomes the list of what the provider offers, with "Other…" to type any name
+function sceltaModello(r) {
+  const riga = document.querySelector('[data-campo="LLM_MODEL"] .campo-edit');
+  const c = campi.find((x) => x.nome === "LLM_MODEL");
+  if (!riga || !c || "LLM_MODEL" in modifiche || riga.querySelector(".nota-modelli")) return;
+  const elenco = r.modelli || [];
+  const nota = el("p", { class: "muted small nota-modelli",
+    text: elenco.length ? t("imp.modelli_n", elenco.length) : t("imp.modelli_errore", r.errore || "0") });
+  if (!elenco.length || !configurabile) { riga.append(nota); return; }
+  const ids = elenco.map((m) => m.id);
+  const s = el("select", { id: "f-LLM_MODEL", onchange: (e) => {
+    if (e.target.value !== "__altro__") { segnaModifica("LLM_MODEL", e.target.value); return; }
+    const i = el("input", { id: "f-LLM_MODEL", type: "text", spellcheck: "false", placeholder: c.valore,
+      oninput: (ev) => segnaModifica("LLM_MODEL", ev.target.value || undefined) });
+    e.target.replaceWith(i);
+    i.focus();
+  } },
+  ids.includes(c.valore) || !c.valore ? [] : [el("option", { value: c.valore, text: c.valore })],
+  elenco.map((m) => el("option", { value: m.id, text: m.nome && m.nome !== m.id ? m.nome + " — " + m.id : m.id })),
+  el("option", { value: "__altro__", text: t("imp.altro_modello") }));
+  s.value = c.valore || ids[0];
+  riga.querySelector("#f-LLM_MODEL").replaceWith(s);
+  riga.append(nota);
+}
+
+function valorePredefinito(c) {
+  if (c.tipo === "select" && c.predefinito) return etichettaOpzione(c, c.predefinito);
+  return c.predefinito || c.predefinito_testo || null;
 }
 
 function origineChip(c) {
-  const v = { pagina: ["accent", t("imp.salvata")], env: ["", t("imp.env")], default: ["", t("imp.predefinita")] }[c.origine];
-  return el("span", { class: "chip " + v[0], text: v[1] });
+  const p = valorePredefinito(c);
+  if (c.origine === "default") {
+    // a menu already shows the default it is on: just say so
+    const testo = c.tipo === "select" ? t("imp.predefinita") : p ? t("imp.predefinita_valore", p) : t("imp.non_impostata_c");
+    return el("span", { class: "chip", text: testo });
+  }
+  const v = { pagina: ["accent", t("imp.salvata")], env: ["", t("imp.env")] }[c.origine];
+  return el("span", {}, el("span", { class: "chip " + v[0], text: v[1] }), p ? " " + t("imp.vale", p) : "");
 }
 
 function segnaModifica(nome, valore) {
@@ -549,13 +632,21 @@ function segnaModifica(nome, valore) {
   $("#savebar-testo").textContent = testoModifiche(n);
 }
 
+function etichettaOpzione(c, o) {
+  const k = "opt." + c.nome + "." + o;
+  const v = t(k);
+  return v === k ? (o === "" ? t("imp.automatico") : o) : v;
+}
+
 function controllo(c) {
   const id = "f-" + c.nome, dis = !configurabile;
   if (c.tipo === "select") {
     const s = el("select", { id, disabled: dis, onchange: (e) => segnaModifica(c.nome, e.target.value) },
-      c.opzioni.map((o) => el("option", { value: o, text: o === "" ? t("imp.automatico") : o })));
-    if (!c.opzioni.includes(c.valore)) s.prepend(el("option", { value: c.valore, text: c.valore || t("imp.non_impostato") }));
-    s.value = c.valore;
+      c.opzioni.map((o) => el("option", { value: o, text: etichettaOpzione(c, o) })));
+    // empty means "the default": show it, instead of a blank choice
+    const mostrato = c.valore === "" && c.predefinito && c.opzioni.includes(c.predefinito) ? c.predefinito : c.valore;
+    if (!c.opzioni.includes(mostrato)) s.prepend(el("option", { value: mostrato, text: mostrato || t("imp.non_impostato") }));
+    s.value = mostrato;
     return s;
   }
   if (c.tipo === "textarea") {
@@ -596,6 +687,7 @@ function disegnaImpostazioni() {
           c.tipo === "secret" && c.impostato && configurabile ? el("button", { type: "button", class: "link", text: t("imp.cancella"),
             onclick: () => { document.getElementById("f-" + c.nome).placeholder = t("imp.cancellata"); segnaModifica(c.nome, ""); } }) : null)))))));
   $("#savebar").hidden = true;
+  if (elencoModelli) sceltaModello(elencoModelli);
 }
 
 async function attendiRiavvio(avvioPrima) {
@@ -715,10 +807,11 @@ async function caricaSistema() {
       rigaSis(t("sis.skill_id"), el("code", { text: s.skill_id }), el("button", { class: "link", type: "button", text: t("sis.copia"), onclick: () => copia(s.skill_id) })),
       rigaSis(t("sis.endpoint"), s.endpoint ? el("code", { text: s.endpoint }) : el("span", { class: "muted", text: t("sis.endpoint_mancante") }),
         s.endpoint ? el("button", { class: "link", type: "button", text: t("sis.copia"), onclick: () => copia(s.endpoint) }) : null),
-      rigaSis(t("sis.lingua"), s.lingua === "en" ? "English (en-US)" : "Italiano (it-IT)"),
+      rigaSis(t("sis.lingua"), s.lingua_scelta === "auto" ? t("sis.lingua_auto") : s.lingua === "en" ? "English (en-US)" : "Italiano (it-IT)"),
       el("p", { class: "muted small", text: t("sis.modello_desc") }),
       el("div", { class: "azioni-sis" }, s.modelli_skill.map((l) =>
-        bottone(t("sis.scarica", l), () => scarica("sistema/modello-skill/" + l), l.startsWith(s.lingua) ? "primary" : "")))),
+        bottone(t("sis.scarica", l), () => scarica("sistema/modello-skill/" + l),
+          s.lingua_scelta === "auto" || l.startsWith(s.lingua) ? "primary" : "")))),
     sezione(t("sis.servizio"),
       rigaSis(t("sis.versione"), "v" + s.versione.replace(/^v/, "")),
       rigaSis(t("sis.attivo_da"), durataLeggibile(Date.now() / 1000 - s.avvio)),

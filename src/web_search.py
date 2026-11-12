@@ -19,7 +19,11 @@ BRAVE_URL = os.environ.get("BRAVE_URL", "https://api.search.brave.com/res/v1/web
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "")
 TAVILY_URL = os.environ.get("TAVILY_URL", "https://api.tavily.com/search")
 RISULTATI = int(os.environ.get("WEB_RESULTS", "5"))
-LINGUA = os.environ.get("WEB_LANGUAGE") or L.LINGUA
+LINGUA = os.environ.get("WEB_LANGUAGE", "").strip()     # empty: the language of the conversation
+
+
+def _lingua():
+    return LINGUA or L.attuale()
 UA = os.environ.get("HTTP_USER_AGENT", "alexa-ai-bridge/1.0")
 
 HOME_TZ = os.environ.get("HOME_TIMEZONE", "Europe/Rome")
@@ -88,13 +92,13 @@ def _formatta(risultati, risposte=()):
 
 
 def _searxng(q):
-    d = _get(SEARXNG_URL + "/search?" + urlencode({"q": q, "format": "json", "language": LINGUA}))
+    d = _get(SEARXNG_URL + "/search?" + urlencode({"q": q, "format": "json", "language": _lingua()}))
     risposte = [a if isinstance(a, str) else (a or {}).get("answer", "") for a in d.get("answers") or []]
     return _formatta([(r.get("title"), r.get("content"), r.get("url", "")) for r in d.get("results") or []], risposte)
 
 
 def _brave(q):
-    d = _get(BRAVE_URL + "?" + urlencode({"q": q, "count": RISULTATI, "search_lang": LINGUA}),
+    d = _get(BRAVE_URL + "?" + urlencode({"q": q, "count": RISULTATI, "search_lang": _lingua()}),
              {"X-Subscription-Token": BRAVE_API_KEY})
     return _formatta([(r.get("title"), r.get("description"), r.get("url", "")) for r in (d.get("web") or {}).get("results") or []])
 

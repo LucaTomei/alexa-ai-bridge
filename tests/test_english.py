@@ -70,3 +70,46 @@ def test_web_results_in_english(web):
     assert WEB_MOD.cerca("weather", "searxng").startswith("Direct answer: Domani sole")
     assert WEB_MOD.cerca(" ", "searxng") == "Say what to search for."
     assert WEB_MOD.strumento()["description"].startswith("Search the web")
+
+
+# ---------- LANGUAGE=auto: the language of each request
+def richiesta(alexa, locale, r):
+    return APP.gestisci({"session": {"user": alexa.user, "attributes": {}}, "request": dict(r, locale=locale)})
+
+
+@pytest.fixture
+def automatica(monkeypatch):
+    monkeypatch.setattr(L, "SCELTA", "auto")
+    monkeypatch.setattr(L, "LINGUA", "it")
+
+
+def test_auto_follows_the_locale_of_each_request(alexa, llm, automatica):
+    assert alexa.said(richiesta(alexa, "en-US", {"type": "LaunchRequest"})) == "Go ahead."
+    assert alexa.said(richiesta(alexa, "it-IT", {"type": "LaunchRequest"})) == "Dimmi pure."
+    assert alexa.said(richiesta(alexa, "en-GB", {"type": "LaunchRequest"})) == "Go ahead."
+    richiesta(alexa, "en-US", {"type": "IntentRequest", "intent": {"name": "AskIntent", "slots": {"query": {"value": "hi"}}}})
+    assert llm.requests[-1]["system"].startswith("You are a voice assistant speaking English")
+    richiesta(alexa, "it-IT", {"type": "IntentRequest", "intent": {"name": "AskIntent", "slots": {"query": {"value": "ciao"}}}})
+    assert llm.requests[-1]["system"].startswith("Sei un assistente vocale")
+
+
+def test_auto_slow_answer_keeps_the_language_of_the_question(alexa, llm, automatica):
+    llm.delay = 1.3
+    r = richiesta(alexa, "en-US", {"type": "IntentRequest", "intent": {"name": "AskIntent", "slots": {"query": {"value": "long one"}}}})
+    assert alexa.said(r) == "Let me think. Say so in a few seconds."
+    time.sleep(1.4)
+    assert llm.requests[-1]["messages"][-1]["content"].startswith("[You are the home voice assistant")
+    assert alexa.said(richiesta(alexa, "en-US", {"type": "IntentRequest", "intent": {"name": "AttesaIntent"}})) == "R1 su: long one"
+
+
+def test_forced_language_ignores_the_locale(alexa, monkeypatch):
+    monkeypatch.setattr(L, "SCELTA", "it")
+    monkeypatch.setattr(L, "LINGUA", "it")
+    assert alexa.said(richiesta(alexa, "en-US", {"type": "LaunchRequest"})) == "Dimmi pure."
+
+
+def test_a_request_never_inherits_the_previous_language(automatica):
+    c = APP.app.test_client()
+    L.imposta("en")
+    c.get("/health")
+    assert L.attuale() == "it"

@@ -14,9 +14,9 @@ CAMPI = [
     ("SKILL_ID", "alexa", "text", None,
      ("Skill ID", "amzn1.ask.skill.… dalla console Alexa: le richieste per altre skill sono rifiutate."),
      ("Skill ID", "amzn1.ask.skill.… from the Alexa console: requests for other skills are refused.")),
-    ("LANGUAGE", "alexa", "select", ["it", "en"],
-     ("Lingua dell'assistente", "it o en. La skill deve usare il modello di interazione della stessa lingua (scheda Sistema)."),
-     ("Assistant language", "it or en. The skill must use the interaction model of the same language (System tab).")),
+    ("LANGUAGE", "alexa", "select", ["auto", "it", "en"],
+     ("Lingua dell'assistente", "auto risponde nella lingua in cui parla l'Echo: una sola skill con modello italiano e inglese parla entrambe (scheda Sistema)."),
+     ("Assistant language", "auto answers in the language the Echo speaks: one skill with an Italian and an English model speaks both (System tab).")),
     ("LLM_API", "modello", "select", ["", "anthropic", "openai"],
      ("Formato API", "anthropic (Claude) oppure openai (qualsiasi endpoint compatibile). Vuoto: dedotto dall'URL."),
      ("API format", "anthropic (Claude) or openai (any compatible endpoint). Empty: guessed from the URL.")),
@@ -90,8 +90,22 @@ OPZIONI = {c[0]: c[3] for c in CAMPI}
 # what the service uses when a setting is empty (shown as placeholder on the page)
 PREDEFINITI = {"LLM_MAX_TOKENS": "1024", "ATTESA_MAX": "6", "LLM_TIMEOUT_LUNGO": "120", "WEB_RESULTS": "5",
                "WEB_MAX": "3", "HOME_TIMEZONE": "Europe/Rome", "HA_MAX_SENZA_CONFERMA": "3", "HTTP_USER_AGENT": "alexa-ai-bridge/1.0",
-               "LLM_EXTRA_JSON": "{}", "WEB_SEARCH": "auto", "HA_TOOLS": "1", "LANGUAGE": "it", "ADMIN_HISTORY": "100",
+               "LLM_EXTRA_JSON": "{}", "WEB_SEARCH": "auto", "HA_TOOLS": "1", "LANGUAGE": "auto", "ADMIN_HISTORY": "100",
                "BRAVE_URL": "https://api.search.brave.com/res/v1/web/search", "TAVILY_URL": "https://api.tavily.com/search"}
+# what an empty setting means, when it is not a plain value (Italian, English)
+PREDEFINITI_TESTO = {
+    "LLM_API": ("dedotto dall'URL", "guessed from the URL"),
+    "WEB_LANGUAGE": ("la lingua dell'assistente", "the assistant's language"),
+    "HA_GRUPPI": ("nessuna", "none"), "HA_SUMMARY_EXTRA": ("nessuna", "none"),
+    "HA_TEMP_PATTERN": ("tutti i sensori di temperatura", "every temperature sensor"),
+    "HA_VIETATO": ("solo la lista incorporata", "the built-in list only"),
+    "SYSTEM_PROMPT": ("le regole incluse", "the built-in rules"), "ISTRUZIONI_TURNO": ("quelle incluse", "the built-in ones"),
+    "HA_UA": ("lo user agent generale", "the general user agent"),
+    "SEARXNG_URL": ("nessuno", "none"), "HOME_CITY": ("nessuna", "none"), "HOME_REGION": ("nessuna", "none"),
+    "HOME_COUNTRY": ("nessuno", "none"), "HA_URL": ("nessuno: strumenti casa spenti", "none: home tools off"),
+    "LLM_API_KEY": ("nessuna", "none"), "BRAVE_API_KEY": ("nessuna", "none"), "TAVILY_API_KEY": ("nessuna", "none"),
+    "HA_TOKEN": ("nessuno: strumenti casa spenti", "none: home tools off"),
+}
 SEGRETI = {c[0] for c in CAMPI if c[2] == "secret"}
 
 # numbers: (minimum, maximum, integer only)
@@ -279,11 +293,14 @@ def valori(lingua="it"):
     out = []
     for nome, gruppo, tipo, opzioni, testi_it, testi_en in CAMPI:
         v = os.environ.get(nome, "")
+        if nome == "LLM_API" and not v:
+            v = os.environ.get("LLM_FORMAT", "")      # the old name of the same setting, still accepted
         nascosto = mascherato(v) if nome in URL else None
         nome_campo, aiuto = testi_en if lingua == "en" else testi_it
         out.append({"nome": nome, "gruppo": gruppo, "nome_gruppo": GRUPPI[gruppo][1 if lingua == "en" else 0],
                     "etichetta": nome_campo, "tipo": tipo, "opzioni": opzioni, "aiuto": aiuto,
                     "predefinito": PREDEFINITI.get(nome, ""), "mascherato": nascosto,
+                    "predefinito_testo": PREDEFINITI_TESTO.get(nome, ("", ""))[1 if lingua == "en" else 0],
                     "valore": None if nome in SEGRETI or nascosto else v, "impostato": bool(v),
                     "origine": "pagina" if nome in OVERRIDE else ("env" if nome in os.environ else "default")})
     return out

@@ -193,6 +193,7 @@ def utente(d):
 
 def calcola(lav):
     t0 = lav["t"]
+    L.imposta(lav.get("lingua"))         # the background thread answers in the language of the question
     casa.azzera_azioni()
     try:
         r = pulisci(ask_llm(lav["hist"], timeout=TIMEOUT_LUNGO))
@@ -212,11 +213,12 @@ def calcola(lav):
     if lav["errore"]:
         log.warning("modello: %s (%.1f s)", lav["errore"], time.time() - t0)
     lav["durata"] = time.time() - t0
+    admin.registra(lav, lav["uid"], "alexa")   # before the answer is handed over: the history is never behind
     lav["evento"].set()
-    admin.registra(lav, lav["uid"], "alexa")
 
 def avvia(uid, hist):
-    lav = {"hist": hist, "evento": threading.Event(), "risposta": None, "errore": None, "t": time.time(), "uid": uid}
+    lav = {"hist": hist, "evento": threading.Event(), "risposta": None, "errore": None, "t": time.time(), "uid": uid,
+           "lingua": L.attuale()}
     with _lock:
         for k in [k for k, v in _lavori.items() if time.time() - v["t"] > CONSERVA]:
             del _lavori[k]
@@ -252,6 +254,7 @@ def gestisci(d, t_req=None):
     t_req = t_req or time.time()
     resta = lambda: ATTESA - (time.time() - t_req)
     rq = d.get("request", {})
+    L.imposta(L.da_locale(rq.get("locale")) if L.SCELTA == "auto" and rq.get("locale") else None)
     tipo = rq.get("type")
     attr = (d.get("session") or {}).get("attributes") or {}
     uid = utente(d)
@@ -304,6 +307,11 @@ def gestisci(d, t_req=None):
 
 app = Flask(__name__)
 admin.configura(app)
+
+
+@app.before_request
+def _lingua_pulita():
+    L.imposta(None)        # threads are reused: a request never inherits the language of the previous one
 
 @app.post("/alexa")
 def alexa():

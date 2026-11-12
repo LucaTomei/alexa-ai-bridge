@@ -4,7 +4,7 @@ actions and recent log, in Italian or English.
 Off unless ADMIN_PASSWORD is set (12 characters or more). Reachable directly (the server itself, or the home network
 with BRIDGE_BIND) and, only with ADMIN_PUBLIC=on, through a reverse proxy: a request that carries proxy headers is
 refused otherwise, whatever the proxy is. See docs/admin.md."""
-import collections, hashlib, hmac, json, logging, os, re, signal, subprocess, sys, threading, time, urllib.request
+import collections, fcntl, hashlib, hmac, json, logging, os, re, signal, subprocess, sys, threading, time, urllib.request
 from flask import Blueprint, Response, abort, current_app, jsonify, request, send_from_directory, session
 from flask.sessions import SecureCookieSessionInterface
 import impostazioni
@@ -67,15 +67,80 @@ def righe_registro():
 logging.getLogger("alexa-ai-bridge").addHandler(_Cattura(logging.INFO))
 
 
+# The history is kept in DATA_DIR (it survives restarts, settings saves and updates, and every process writes to the
+# same place, scripts/e2e.py included); in memory only when there is no writable data folder.
+FILE_STORICO = os.path.join(impostazioni.DATA_DIR, "history.json")
+
+
+def _su_disco():
+    return impostazioni.scrivibile()
+
+
+def _modifica_storico(cambia):
+    """Read, change and rewrite the history file under an exclusive lock (several processes may write)."""
+    with open(FILE_STORICO + ".lock", "a") as blocco:
+        fcntl.flock(blocco, fcntl.LOCK_EX)
+        try:
+            with open(FILE_STORICO, encoding="utf-8") as f:
+                voci = json.load(f)
+            voci = voci if isinstance(voci, list) else []
+        except (OSError, ValueError):
+            voci = []
+        voci = cambia(voci)[-STORICO.maxlen:]
+        tmp = FILE_STORICO + ".tmp"
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(voci, f, ensure_ascii=False)
+        os.replace(tmp, FILE_STORICO)
+        return voci
+
+
+def voci_storico():
+    if not STORIA_ATTIVA:
+        return []
+    if _su_disco():
+        try:
+            with open(FILE_STORICO, encoding="utf-8") as f:
+                voci = json.load(f)
+            return voci[-STORICO.maxlen:] if isinstance(voci, list) else []
+        except (OSError, ValueError):
+            return []
+    with _lock:
+        return list(STORICO)
+
+
+def aggiungi_voce(voce):
+    if not STORIA_ATTIVA:
+        return
+    if _su_disco():
+        try:
+            _modifica_storico(lambda voci: voci + [voce])
+            return
+        except OSError as e:
+            log.warning("admin: history not saved (%s)", e)
+    with _lock:
+        STORICO.append(voce)
+
+
+def svuota():
+    with _lock:
+        STORICO.clear()
+    if _su_disco():
+        try:
+            _modifica_storico(lambda voci: [])
+        except OSError:
+            pass
+
+
 def registra(lav, uid, origine):
     """Called by the service when a question is answered (or fails)."""
     if not STORIA_ATTIVA:
         return
     domanda = lav["hist"][-1]["content"] if lav.get("hist") else ""
-    with _lock:
-        STORICO.append({"t": lav["t"], "utente": hashlib.sha256(uid.encode()).hexdigest()[:8], "origine": origine,
-                        "domanda": domanda, "risposta": lav.get("risposta"), "errore": lav.get("errore"),
-                        "durata": round(lav.get("durata") or 0, 1), "azioni": lav.get("azioni") or []})
+    aggiungi_voce({"t": lav["t"], "utente": hashlib.sha256(uid.encode()).hexdigest()[:8],
+                   "origine": "e2e" if uid == "e2e-test" else origine,
+                   "domanda": domanda, "risposta": lav.get("risposta"), "errore": lav.get("errore"),
+                   "durata": round(lav.get("durata") or 0, 1), "azioni": lav.get("azioni") or []})
 
 
 # ---------- authentication
@@ -236,9 +301,8 @@ def _a():
 @bp.get("/admin/api/stato")
 def stato():
     A = _a()
-    with _lock:
-        voci = list(STORICO)
-    durate = [v["durata"] for v in voci if v["risposta"]]
+    voci = voci_storico()
+    durate = [v["durata"] for v in voci if v.get("risposta")]
     return jsonify(
         versione=VERSIONE, avvio=AVVIO, ora=time.time(), lingua=L.LINGUA,
         modello={"api": A.llm.API, "url": impostazioni.mascherato(A.llm.BASE) or A.llm.BASE, "nome": A.llm.MODEL, "chiave": bool(A.llm.KEY)},
@@ -246,10 +310,10 @@ def stato():
         casa={"configurata": bool(A.casa.HA and A.casa.TOKEN), "attiva": A.casa_attiva(), "url": impostazioni.mascherato(A.casa.HA) or A.casa.HA},
         adattamenti={k: v for k, v in A.llm.STATO.items()},
         attesa=A.ATTESA, in_sospeso=len(A._lavori),
-        statistiche={"domande": len(voci), "errori": sum(1 for v in voci if v["errore"]),
-                     "lente": sum(1 for v in voci if v["durata"] > A.ATTESA),
+        statistiche={"domande": len(voci), "errori": sum(1 for v in voci if v.get("errore")),
+                     "lente": sum(1 for v in voci if (v.get("durata") or 0) > A.ATTESA),
                      "durata_media": round(sum(durate) / len(durate), 1) if durate else None,
-                     "azioni": sum(len(v["azioni"]) for v in voci)},
+                     "azioni": sum(len(v.get("azioni") or []) for v in voci)},
         avvisi=sum(1 for r in righe_registro() if r["livello"] in ("WARNING", "ERROR", "CRITICAL")),
         storico_attivo=STORIA_ATTIVA, configurabile=impostazioni.scrivibile())
 
@@ -275,7 +339,7 @@ def prova(cosa):
         if A.WEB == "native":
             r = _cronometra(lambda: A.ask_llm([{"role": "user", "content": L.t("prova_web") % citta}], timeout=60))
         else:
-            r = _cronometra(lambda: A.web.cerca(("meteo %s oggi" if L.LINGUA == "it" else "weather %s today") % citta, A.WEB))
+            r = _cronometra(lambda: A.web.cerca(("meteo %s oggi" if L.attuale() == "it" else "weather %s today") % citta, A.WEB))
             r["ok"] = r["ok"] and not r["esito"].startswith(L.t("web_errore").split("(")[0].strip())
     else:
         if not A.casa.ATTIVO:
@@ -289,14 +353,12 @@ def prova(cosa):
 
 @bp.get("/admin/api/storico")
 def storico():
-    with _lock:
-        return jsonify(voci=list(reversed(STORICO)), attivo=STORIA_ATTIVA)
+    return jsonify(voci=list(reversed(voci_storico())), attivo=STORIA_ATTIVA)
 
 
 @bp.delete("/admin/api/storico")
 def svuota_storico():
-    with _lock:
-        STORICO.clear()
+    svuota()
     return jsonify(ok=True)
 
 
@@ -321,6 +383,7 @@ def chat():
     if storia and storia[0]["role"] != "user":
         storia = storia[1:]
     lav = {"hist": storia + [{"role": "user", "content": testo}], "t": time.time(), "risposta": None, "errore": None}
+    L.imposta(d.get("lingua") if d.get("lingua") in L.LINGUE else None)   # the test chat can try either language
     A.casa.azzera_azioni()
     A.casa.imposta_simulazione(d.get("simula", True) is not False)
     try:
@@ -341,6 +404,16 @@ def chat():
 
 
 # ---------- settings
+@bp.get("/admin/api/modelli")
+def modelli():
+    """Models offered by the configured endpoint, for the model picker of the settings page."""
+    A = _a()
+    try:
+        return jsonify(modelli=A.llm.modelli(), attuale=A.llm.MODEL)
+    except Exception as e:
+        return jsonify(modelli=[], attuale=A.llm.MODEL, errore=str(e).split(":")[0][:60])   # e.g. "HTTP 401"
+
+
 @bp.get("/admin/api/impostazioni")
 def leggi_impostazioni():
     return jsonify(campi=impostazioni.valori(_lingua()), configurabile=impostazioni.scrivibile(), cartella=impostazioni.DATA_DIR)
@@ -523,7 +596,7 @@ def _infrastruttura():
 def sistema():
     A = _a()
     host = os.environ.get("PUBLIC_HOST", "").strip()
-    return jsonify(versione=VERSIONE, avvio=AVVIO, lingua=L.LINGUA, skill_id=A.SKILL_ID,
+    return jsonify(versione=VERSIONE, avvio=AVVIO, lingua=L.LINGUA, lingua_scelta=L.SCELTA, skill_id=A.SKILL_ID,
                    endpoint=("https://%s/alexa" % host) if host and host != "alexa.example.com" and not host.startswith(":") else None,
                    modelli_skill=sorted(f.split(".")[1] for f in os.listdir(CARTELLA_SKILL) if f.endswith(".json")) if CARTELLA_SKILL else [],
                    in_sospeso=len(A._lavori), password_da_pagina=bool(impostazioni.password_salvata()),

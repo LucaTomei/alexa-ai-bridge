@@ -204,6 +204,28 @@ def _openai(system, messaggi, strumenti, esegui, scadenza):
     return t
 
 
+def modelli(timeout=8):
+    """The models the endpoint offers ({"id", "nome"}), as listed by its /models endpoint (both formats have one)."""
+    if API == "anthropic":
+        url, hdr = BASE + "/models?limit=1000", {"x-api-key": KEY, "anthropic-version": "2023-06-01"}
+    else:
+        url, hdr = BASE + "/models", ({"Authorization": "Bearer " + KEY} if KEY else {})
+    req = urllib.request.Request(url, headers=dict(hdr, **{"User-Agent": UA, "Accept": "application/json"}))
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            d = json.load(r)
+    except urllib.error.HTTPError as e:
+        raise ErroreModello("HTTP %d: %s" % (e.code, e.read()[:200].decode("utf-8", "replace")), e.code) from None
+    voci = d.get("data") or d.get("models") if isinstance(d, dict) else d
+    out, visti = [], set()
+    for m in voci if isinstance(voci, list) else []:
+        mid = m.get("id") or m.get("name") if isinstance(m, dict) else m
+        if isinstance(mid, str) and mid and mid not in visti:
+            visti.add(mid)
+            out.append({"id": mid, "nome": (m.get("display_name") or "") if isinstance(m, dict) else ""})
+    return out
+
+
 def chiedi(system, messaggi, strumenti, esegui, nativo=None, timeout=60):
     """One answer from the model. messaggi: [{"role": "user"|"assistant", "content": str}];
     strumenti: [{"name", "description", "parameters"}]; esegui(name, args) -> str runs a tool;

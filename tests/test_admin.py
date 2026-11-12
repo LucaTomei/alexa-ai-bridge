@@ -168,7 +168,8 @@ def test_history_records_failures(client, alexa, llm, monkeypatch):
 def test_history_can_be_off(alexa, llm, monkeypatch):
     monkeypatch.setattr(ADMIN, "STORIA_ATTIVA", False)
     alexa.ask("privata")
-    assert not ADMIN.STORICO
+    monkeypatch.undo()
+    assert not ADMIN.voci_storico()
 
 
 # ---------- test chat
@@ -510,3 +511,36 @@ def test_failed_write_leaves_no_temporary_file(tmp_path, monkeypatch):
     with pytest.raises(TypeError):
         IMP.salva({"X": object()})
     assert list(tmp_path.iterdir()) == []
+
+
+def test_old_llm_format_name_is_shown_as_the_api_format(client, monkeypatch):
+    monkeypatch.delenv("LLM_API", raising=False)
+    monkeypatch.setenv("LLM_FORMAT", "anthropic")
+    campi = {c["nome"]: c for c in client.get("/admin/api/impostazioni").json["campi"]}
+    assert campi["LLM_API"]["valore"] == "anthropic"
+    assert campi["WEB_SEARCH"]["predefinito"] == "auto"       # an empty select shows its default
+
+
+def test_model_list_from_the_endpoint(client, openai, monkeypatch):
+    r = client.get("/admin/api/modelli").json
+    assert r["modelli"] == [{"id": "model-test", "nome": "Model Test"}, {"id": "model-fast", "nome": ""}] and r["attuale"] == "model-test"
+    monkeypatch.setattr(conftest.LLM_MOD, "API", "anthropic")
+    assert [m["id"] for m in client.get("/admin/api/modelli").json["modelli"]] == ["model-test", "model-fast"]
+    monkeypatch.setattr(conftest.LLM_MOD, "KEY", "wrong")
+    r = client.get("/admin/api/modelli").json
+    assert r["modelli"] == [] and r["errore"] == "HTTP 401"
+
+
+def test_defaults_are_described(client):
+    campi = {c["nome"]: c for c in client.get("/admin/api/impostazioni").json["campi"]}
+    assert campi["LLM_MAX_TOKENS"]["predefinito"] == "1024" and campi["HA_VIETATO"]["predefinito_testo"] == "solo la lista incorporata"
+    campi = {c["nome"]: c for c in client.get("/admin/api/impostazioni", headers={"X-Lang": "en"}).json["campi"]}
+    assert campi["HA_VIETATO"]["predefinito_testo"] == "the built-in list only"
+
+
+def test_history_is_shared_and_survives_a_restart(client, alexa, llm):
+    alexa.ask("prima della riavvio")
+    APP.admin.STORICO.clear()                  # what a new worker has in memory: nothing
+    assert client.get("/admin/api/storico").json["voci"][0]["domanda"] == "prima della riavvio"
+    ADMIN.registra({"hist": [{"role": "user", "content": "dal test e2e"}], "t": 1.0, "durata": 2}, "e2e-test", "alexa")
+    assert client.get("/admin/api/storico").json["voci"][0]["origine"] == "e2e"
