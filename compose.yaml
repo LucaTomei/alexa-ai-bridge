@@ -1,4 +1,5 @@
-# Alexa AI Bridge. Put an HTTPS reverse proxy in front (see deploy/Caddyfile.example).
+# Alexa AI Bridge. Alexa needs a public HTTPS endpoint: either add  --profile caddy  (below) or put your own
+# reverse proxy in front of 127.0.0.1:8090 (see deploy/Caddyfile.example and docs/setup.md).
 # Keep ONE gunicorn worker: pending "slow" answers live in memory.
 services:
   alexa-ai-bridge:
@@ -9,9 +10,29 @@ services:
     env_file: .env
     mem_limit: 256m
     ports:
-      - "127.0.0.1:8090:8090"   # only reachable by the local reverse proxy
+      - "127.0.0.1:8090:8090"   # only reachable by a reverse proxy on this host
     extra_hosts:
       - "host.docker.internal:host-gateway"   # reach Ollama / LM Studio / SearXNG running on the host
+
+  # Optional HTTPS with an automatic Let's Encrypt certificate:  docker compose --profile caddy up -d
+  # needs PUBLIC_HOST=alexa.example.com in .env, a DNS record pointing to this host and ports 80 + 443 open
+  caddy:
+    image: caddy:2
+    container_name: alexa-ai-bridge-caddy
+    profiles: ["caddy"]
+    restart: unless-stopped
+    environment:
+      - PUBLIC_HOST=${PUBLIC_HOST:-alexa.example.com}
+      - UPSTREAM=alexa-ai-bridge:8090
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile.example:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - alexa-ai-bridge
 
   # Optional, free web search for models other than Claude:  docker compose --profile searxng up -d
   # then SEARXNG_URL=http://searxng:8080 in .env (see docs/providers.md#web-search)
@@ -25,3 +46,7 @@ services:
     volumes:
       - ./deploy/searxng:/etc/searxng
     mem_limit: 512m
+
+volumes:
+  caddy_data:
+  caddy_config:

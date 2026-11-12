@@ -1,7 +1,11 @@
 # Alexa needs a public HTTPS endpoint with a certificate from a trusted CA.
-# Caddy obtains it automatically from Let's Encrypt.
-alexa.example.com {
-	reverse_proxy 127.0.0.1:8090
+# Caddy obtains it automatically from Let's Encrypt (ports 80 and 443 must be reachable from the internet).
+#
+# - with  docker compose --profile caddy  this file is used as is: set PUBLIC_HOST in .env;
+# - with Caddy installed on the host: copy it to /etc/caddy/Caddyfile and replace the two values below,
+#   or set the PUBLIC_HOST environment variable for the Caddy service.
+{$PUBLIC_HOST:alexa.example.com} {
+	reverse_proxy {$UPSTREAM:127.0.0.1:8090}
 	log {
 		output stdout
 		format json
