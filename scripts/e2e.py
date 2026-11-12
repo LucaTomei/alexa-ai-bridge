@@ -14,6 +14,7 @@ Home checks are skipped when Home Assistant is not configured. Exit code: 0 if e
 import os, shutil, subprocess, sys, tempfile
 CONTAINER = os.environ.get("CONTAINER", "alexa-ai-bridge")
 PUBLIC_URL = os.environ.get("PUBLIC_URL", "").rstrip("/")
+UA = {"User-Agent": os.environ.get("HTTP_USER_AGENT", "alexa-ai-bridge/1.0")}   # WAFs block Python's default one
 INNER = r'''import os, sys, time, logging, re
 sys.path.insert(0, "/app")
 import app as A, home_tools as C
@@ -122,11 +123,11 @@ def main():
     if PUBLIC_URL:
         import urllib.request, urllib.error
         try:
-            salute = urllib.request.urlopen(PUBLIC_URL + "/health", timeout=10).read().decode()
+            salute = urllib.request.urlopen(urllib.request.Request(PUBLIC_URL + "/health", headers=UA), timeout=10).read().decode()
         except Exception as e:
             salute = "ERROR %s" % e
         try:
-            codice = urllib.request.urlopen(urllib.request.Request(PUBLIC_URL + "/alexa", b"{}", method="POST"), timeout=10).status
+            codice = urllib.request.urlopen(urllib.request.Request(PUBLIC_URL + "/alexa", b"{}", UA, method="POST"), timeout=10).status
         except urllib.error.HTTPError as e:
             codice = e.code
         except Exception as e:
