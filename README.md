@@ -4,7 +4,7 @@
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-a78bfa">
   <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-38bdf8">
   <img alt="Docker" src="https://img.shields.io/badge/run%20with-Docker-38bdf8">
-  <img alt="Tests: 54" src="https://img.shields.io/badge/tests-54%20passing-22c55e">
+  <a href="https://github.com/LucaTomei/alexa-ai-bridge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucaTomei/alexa-ai-bridge/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Alexa skill: it-IT" src="https://img.shields.io/badge/Alexa%20skill-it--IT-f0abfc">
 </p>
 
@@ -71,7 +71,8 @@ These are real conversations in the Alexa developer console simulator, which sen
 - 🛟 **Degrades gracefully**: if a model has no tool support, rejects a parameter or returns its reasoning in
   `<think>` tags, the service adapts on its own.
 - 🧪 **Tested**:
-  - 54 tests against fake model endpoints (both formats), a fake Home Assistant and fake search backends;
+  - a test suite against fake model endpoints (both formats), a fake Home Assistant and fake search backends,
+    run by CI on every push together with lint, repository checks and a Docker smoke test;
   - an end-to-end script for your real setup.
 
 ## Pick your model
@@ -115,27 +116,28 @@ Full details: [docs/architecture.md](docs/architecture.md).
 
 ## Quick start
 
-> You need a free Amazon developer account, a host with Docker and a public HTTPS name, an AI model (any API key,
-> or Ollama), and optionally Home Assistant.
-
-```bash
-git clone https://github.com/<you>/alexa-ai-bridge.git && cd alexa-ai-bridge
-cp .env.example .env && chmod 600 .env     # SKILL_ID, one model block, optional WEB_* and HA_*
-docker compose up -d --build               # add  --profile searxng  for free web search
-curl -s http://127.0.0.1:8090/health        # {"ok":true}
-```
-
-Then:
+> You need a free Amazon developer account (same login as your Echo), a Linux host with Docker, a public DNS name
+> with ports 80/443 open, an AI model (any API key, or Ollama), and optionally Home Assistant.
+>
+> 📘 **First time? Follow the [complete setup guide](docs/setup.md)**: every step, with checks and troubleshooting.
 
 1. **Create the skill** in the [Alexa developer console](https://developer.amazon.com/alexa/console/ask):
    - choose a *Custom* model with *Provision your own* hosting;
    - paste [`skill/interaction-model.it-IT.json`](skill/interaction-model.it-IT.json) into the JSON editor;
-   - click **Save**, then **Build**.
-2. **Expose the service** over HTTPS (example: [`deploy/Caddyfile.example`](deploy/Caddyfile.example)). Set the
-   skill endpoint to `https://<your-host>/alexa` and choose *"certificate from a trusted certificate authority"*.
-3. **Test** in the console simulator, then on your Echo: *"Alexa, apri cervellone"*.
+   - click **Save**, then **Build**, and copy the **Skill ID**.
+2. **Run the service** on your host:
 
-The step-by-step guide is in [docs/setup.md](docs/setup.md).
+   ```bash
+   git clone https://github.com/LucaTomei/alexa-ai-bridge.git && cd alexa-ai-bridge
+   cp .env.example .env && chmod 600 .env     # SKILL_ID, PUBLIC_HOST, one model block, optional WEB_* and HA_*
+   docker compose --profile caddy up -d --build   # bridge + HTTPS (add --profile searxng for free web search)
+   curl -s https://alexa.example.com/health       # {"ok":true}
+   ```
+
+   Already have a reverse proxy? Skip `--profile caddy` and point it to `127.0.0.1:8090`.
+3. **Set the skill endpoint** to `https://<your-host>/alexa` and choose *"certificate from a trusted certificate
+   authority"*.
+4. **Test** in the console simulator, then on your Echo: *"Alexa, apri cervellone"*.
 
 ## Safety model
 
@@ -151,7 +153,8 @@ might try to inject. More in [docs/security.md](docs/security.md) and [docs/home
 ## Tests
 
 ```bash
-pip install -r requirements.txt pytest && python -m pytest -q     # 54 passed
+pip install -r requirements.txt pytest && python -m pytest -q     # unit and integration tests
+python scripts/check_repo.py                                      # docs links, skill model, env variables
 ```
 
 For your real deployment, [`scripts/e2e.py`](scripts/e2e.py) runs a scripted conversation inside the container
@@ -184,9 +187,12 @@ All fifteen, with their fixes, are in [docs/lessons-learned.md](docs/lessons-lea
 ├── skill/
 │   └── interaction-model.it-IT.json   # paste into the Alexa console JSON editor
 ├── deploy/                 # Caddyfile example, SearXNG settings
-├── scripts/e2e.py          # end-to-end check against a running deployment
+├── scripts/
+│   ├── e2e.py              # end-to-end check against a running deployment
+│   └── check_repo.py       # consistency checks run by CI
 ├── tests/                  # pytest suite with fake models, fake Home Assistant, fake search
 ├── docs/                   # providers, architecture, setup, Home Assistant, security, lessons
+├── .github/workflows/      # CI: lint, tests on Python 3.11-3.14, repository checks, Docker smoke test
 └── Dockerfile · compose.yaml · .env.example
 ```
 

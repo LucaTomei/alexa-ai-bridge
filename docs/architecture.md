@@ -100,8 +100,10 @@ flowchart TD
   effort can be set with `LLM_EXTRA_JSON`.
 - **Tool loop**: up to 8 rounds of tool calls (or `pause_turn` for Claude's native search). With native search only
   the text after the last search result is spoken (the *"let me check"* preamble is dropped).
-- **Graceful degradation**, learned once and remembered:
+- **Graceful degradation**, learned once and remembered (only if the request then succeeds, so a 400 caused by
+  something else never switches home control off):
   - `max_tokens` rejected in favour of `max_completion_tokens` (OpenAI reasoning models) → renamed;
   - native web search rejected (a gateway without server tools) → switched off;
   - tools rejected (a model without function calling) → plain answers, and the instructions stop mentioning tools;
-  - an empty answer is retried once.
+  - rate limits and temporary errors (429, 5xx, 529 *overloaded*) → retried once;
+  - an empty answer is retried once, unless a home action already ran (a retry could repeat it).

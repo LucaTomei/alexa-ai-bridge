@@ -90,7 +90,8 @@ proxy. A WAF *Skip* rule for the path records **0 events**: the block happens ea
 - `"thinking": {"type": "disabled"}` for Claude.
 - `<think>…</think>` is removed before speaking.
 - `reasoning_effort` can be set through `LLM_EXTRA_JSON`.
-- `max_tokens` is 1024, and an empty answer gets one automatic retry.
+- `max_tokens` is 1024, and an empty answer gets one automatic retry (not after a home action: a second run could
+  repeat it, and a `toggle` would undo itself).
 
 ## 12. A gateway's own system prompt wins
 

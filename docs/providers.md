@@ -84,8 +84,8 @@ model never sees full URLs, and the voice rules tell it never to read them aloud
 `compose.yaml` includes an optional SearXNG service, which is not published on any port:
 
 ```bash
-sed -i "s/change-this-secret/$(openssl rand -hex 32)/" deploy/searxng/settings.yml
-echo "SEARXNG_URL=http://searxng:8080" >> .env
+sed -i.bak "s/change-this-secret/$(openssl rand -hex 32)/" deploy/searxng/settings.yml && rm deploy/searxng/settings.yml.bak
+# in .env:  SEARXNG_URL=http://searxng:8080
 docker compose --profile searxng up -d --build
 docker exec alexa-ai-bridge python -c "import web_search as w; print(w.cerca('meteo Roma domani', 'searxng'))"
 ```
