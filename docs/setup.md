@@ -308,5 +308,5 @@ All variables go in `.env`. Only `SKILL_ID`, `LLM_BASE_URL` and `LLM_MODEL` are 
 | `SYSTEM_PROMPT`, `ISTRUZIONI_TURNO` | Italian voice rules | Override the instructions |
 | `ADMIN_PASSWORD` | – | Turns the [admin page](admin.md) on (12 characters or more) |
 | `ADMIN_HISTORY` | `100` | Questions kept in the admin page history; `0` turns it off |
-| `BRIDGE_BIND` | `127.0.0.1` | Address of the published port; `0.0.0.0` opens it to your home network |
-| `ADMIN_PUBLIC` | `off` | `on` publishes `/admin` through the bundled Caddy |
+| `BRIDGE_BIND` | `127.0.0.1` | Address of the published port; the server's LAN IP opens it to your home network |
+| `ADMIN_PUBLIC` | `off` | `on` allows `/admin` through a reverse proxy (the bundled Caddy or your own) |

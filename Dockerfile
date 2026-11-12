@@ -9,4 +9,4 @@ USER app
 EXPOSE 8090
 VOLUME /data
 HEALTHCHECK --interval=60s --timeout=5s CMD python -c "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8090/health',timeout=3)"
-CMD ["gunicorn", "-w", "1", "--threads", "8", "-b", "0.0.0.0:8090", "--timeout", "30", "--access-logfile", "-", "app:app"]
+CMD ["gunicorn", "-w", "1", "--threads", "8", "-b", "0.0.0.0:8090", "--timeout", "30", "--graceful-timeout", "130", "--access-logfile", "-", "app:app"]

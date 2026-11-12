@@ -62,14 +62,8 @@ jobs:
           cp .env.example .env
           docker compose config -q
           docker compose --profile caddy --profile searxng config -q
-      - name: Caddyfile is valid, and /admin is published only with ADMIN_PUBLIC=on
+      - name: Caddyfile is valid
         run: |
-          for admin in off on; do
-            docker run --rm -e PUBLIC_HOST=alexa.example.com -e UPSTREAM=alexa-ai-bridge:8090 -e ADMIN_PUBLIC=$admin \
-              -v "$PWD/deploy/Caddyfile.example:/etc/caddy/Caddyfile:ro" caddy:2 \
-              caddy adapt --config /etc/caddy/Caddyfile --adapter caddyfile > caddy-$admin.json
-          done
-          grep -q '"/admin\*"' caddy-off.json && ! grep -q '"/admin\*"' caddy-on.json
           docker run --rm -v "$PWD/deploy/Caddyfile.example:/etc/caddy/Caddyfile:ro" caddy:2 \
             caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
       - name: Build image
@@ -84,9 +78,37 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' -X POST -d 'not json' http://127.0.0.1:8090/alexa)" = 400
           docker exec bridge python -c "from zoneinfo import ZoneInfo; ZoneInfo('Europe/Rome')"
           test "$(docker inspect -f '{{.Config.User}}' bridge)" = app
+      - name: Admin page through Caddy is published only with ADMIN_PUBLIC=on, on both sides
+        run: |
+          docker network create prova
+          ci_env="-e SKILL_ID=amzn1.ask.skill.ci -e LLM_BASE_URL=http://127.0.0.1:9/v1 -e LLM_MODEL=ci -e ADMIN_PASSWORD=ci-admin-password"
+          docker run -d --name ponte-on --network prova $ci_env -e ADMIN_PUBLIC=on alexa-ai-bridge:ci
+          docker run -d --name ponte-off --network prova $ci_env alexa-ai-bridge:ci
+          avvia() {   # name, ADMIN_PUBLIC for Caddy, upstream, host port
+            docker run -d --name "$1" --network prova -p "127.0.0.1:$4:80" -e PUBLIC_HOST=:80 -e UPSTREAM="$3:8090" \
+              -e ADMIN_PUBLIC="$2" -v "$PWD/deploy/Caddyfile.example:/etc/caddy/Caddyfile:ro" caddy:2
+          }
+          avvia caddy-on on ponte-on 18081
+          avvia caddy-off off ponte-on 18082
+          avvia caddy-vuoto "" ponte-on 18083
+          avvia caddy-strano true ponte-on 18084
+          avvia caddy-on-ponte-off on ponte-off 18085
+          sleep 8
+          codice() { curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$1$2"; }
+          for p in 18081 18082 18083 18084 18085; do test "$(codice $p /health)" = 200; done   # Alexa endpoint always up
+          test "$(codice 18081 /admin)" = 200          # published on both sides
+          test "$(codice 18082 /admin)" = 404          # Caddy hides it
+          test "$(codice 18082 /admin/api/sessione)" = 404
+          test "$(codice 18082 /ADMIN)" = 404
+          test "$(codice 18082 //admin)" = 404
+          test "$(codice 18083 /admin)" = 404          # empty value: hidden
+          test "$(codice 18084 /admin)" = 404          # unexpected value: hidden, and Caddy still runs
+          test "$(codice 18085 /admin)" = 404          # Caddy publishes it, the bridge refuses proxied requests
       - name: Container log
         if: always()
-        run: docker logs bridge || true
+        run: |
+          docker logs bridge || true
+          for c in caddy-on caddy-off caddy-strano ponte-off; do echo "== $c"; docker logs "$c" 2>&1 | tail -5 || true; done
       - name: docker compose up, as in the setup guide (pulls the release image, or builds it before the first release)
         run: |
           docker rm -f bridge

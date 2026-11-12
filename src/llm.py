@@ -143,8 +143,22 @@ def _anthropic(system, messaggi, strumenti, esegui, nativo, scadenza):
     t = "".join(b.get("text", "") for b in bl[ultimo + 1:] if b.get("type") == "text") \
         or "".join(b.get("text", "") for b in bl if b.get("type") == "text")
     if not t.strip():
-        log.warning("answer without text: %s", json.dumps(d, ensure_ascii=False)[:400])
+        log.warning("answer without text: %s", _riassunto(d))
     return t
+
+
+def _riassunto(d):
+    """The shape of an answer, never its content (it could hold anything the endpoint sent back)."""
+    if not isinstance(d, dict):
+        return type(d).__name__
+    if "choices" in d:
+        c = (d.get("choices") or [{}])[0] or {}
+        m = c.get("message") or {}
+        return "finish_reason=%s, tool_calls=%d" % (c.get("finish_reason"), len(m.get("tool_calls") or []))
+    if "content" in d or "stop_reason" in d:
+        tipi = [b.get("type") for b in d.get("content") or [] if isinstance(b, dict)]
+        return "stop_reason=%s, blocks=%s" % (d.get("stop_reason"), ",".join(map(str, tipi)) or "none")
+    return "unexpected fields: %s" % ",".join(sorted(map(str, d))[:10])
 
 
 # ---------- OpenAI-compatible Chat Completions API
@@ -186,7 +200,7 @@ def _openai(system, messaggi, strumenti, esegui, scadenza):
         d = _invia(url, hdr, body, scadenza)
     t = _testo_openai(((d.get("choices") or [{}])[0].get("message")) or {})
     if not t.strip():
-        log.warning("answer without text: %s", json.dumps(d, ensure_ascii=False)[:400])
+        log.warning("answer without text: %s", _riassunto(d))
     return t
 
 

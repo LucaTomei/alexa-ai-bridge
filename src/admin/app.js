@@ -251,8 +251,9 @@ function origineChip(c) {
 
 function segnaModifica(nome, valore) {
   const c = campi.find((x) => x.nome === nome);
-  const iniziale = c.tipo === "secret" ? undefined : c.valore;
-  if (valore === undefined || (valore === iniziale && c.tipo !== "secret")) delete modifiche[nome];
+  const nascosto = c.tipo === "secret" || c.mascherato;
+  const iniziale = nascosto ? undefined : c.valore;
+  if (valore === undefined || (valore === iniziale && !nascosto)) delete modifiche[nome];
   else modifiche[nome] = valore;
   document.querySelector('[data-campo="' + nome + '"]')?.classList.toggle("modificato", nome in modifiche);
   const n = Object.keys(modifiche).length;
@@ -278,6 +279,11 @@ function controllo(c) {
   if (c.tipo === "secret") {
     return el("input", { id, type: "password", autocomplete: "new-password", disabled: dis,
       placeholder: c.impostato ? "•••••••• impostata: scrivi per cambiarla" : "non impostata",
+      oninput: (e) => segnaModifica(c.nome, e.target.value === "" ? undefined : e.target.value) });
+  }
+  if (c.mascherato) {
+    return el("input", { id, type: "text", disabled: dis, spellcheck: "false", autocomplete: "off",
+      placeholder: c.mascherato + "  (contiene credenziali: scrivi per cambiarlo)",
       oninput: (e) => segnaModifica(c.nome, e.target.value === "" ? undefined : e.target.value) });
   }
   const i = el("input", { id, type: c.tipo === "number" ? "number" : "text", step: "any", disabled: dis, spellcheck: "false",

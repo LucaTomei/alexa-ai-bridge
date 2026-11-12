@@ -3,7 +3,8 @@
 They are stored as JSON in DATA_DIR/settings.json (a Docker volume) and override the values from .env. This module is
 imported before every other one, so the overrides are in os.environ when the other modules read their settings.
 Saving restarts the gunicorn worker, which imports everything again with the new values."""
-import json, os, tempfile
+import json, math, os, tempfile
+from urllib.parse import urlsplit
 
 DATA_DIR = os.environ.get("DATA_DIR", "/data")
 FILE = os.path.join(DATA_DIR, "settings.json")
@@ -52,6 +53,13 @@ PREDEFINITI = {"LLM_MAX_TOKENS": "1024", "ATTESA_MAX": "6", "LLM_TIMEOUT_LUNGO":
                "LLM_EXTRA_JSON": "{}", "WEB_SEARCH": "auto", "HA_TOOLS": "1"}
 SEGRETI = {c[0] for c in CAMPI if c[3] == "secret"}
 
+# numbers: (minimum, maximum, integer only)
+LIMITI = {"LLM_MAX_TOKENS": (1, 200000, True), "ATTESA_MAX": (1, 7.5, False), "LLM_TIMEOUT_LUNGO": (5, 900, False),
+          "WEB_RESULTS": (1, 20, True), "WEB_MAX": (1, 20, True), "HA_MAX_SENZA_CONFERMA": (0, 100, True)}
+# endpoints the service sends keys and tokens to: only http(s), never file:// or other schemes
+URL = ("LLM_BASE_URL", "HA_URL", "SEARXNG_URL", "BRAVE_URL", "TAVILY_URL")
+ETICHETTE = {c[0]: c[2] for c in CAMPI}
+
 BASE = {}        # value from the environment (.env) of every overridden setting, before the override
 OVERRIDE = {}    # settings saved from the admin page
 
@@ -60,7 +68,8 @@ def leggi():
     try:
         with open(FILE, encoding="utf-8") as f:
             d = json.load(f)
-        return {k: str(v) for k, v in d.items() if k in NOMI} if isinstance(d, dict) else {}
+        # a hand-edited file must never crash the service: unknown names and NUL characters are skipped
+        return {k: str(v) for k, v in d.items() if k in NOMI and "\x00" not in str(v)} if isinstance(d, dict) else {}
     except (OSError, ValueError):
         return {}
 
@@ -72,6 +81,67 @@ def carica():
         BASE[k] = os.environ.get(k)
         OVERRIDE[k] = v
         os.environ[k] = v
+
+
+def errore_valore(nome, valore):
+    """Why a value is not acceptable, or None. Used at startup and by the admin page."""
+    valore = (valore or "").strip()
+    if not valore:
+        return None
+    etichetta = "%s (%s)" % (ETICHETTE.get(nome, nome), nome)
+    if nome in LIMITI:
+        minimo, massimo, intero = LIMITI[nome]
+        try:
+            n = float(valore)
+        except ValueError:
+            return "%s deve essere un numero." % etichetta
+        if not math.isfinite(n) or not minimo <= n <= massimo or (intero and n != int(n)):
+            return "%s deve essere un numero %stra %g e %g." % (etichetta, "intero " if intero else "", minimo, massimo)
+    if nome in URL:
+        p = urlsplit(valore)
+        if p.scheme not in ("http", "https") or not p.hostname:
+            return "%s deve essere un indirizzo http:// o https://." % etichetta
+    return None
+
+
+def controlla(env):
+    for nome in list(LIMITI) + list(URL):
+        e = errore_valore(nome, env.get(nome))
+        if e:
+            return e
+    return None
+
+
+def mascherato(url):
+    """An URL without its credentials (user:password@ and the query string), for display."""
+    p = urlsplit(url or "")
+    if not p.username and not p.password and not p.query:
+        return None
+    host = p.hostname or ""
+    if p.port:
+        host += ":%d" % p.port
+    return "%s://%s%s%s" % (p.scheme, "•••@" if p.username or p.password else "", host, p.path) + ("?•••" if p.query else "")
+
+
+def segreto():
+    """Random key that signs the admin session cookie, kept in DATA_DIR (a new one per process without it)."""
+    f = os.path.join(DATA_DIR, "admin-secret")
+    try:
+        with open(f, "rb") as h:
+            k = h.read()
+        if len(k) >= 32:
+            return k
+    except OSError:
+        pass
+    k = os.urandom(32)
+    if scrivibile():
+        try:
+            fd = os.open(f, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+            with os.fdopen(fd, "wb") as h:
+                h.write(k)
+        except OSError:
+            pass
+    return k
 
 
 def scrivibile():
@@ -93,10 +163,14 @@ def ambiente_con(nuovi):
 def salva(nuovi):
     os.makedirs(DATA_DIR, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=DATA_DIR, prefix=".settings-")
-    with os.fdopen(fd, "w", encoding="utf-8") as f:
-        json.dump(nuovi, f, indent=2, ensure_ascii=False)
-    os.chmod(tmp, 0o600)
-    os.replace(tmp, FILE)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(nuovi, f, indent=2, ensure_ascii=False)
+        os.chmod(tmp, 0o600)
+        os.replace(tmp, FILE)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
 
 
 def valori():
@@ -104,11 +178,15 @@ def valori():
     out = []
     for nome, gruppo, etichetta, tipo, opzioni, aiuto in CAMPI:
         v = os.environ.get(nome, "")
+        nascosto = mascherato(v) if nome in URL else None
         out.append({"nome": nome, "gruppo": gruppo, "etichetta": etichetta, "tipo": tipo, "opzioni": opzioni, "aiuto": aiuto,
-                    "predefinito": PREDEFINITI.get(nome, ""),
-                    "valore": None if nome in SEGRETI else v, "impostato": bool(v),
+                    "predefinito": PREDEFINITI.get(nome, ""), "mascherato": nascosto,
+                    "valore": None if nome in SEGRETI or nascosto else v, "impostato": bool(v),
                     "origine": "pagina" if nome in OVERRIDE else ("env" if nome in os.environ else "default")})
     return out
 
 
 carica()
+_errore = controlla(os.environ)
+if _errore:
+    raise SystemExit(_errore)

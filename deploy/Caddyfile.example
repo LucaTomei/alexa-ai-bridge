@@ -5,15 +5,14 @@
 # - with Caddy installed on the host: copy it to /etc/caddy/Caddyfile and set the same variables for the Caddy
 #   service, or replace the placeholders below.
 
-# The admin page (/admin) is not published unless ADMIN_PUBLIC=on
-(admin-off) {
-	respond /admin* 404
-}
-(admin-on) {
-}
-
 {$PUBLIC_HOST:alexa.example.com} {
-	import admin-{$ADMIN_PUBLIC:off}
+	# The admin page is answered with 404 unless ADMIN_PUBLIC is exactly "on" (any other value, or none, hides it)
+	@admin_nascosta {
+		path /admin /admin/*
+		not expression `{env.ADMIN_PUBLIC} == "on"`
+	}
+	respond @admin_nascosta 404
+
 	reverse_proxy {$UPSTREAM:127.0.0.1:8090}
 	log {
 		output stdout

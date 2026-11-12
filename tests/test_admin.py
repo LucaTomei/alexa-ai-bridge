@@ -57,17 +57,61 @@ def test_api_needs_login_and_csrf(anon, client):
     assert post(client, "logout").status_code == 200 and client.get("/admin/api/stato").status_code == 401
 
 
-def test_wrong_passwords_are_limited(anon):
+def login_da(ip, password="test-admin-password", **kw):
+    return APP.app.test_client().post("/admin/api/login", json={"password": password}, environ_base={"REMOTE_ADDR": ip}, **kw)
+
+
+def test_wrong_passwords_are_limited_per_client_without_locking_the_owner_out():
     for _ in range(5):
-        assert anon.post("/admin/api/login", json={"password": "nope"}).status_code == 401
-    r = anon.post("/admin/api/login", json={"password": "test-admin-password"})
-    assert r.status_code == 429                         # even the right password waits now
-    other = APP.app.test_client()
-    assert other.post("/admin/api/login", json={"password": "test-admin-password"},
-                      headers={"X-Forwarded-For": "10.0.0.9"}).status_code == 200
+        assert login_da("10.0.0.66", "nope").status_code == 401
+    assert login_da("10.0.0.66").status_code == 429            # this client waits, even with the right password
+    for i in range(40):                                          # many clients guessing: no global lock-out
+        login_da("10.1.%d.1" % i, "nope")
+    assert login_da("127.0.0.1").status_code == 200
 
 
-def test_session_cookie_flags(anon):
+def test_proxied_requests_are_refused_unless_published(anon, monkeypatch):
+    for h in ("X-Forwarded-For", "X-Forwarded-Proto", "Forwarded", "X-Real-IP", "X-Forwarded-Host"):
+        assert anon.get("/admin", headers={h: "x"}).status_code == 404, h
+        assert anon.post("/admin/api/login", json={"password": "test-admin-password"}, headers={h: "x"}).status_code == 404, h
+    assert anon.get("/health", headers={"X-Forwarded-For": "1.2.3.4"}).status_code == 200     # the rest is untouched
+    monkeypatch.setattr(ADMIN, "PUBBLICO", True)
+    assert anon.get("/admin", headers={"X-Forwarded-For": "1.2.3.4"}).status_code == 200
+
+
+def test_spoofed_forwarded_for_does_not_dodge_the_limit(monkeypatch):
+    monkeypatch.setattr(ADMIN, "PUBBLICO", True)
+    for i in range(5):     # the proxy appends the real client last: whatever the client wrote before stays ignored
+        login_da("172.18.0.2", "nope", headers={"X-Forwarded-For": "6.6.6.%d, 203.0.113.7" % i})
+    assert login_da("172.18.0.2", headers={"X-Forwarded-For": "1.1.1.1, 203.0.113.7"}).status_code == 429
+    assert login_da("172.18.0.2", headers={"X-Forwarded-For": "198.51.100.1"}).status_code == 200
+
+
+def test_logout_revokes_the_cookie_and_sessions_expire(client, monkeypatch):
+    cookie = client.get_cookie("aab_admin").value
+    assert post(client, "logout").status_code == 200
+    replay = APP.app.test_client()
+    replay.set_cookie("aab_admin", cookie)
+    assert replay.get("/admin/api/stato").status_code == 401    # a copied cookie dies with the logout
+    c = APP.app.test_client()
+    c.post("/admin/api/login", json={"password": "test-admin-password"})
+    assert c.get("/admin/api/stato").status_code == 200
+    monkeypatch.setattr(ADMIN, "DURATA", 0)
+    assert c.get("/admin/api/stato").status_code == 401         # absolute lifetime, not renewed by use
+    monkeypatch.undo()
+    monkeypatch.setattr(ADMIN, "PASSWORD", "a-new-password-for-admin")
+    assert c.get("/admin/api/stato").status_code == 401         # a new password logs everyone out
+
+
+def test_session_key_is_random_and_not_derived_from_the_password():
+    import hashlib
+    assert len(ADMIN.SEGRETO) >= 32 and ADMIN.SEGRETO != hashlib.sha256(b"alexa-ai-bridge-admin:test-admin-password").digest()
+    assert IMP.segreto() == ADMIN.SEGRETO                       # kept in DATA_DIR, stable across restarts
+    assert oct(os.stat(os.path.join(IMP.DATA_DIR, "admin-secret")).st_mode & 0o777) == "0o600"
+
+
+def test_session_cookie_flags(anon, monkeypatch):
+    monkeypatch.setattr(ADMIN, "PUBBLICO", True)
     r = anon.post("/admin/api/login", json={"password": "test-admin-password"}, headers={"X-Forwarded-Proto": "https"})
     cookie = r.headers["Set-Cookie"]
     assert "HttpOnly" in cookie and "SameSite=Strict" in cookie and "Secure" in cookie
@@ -176,6 +220,64 @@ def test_settings_never_expose_secrets(client, dati):
     assert "test-key" not in json.dumps(d) and "ha-token" not in json.dumps(d) and "ADMIN_PASSWORD" not in json.dumps(d)
 
 
+@pytest.mark.parametrize("valori, messaggio", [
+    ({"LLM_BASE_URL": "file:///data/settings.json#", "LLM_API_KEY": ""}, "http:// o https://"),
+    ({"HA_URL": "gopher://x", "HA_TOKEN": ""}, "http:// o https://"),
+    ({"SEARXNG_URL": "javascript:alert(1)"}, "http:// o https://"),
+    ({"ATTESA_MAX": "inf"}, "tra 1 e 7.5"),
+    ({"ATTESA_MAX": "nan"}, "tra 1 e 7.5"),
+    ({"ATTESA_MAX": "8"}, "tra 1 e 7.5"),
+    ({"LLM_MAX_TOKENS": "1e12"}, "intero tra 1 e 200000"),
+    ({"WEB_RESULTS": "2.5"}, "intero"),
+    ({"HA_TOOLS": "maybe"}, "valore non previsto"),
+    ({"HOME_CITY": "Roma\x00"}, "caratteri non ammessi"),
+    ({"HOME_CITY": "Roma\nRIGA"}, "caratteri non ammessi"),
+    ({"HOME_CITY": "\udc80"}, "caratteri non validi"),
+    ({"SYSTEM_PROMPT": "x" * 20001}, "troppo lungo"),
+    ({"HOME_CITY": True}, "Valore non valido"),
+    ({"LLM_BASE_URL": "https://attacker.example/v1"}, "inserisci di nuovo Chiave API"),
+    ({"HA_URL": "https://attacker.example"}, "inserisci di nuovo Token"),
+])
+def test_dangerous_or_broken_values_are_refused(client, dati, valori, messaggio):
+    r = post(client, "impostazioni", {"valori": valori})
+    assert r.status_code == 400 and messaggio in r.json["errore"], r.json
+    assert not (dati / "settings.json").exists() and not list(dati.glob(".settings-*"))
+
+
+def test_malformed_requests_are_400_not_500(client, dati):
+    for corpo in ({"valori": ["LLM_MODEL"]}, {"valori": "x"}, [], "x"):
+        assert post(client, "impostazioni", corpo).status_code == 400
+    assert post(client, "chat", ["x"]).status_code == 400
+    assert post(client, "chat", {"testo": "ciao", "storia": "non una lista"}).status_code == 200
+
+
+def test_new_endpoint_with_its_key_is_accepted(client, dati):
+    r = post(client, "impostazioni", {"valori": {"LLM_BASE_URL": "http://127.0.0.1:11434/v1", "LLM_API_KEY": ""}})
+    assert r.status_code == 200
+    assert json.loads((dati / "settings.json").read_text()) == {"LLM_BASE_URL": "http://127.0.0.1:11434/v1", "LLM_API_KEY": ""}
+
+
+def test_two_saves_before_the_restart_both_count(client, dati):
+    assert post(client, "impostazioni", {"valori": {"HOME_CITY": "Roma"}}).status_code == 200
+    assert post(client, "impostazioni", {"valori": {"WEB_RESULTS": "7"}}).status_code == 200
+    assert json.loads((dati / "settings.json").read_text()) == {"HOME_CITY": "Roma", "WEB_RESULTS": "7"}
+
+
+def test_urls_with_credentials_are_masked(client, monkeypatch):
+    monkeypatch.setenv("SEARXNG_URL", "https://user:pass@search.example/?token=abc")
+    campi = {c["nome"]: c for c in client.get("/admin/api/impostazioni").json["campi"]}
+    assert campi["SEARXNG_URL"]["valore"] is None and campi["SEARXNG_URL"]["mascherato"] == "https://•••@search.example/?•••"
+    monkeypatch.setattr(APP.casa, "HA", "https://u:p@ha.example")
+    assert client.get("/admin/api/stato").json["casa"]["url"] == "https://•••@ha.example"
+
+
+def test_empty_answers_never_put_the_response_body_in_the_log(client, llm):
+    llm.queue = [{"stop_reason": "end_turn", "content": [{"type": "thinking", "thinking": "LLM_API_KEY=sk-secret"}], "leak": "sk-secret"}] * 2
+    post(client, "prova/modello")
+    righe = " ".join(v["testo"] for v in client.get("/admin/api/registro").json["voci"])
+    assert "sk-secret" not in righe and "stop_reason=end_turn, blocks=thinking" in righe
+
+
 def test_settings_are_validated_saved_and_reverted(client, dati):
     r = post(client, "impostazioni", {"valori": {"LLM_EXTRA_JSON": "[1, 2]"}})
     assert r.status_code == 400 and "LLM_EXTRA_JSON must be a JSON object" in r.json["errore"]
@@ -183,7 +285,7 @@ def test_settings_are_validated_saved_and_reverted(client, dati):
     assert r.status_code == 400 and "HA_VIETATO" in r.json["errore"]
     assert post(client, "impostazioni", {"valori": {"PASSWORD": "x"}}).status_code == 400
     r = post(client, "impostazioni", {"valori": {"ATTESA_MAX": "sei"}})
-    assert r.status_code == 400 and r.json["errore"] == "Attesa massima (s) deve essere un numero."
+    assert r.status_code == 400 and r.json["errore"] == "Attesa massima (s) (ATTESA_MAX) deve essere un numero."
     assert not (dati / "settings.json").exists()
     r = post(client, "impostazioni", {"valori": {"LLM_MODEL": "  modello-nuovo ", "HOME_CITY": "Roma"}})
     assert r.status_code == 200 and r.json == {"ok": True, "riavvio": False}       # not under gunicorn: no reload

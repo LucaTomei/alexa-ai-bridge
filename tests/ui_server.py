@@ -16,8 +16,8 @@ from flask import session  # noqa: E402
 
 @A.app.before_request
 def _accesso_demo():
-    session["admin"] = True
-    session["csrf"] = "demo"
+    if not admin.autenticato():
+        session.update(admin=True, csrf="demo", sid="demo", login=time.time(), pw=admin._impronta())
 
 
 @A.app.after_request
