@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Alexa AI Bridge</title>
+  <link rel="icon" href="/admin/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/admin/app.css">
+  <script src="/admin/app.js" defer></script>
+</head>
+<body>
+  <div id="login" class="login" hidden>
+    <form class="login-card" id="login-form">
+      <img src="/admin/icon.svg" alt="" width="56" height="56">
+      <h1>Alexa AI Bridge</h1>
+      <p class="muted">Pannello di gestione</p>
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required autofocus>
+      <button class="btn primary" type="submit">Entra</button>
+      <p id="login-errore" class="errore" role="alert"></p>
+    </form>
+  </div>
+
+  <div id="shell" class="shell" hidden>
+    <header class="topbar">
+      <div class="brand">
+        <img src="/admin/icon.svg" alt="" width="28" height="28">
+        <span>Alexa AI Bridge</span>
+        <span id="versione" class="chip"></span>
+      </div>
+      <nav class="tabs" role="tablist">
+        <button role="tab" data-tab="panoramica">Panoramica</button>
+        <button role="tab" data-tab="conversazioni">Conversazioni</button>
+        <button role="tab" data-tab="chat">Chat di prova</button>
+        <button role="tab" data-tab="impostazioni">Configurazione</button>
+        <button role="tab" data-tab="registro">Registro</button>
+      </nav>
+      <button id="esci" class="btn ghost small">Esci</button>
+    </header>
+
+    <main>
+      <section id="tab-panoramica" class="tab">
+        <div class="cards" id="stato-cards"></div>
+        <div id="adattamenti"></div>
+        <h2>Dall'ultimo avvio</h2>
+        <div class="stats" id="stats"></div>
+        <h2>Prove</h2>
+        <p class="muted">Ogni prova usa la configurazione attuale, come farebbe una domanda ad Alexa.</p>
+        <div class="checks">
+          <div class="check" data-prova="modello">
+            <div class="check-head"><strong>Modello</strong><button class="btn small">Prova</button></div>
+            <p class="muted">Una domanda breve al modello.</p>
+            <pre class="esito" hidden></pre>
+          </div>
+          <div class="check" data-prova="web">
+            <div class="check-head"><strong>Ricerca web</strong><button class="btn small">Prova</button></div>
+            <p class="muted">Il meteo di oggi nella tua città.</p>
+            <pre class="esito" hidden></pre>
+          </div>
+          <div class="check" data-prova="casa">
+            <div class="check-head"><strong>Home Assistant</strong><button class="btn small">Prova</button></div>
+            <p class="muted">Il riepilogo della casa, in sola lettura.</p>
+            <pre class="esito" hidden></pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-conversazioni" class="tab" hidden>
+        <div class="toolbar">
+          <input id="filtro" type="search" placeholder="Cerca nelle domande e nelle risposte">
+          <select id="filtro-origine">
+            <option value="">Tutte</option>
+            <option value="alexa">Alexa</option>
+            <option value="chat">Chat di prova</option>
+          </select>
+          <button id="aggiorna-storico" class="btn small">Aggiorna</button>
+          <button id="svuota-storico" class="btn small danger">Svuota</button>
+        </div>
+        <p class="muted small">Tenute solo in memoria: si azzerano al riavvio. Gli utenti sono anonimizzati.</p>
+        <div id="storico" class="lista"></div>
+      </section>
+
+      <section id="tab-chat" class="tab" hidden>
+        <div class="chat">
+          <div class="chat-bar">
+            <label class="switch"><input id="simula" type="checkbox" checked><span></span> Simula le azioni sulla casa</label>
+            <button id="nuova-chat" class="btn small ghost">Nuova conversazione</button>
+          </div>
+          <div id="messaggi" class="messaggi" aria-live="polite">
+            <p class="vuoto">Scrivi come parleresti ad Alexa, per esempio <em>che tempo fa domani</em> o <em>accendi la luce del salone</em>.</p>
+          </div>
+          <form id="chat-form" class="chat-form">
+            <input id="chat-testo" autocomplete="off" placeholder="Fai una domanda…" maxlength="1000">
+            <button class="btn primary" type="submit">Invia</button>
+          </form>
+        </div>
+      </section>
+
+      <section id="tab-impostazioni" class="tab" hidden>
+        <div id="impostazioni-avviso"></div>
+        <form id="impostazioni-form"></form>
+        <div class="savebar" id="savebar" hidden>
+          <span id="savebar-testo"></span>
+          <button id="annulla" type="button" class="btn ghost small">Annulla</button>
+          <button id="salva" type="button" class="btn primary small">Salva e riavvia</button>
+        </div>
+      </section>
+
+      <section id="tab-registro" class="tab" hidden>
+        <div class="toolbar">
+          <select id="livello">
+            <option value="">Tutti i livelli</option>
+            <option value="WARNING">Solo avvisi ed errori</option>
+          </select>
+          <label class="switch"><input id="auto-registro" type="checkbox" checked><span></span> Aggiornamento automatico</label>
+        </div>
+        <div id="registro" class="registro"></div>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

@@ -16,9 +16,11 @@ from cryptography.x509.verification import PolicyBuilder, Store
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.utils import CryptographyDeprecationWarning
+import impostazioni  # noqa: F401  (first: applies the settings saved from the admin page)
 import llm
 import web_search as web
 import home_tools as casa
+import admin
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("alexa-ai-bridge")
@@ -201,7 +203,7 @@ def utente(d):
         or d.get("context", {}).get("System", {}).get("user", {}).get("userId") or "anonimo"
 
 def calcola(lav):
-    t0 = time.time()
+    t0 = lav["t"]
     casa.azzera_azioni()
     try:
         r = pulisci(ask_llm(lav["hist"], timeout=TIMEOUT_LUNGO))
@@ -220,10 +222,12 @@ def calcola(lav):
         lav["errore"] = str(e)[:200]
     if lav["errore"]:
         log.warning("modello: %s (%.1f s)", lav["errore"], time.time() - t0)
+    lav["durata"] = time.time() - t0
     lav["evento"].set()
+    admin.registra(lav, lav["uid"], "alexa")
 
 def avvia(uid, hist):
-    lav = {"hist": hist, "evento": threading.Event(), "risposta": None, "errore": None, "t": time.time()}
+    lav = {"hist": hist, "evento": threading.Event(), "risposta": None, "errore": None, "t": time.time(), "uid": uid}
     with _lock:
         for k in [k for k, v in _lavori.items() if time.time() - v["t"] > CONSERVA]:
             del _lavori[k]
@@ -312,6 +316,7 @@ def gestisci(d, t_req=None):
     return ancora(attr, True)
 
 app = Flask(__name__)
+admin.configura(app)
 
 @app.post("/alexa")
 def alexa():

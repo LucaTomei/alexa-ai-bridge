@@ -66,6 +66,10 @@ def azzera_azioni():
 def azioni_fatte():
     return list(getattr(_tl, "azioni", []))
 
+def imposta_simulazione(attiva):
+    """Test chat of the admin page: every check runs, but no command is sent to Home Assistant."""
+    _tl.simula = bool(attiva)
+
 def imposta_domanda(testo):
     """Called before every model request: a confirmation counts only if the user's last sentence is a yes."""
     _tl.consenso = bool(SI.match(testo or ""))
@@ -156,10 +160,12 @@ def esegui(dominio, servizio, entita, dati=None, confermato=False):
     if multi and not (confermato and getattr(_tl, "consenso", False)):
         return ("SERVE CONFERMA: l'azione riguarda piu' stanze (%s). Chiedi all'utente una conferma breve e non eseguire: "
                 "solo quando l'utente avra' risposto si', richiama esegui_azione con confermato=true.") % ", ".join(nome(S[e]) for e in entita)
-    _req("POST", "services/%s/%s" % (dominio, servizio), dict(dati, entity_id=entita), timeout=15)
-    _cache["t"] = 0
-    log.info("azione HA: %s.%s %s %s", dominio, servizio, ",".join(entita), json.dumps(dati) if dati else "")
-    _tl.azioni = getattr(_tl, "azioni", []) + ["%s.%s %s%s" % (dominio, servizio, ",".join(entita), (" " + json.dumps(dati)) if dati else "")]
+    simulata = getattr(_tl, "simula", False)
+    if not simulata:
+        _req("POST", "services/%s/%s" % (dominio, servizio), dict(dati, entity_id=entita), timeout=15)
+        _cache["t"] = 0
+    log.info("azione HA%s: %s.%s %s %s", " (simulata)" if simulata else "", dominio, servizio, ",".join(entita), json.dumps(dati) if dati else "")
+    _tl.azioni = getattr(_tl, "azioni", []) + ["%s%s.%s %s%s" % ("[simulata] " if simulata else "", dominio, servizio, ",".join(entita), (" " + json.dumps(dati)) if dati else "")]
     return "Fatto: %s.%s su %s." % (dominio, servizio, ", ".join(nome(S[e]) for e in entita))
 
 STRUMENTI = [

@@ -1,7 +1,7 @@
 """Test fixtures: a fake model endpoint (Anthropic and OpenAI-compatible), a fake Home Assistant and fake web
 search backends (SearXNG, Brave, Tavily), all in-process HTTP servers.
 Environment variables are set before the service module is imported."""
-import json, os, sys, threading, time, http.server
+import json, os, sys, tempfile, threading, time, http.server
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
@@ -141,12 +141,15 @@ os.environ.update(
     HA_GRUPPI="cover.all_covers", HA_SUMMARY_EXTRA="sensor.power=Consumo ora,lock.front_door=Porta di casa",
     HOME_CITY="Testville", HOME_COUNTRY="IT",
     SEARXNG_URL="http://127.0.0.1:%d" % WEB_PORT, BRAVE_URL="http://127.0.0.1:%d/brave" % WEB_PORT, BRAVE_API_KEY="brave-key",
-    TAVILY_URL="http://127.0.0.1:%d/tavily" % WEB_PORT, TAVILY_API_KEY="tvly-key")
+    TAVILY_URL="http://127.0.0.1:%d/tavily" % WEB_PORT, TAVILY_API_KEY="tvly-key",
+    ADMIN_PASSWORD="test-admin-password", DATA_DIR=tempfile.mkdtemp(prefix="aab-data-"))
 
 import app as APP  # noqa: E402  (after the environment is ready)
 import home_tools as HOME  # noqa: E402
 import llm as LLM_MOD  # noqa: E402
 import web_search as WEB_MOD  # noqa: E402,F401  (used by the tests through conftest)
+import admin as ADMIN  # noqa: E402,F401
+import impostazioni as IMPOSTAZIONI  # noqa: E402,F401
 WEB_DEFAULT = APP.WEB
 
 
@@ -155,7 +158,8 @@ def clean():
     LLM.reset(); HA.reset(); WEB.reset()
     APP._lavori.clear(); APP.WEB = WEB_DEFAULT
     LLM_MOD.API = "anthropic"; LLM_MOD.STATO.update(web_nativo=True, strumenti=True, max_completion=False, thinking=True)
-    HOME.ATTIVO = True; HOME._cache["t"] = 0
+    HOME.ATTIVO = True; HOME._cache["t"] = 0; HOME.imposta_simulazione(False)
+    ADMIN.STORICO.clear(); ADMIN._tentativi.clear(); ADMIN.RITARDO = 0
     yield
 
 
