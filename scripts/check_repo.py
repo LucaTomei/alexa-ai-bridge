@@ -52,8 +52,9 @@ for py in (ROOT / "src").glob("*.py"):
 used |= set(re.findall(r'"(LLM_BASE_URL|LLM_MODEL)"', (ROOT / "src" / "llm.py").read_text(encoding="utf-8")))
 example = (ROOT / ".env.example").read_text(encoding="utf-8")
 reference = (ROOT / "docs" / "setup.md").read_text(encoding="utf-8")
-ALIASES = {"LLM_FORMAT"}   # old name of LLM_API, still accepted but no longer documented
-for var in sorted(used - ALIASES):
+ALIASES = {"LLM_FORMAT"}               # old name of LLM_API, still accepted but no longer documented
+INTERNE = {"APP_VERSION", "DATA_DIR"}  # set by the Docker image (Dockerfile), not by the user
+for var in sorted(used - ALIASES - INTERNE):
     if not re.search(r"^#?\s*%s=" % var, example, re.M):
         errors.append(".env.example: %s is not listed" % var)
     if "`%s`" % var not in reference:

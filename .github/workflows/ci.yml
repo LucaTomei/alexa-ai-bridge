@@ -28,6 +28,8 @@ jobs:
         run: ruff check --output-format=github .
       - name: Docs links, interaction model, environment variables
         run: python scripts/check_repo.py
+      - name: Admin page JavaScript parses
+        run: node --check src/admin/app.js
 
   test:
     name: Tests (Python ${{ matrix.python }})
@@ -58,10 +60,15 @@ jobs:
           cp .env.example .env
           docker compose config -q
           docker compose --profile caddy --profile searxng config -q
-      - name: Caddyfile is valid
+      - name: Caddyfile is valid, and /admin is published only with ADMIN_PUBLIC=on
         run: |
-          docker run --rm -e PUBLIC_HOST=alexa.example.com -e UPSTREAM=alexa-ai-bridge:8090 \
-            -v "$PWD/deploy/Caddyfile.example:/etc/caddy/Caddyfile:ro" caddy:2 \
+          for admin in off on; do
+            docker run --rm -e PUBLIC_HOST=alexa.example.com -e UPSTREAM=alexa-ai-bridge:8090 -e ADMIN_PUBLIC=$admin \
+              -v "$PWD/deploy/Caddyfile.example:/etc/caddy/Caddyfile:ro" caddy:2 \
+              caddy adapt --config /etc/caddy/Caddyfile --adapter caddyfile > caddy-$admin.json
+          done
+          grep -q '"/admin\*"' caddy-off.json && ! grep -q '"/admin\*"' caddy-on.json
+          docker run --rm -v "$PWD/deploy/Caddyfile.example:/etc/caddy/Caddyfile:ro" caddy:2 \
             caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
       - name: Build image
         run: docker build -t alexa-ai-bridge:ci .
