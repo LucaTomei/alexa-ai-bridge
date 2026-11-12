@@ -21,9 +21,26 @@ COMANDI = {  # domain -> allowed services
     "scene": {"turn_on"},
 }
 VIETATO_BASE = (r"^lock\.|^alarm_control_panel\.|^script\.|^automation\.|porta|portone|serratura|cancello|antifurto|allarme|"
+                r"(?:^|[._\s])(?:door|doors|gate|gates|garage_door|garage door|alarm|siren|unlock)(?:$|[._\s])|"
                 r"docker|power_control|zigbee|mosquitto|frigate|arcane|nodered|node_red|adguard|backup|proxmox|kuma|_restart|riavvia")
-# HA_VIETATO adds to the built-in list, it never replaces it
-VIETATO = re.compile("|".join("(?:%s)" % r for r in (VIETATO_BASE, os.environ.get("HA_VIETATO", "").strip()) if r), re.I)
+
+
+class _Vietato:
+    """The built-in forbidden list plus HA_VIETATO (added, never a replacement), each compiled on its own so that a
+    custom regex with inline flags such as (?i) works."""
+    def __init__(self, extra):
+        self.regole = [re.compile(VIETATO_BASE, re.I)]
+        if extra:
+            try:
+                self.regole.append(re.compile(extra, re.I))
+            except re.error as e:
+                raise SystemExit("HA_VIETATO is not a valid regular expression: %s" % e) from None
+
+    def search(self, testo):
+        return next((m for r in self.regole for m in [r.search(testo)] if m), None)
+
+
+VIETATO = _Vietato(os.environ.get("HA_VIETATO", "").strip())
 
 
 def _lista(nome_env):

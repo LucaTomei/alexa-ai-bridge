@@ -67,11 +67,17 @@ def cert_amazon(u):
     c = _cache.get(u)
     if c and c[1] > time.time():
         return c[0]
-    certs = x509.load_pem_x509_certificates(scarica(u))
-    leaf, inter = certs[0], certs[1:]
-    PolicyBuilder().store(ROOTS).build_server_verifier(DNSName("echo-api.amazon.com")).verify(leaf, inter)
+    leaf = verifica_catena(x509.load_pem_x509_certificates(scarica(u)))
     _cache[u] = (leaf, time.time() + 3600)
     return leaf
+
+def verifica_catena(certs, quando=None):
+    """Validate Amazon's chain (leaf first) against the public roots: SAN echo-api.amazon.com, server auth, dates."""
+    pb = PolicyBuilder().store(ROOTS)
+    if quando is not None:
+        pb = pb.time(quando)
+    pb.build_server_verifier(DNSName("echo-api.amazon.com")).verify(certs[0], certs[1:])
+    return certs[0]
 
 def richiesta_valida(body, headers, dati):
     u, s = headers.get("SignatureCertChainUrl", ""), headers.get("Signature-256", "")
@@ -184,9 +190,11 @@ def pendente(uid):
             return None
         return lav
 
-def scarta(uid):
+def scarta(uid, lav):
+    """Forget this job, but only if it is still the user's current one (another Echo may have asked since)."""
     with _lock:
-        _lavori.pop(uid, None)
+        if _lavori.get(uid) is lav:
+            del _lavori[uid]
 
 def utente(d):
     return ((d.get("session") or {}).get("user") or {}).get("userId") \
@@ -257,10 +265,11 @@ def gestisci(d, t_req=None):
     uid = utente(d)
     if tipo == "LaunchRequest":
         lav = pendente(uid)
-        if lav and lav["evento"].is_set() and lav["risposta"]:
+        finito = bool(lav) and lav["evento"].is_set()     # read once: the job may finish meanwhile
+        if finito and lav["risposta"]:
             return consegna(uid, lav, attr, "Ho la risposta alla domanda di prima. ")
-        if lav and lav["evento"].is_set():
-            scarta(uid)         # failed in the background: forget it, or a later "si'" would hear the error
+        if finito:
+            scarta(uid, lav)    # failed in the background: forget it, or a later "si'" would hear the error
         elif lav:
             return risposta("Sto ancora pensando alla domanda di prima. Dimmi allora tra poco, oppure fammi un'altra domanda.",
                             "Cosa vuoi fare?", attr)
@@ -276,7 +285,8 @@ def gestisci(d, t_req=None):
         return risposta("Ciao!", fine=True)
     if nome == "AMAZON.HelpIntent":
         return risposta(AIUTO, "Cosa vuoi sapere?", attr)
-    in_sospeso = pendente(uid) is not None
+    lav = pendente(uid)
+    in_sospeso = lav is not None
     q_sino = None
     if nome == "AMAZON.YesIntent" and not in_sospeso:
         q_sino = "si'"      # answer to a question from the model (e.g. confirming an action)
@@ -285,7 +295,7 @@ def gestisci(d, t_req=None):
     elif nome in ("AttesaIntent", "AMAZON.YesIntent"):
         return chiedi_risposta(uid, attr, resta())
     if nome == "AMAZON.NoIntent" and not q_sino:
-        scarta(uid)
+        scarta(uid, lav)
         return risposta("Va bene. Altro?", "Cosa vuoi sapere?", attr)
     if nome not in ("AskIntent", "FraseBreveIntent") and not q_sino:
         return risposta("Non ho capito. " + AIUTO, "Cosa vuoi sapere?", attr)

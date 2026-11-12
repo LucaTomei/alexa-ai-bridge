@@ -4,14 +4,6 @@ Environment variables are set before the service module is imported."""
 import json, os, sys, threading, time, http.server
 import pytest
 
-LLM_PORT, HA_PORT, WEB_PORT = 18501, 18502, 18503
-os.environ.update(
-    LLM_BASE_URL="http://127.0.0.1:%d/v1" % LLM_PORT, LLM_API_KEY="test-key", LLM_MODEL="model-test", LLM_API="anthropic",
-    SKILL_ID="amzn1.ask.skill.test", ATTESA_MAX="1.0", HA_URL="http://127.0.0.1:%d" % HA_PORT, HA_TOKEN="ha-token",
-    HA_GRUPPI="cover.all_covers", HA_SUMMARY_EXTRA="sensor.power=Consumo ora,lock.front_door=Porta di casa",
-    HOME_CITY="Testville", HOME_COUNTRY="IT",
-    SEARXNG_URL="http://127.0.0.1:%d" % WEB_PORT, BRAVE_URL="http://127.0.0.1:%d/brave" % WEB_PORT, BRAVE_API_KEY="brave-key",
-    TAVILY_URL="http://127.0.0.1:%d/tavily" % WEB_PORT, TAVILY_API_KEY="tvly-key")
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 
@@ -75,7 +67,7 @@ class FakeHA:
 LLM, HA, WEB = FakeLLM(), FakeHA(), FakeWeb()
 
 
-def _server(port, get=None, post=None):
+def _server(get=None, post=None):
     class H(http.server.BaseHTTPRequestHandler):
         def _send(self, code, obj):
             d = json.dumps(obj).encode()
@@ -91,9 +83,10 @@ def _server(port, get=None, post=None):
 
         def log_message(self, *a):
             pass
-    srv = http.server.ThreadingHTTPServer(("127.0.0.1", port), H)
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), H)   # a free port: parallel test runs do not collide
     srv.daemon_threads = True
     threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv.server_address[1]
 
 
 def _ha_auth(h):
@@ -113,6 +106,11 @@ def _ha_post(h, body):
     if err:
         return err
     HA.calls.append((h.path, body))
+    servizio = h.path.rsplit("/", 1)[-1]          # apply the call, like Home Assistant would
+    nuovo = {"turn_on": "on", "turn_off": "off", "open_cover": "open", "close_cover": "closed"}.get(servizio)
+    for s in HA.states:
+        if nuovo and s["entity_id"] in (body.get("entity_id") or []):
+            s["state"] = nuovo
     return 200, []
 
 
@@ -134,9 +132,16 @@ def _web_post(h, body):
     return 401, {}
 
 
-_server(LLM_PORT, post=lambda h, b: LLM.handle(b, h.path, h.headers))
-_server(WEB_PORT, get=_web_get, post=_web_post)
-_server(HA_PORT, get=_ha_get, post=_ha_post)
+LLM_PORT = _server(post=lambda h, b: LLM.handle(b, h.path, h.headers))
+WEB_PORT = _server(get=_web_get, post=_web_post)
+HA_PORT = _server(get=_ha_get, post=_ha_post)
+os.environ.update(
+    LLM_BASE_URL="http://127.0.0.1:%d/v1" % LLM_PORT, LLM_API_KEY="test-key", LLM_MODEL="model-test", LLM_API="anthropic",
+    SKILL_ID="amzn1.ask.skill.test", ATTESA_MAX="1.0", HA_URL="http://127.0.0.1:%d" % HA_PORT, HA_TOKEN="ha-token",
+    HA_GRUPPI="cover.all_covers", HA_SUMMARY_EXTRA="sensor.power=Consumo ora,lock.front_door=Porta di casa",
+    HOME_CITY="Testville", HOME_COUNTRY="IT",
+    SEARXNG_URL="http://127.0.0.1:%d" % WEB_PORT, BRAVE_URL="http://127.0.0.1:%d/brave" % WEB_PORT, BRAVE_API_KEY="brave-key",
+    TAVILY_URL="http://127.0.0.1:%d/tavily" % WEB_PORT, TAVILY_API_KEY="tvly-key")
 
 import app as APP  # noqa: E402  (after the environment is ready)
 import home_tools as HOME  # noqa: E402
@@ -149,7 +154,7 @@ WEB_DEFAULT = APP.WEB
 def clean():
     LLM.reset(); HA.reset(); WEB.reset()
     APP._lavori.clear(); APP.WEB = WEB_DEFAULT
-    LLM_MOD.API = "anthropic"; LLM_MOD.STATO.update(web_nativo=True, strumenti=True, max_completion=False)
+    LLM_MOD.API = "anthropic"; LLM_MOD.STATO.update(web_nativo=True, strumenti=True, max_completion=False, thinking=True)
     HOME.ATTIVO = True; HOME._cache["t"] = 0
     yield
 

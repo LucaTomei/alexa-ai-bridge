@@ -31,7 +31,7 @@ MAX_ROUNDS = 8
 RIPROVA = {429, 500, 502, 503, 504, 529}   # rate limit / overloaded / gateway errors: worth one more try
 
 # what the endpoint accepted so far (learned at runtime, shared by all requests)
-STATO = {"web_nativo": True, "strumenti": True, "max_completion": False}
+STATO = {"web_nativo": True, "strumenti": True, "max_completion": False, "thinking": True}
 
 
 class Rifiutata(Exception):
@@ -66,7 +66,7 @@ def _invia(url, hdr, body, scadenza, nativo=None):
     """POST, adapting the body once per kind of rejection: max_tokens name, thinking, native web search, tools.
     What was turned off is remembered for the next requests only if the request then succeeds: a 400 caused by
     something else (a malformed message, a context that is too long) must not switch home control off for good."""
-    tolto, riprovato = [], False
+    tolto, riprovato, primo = [], False, None
     while True:
         try:
             d = _post(url, hdr, body, _resta(scadenza))
@@ -79,14 +79,17 @@ def _invia(url, hdr, body, scadenza, nativo=None):
             continue
         except Rifiutata as e:
             msg, tools = str(e), body.get("tools") or []
+            primo = primo or msg
             if "max_tokens" in body and "max_completion_tokens" in msg:
                 body["max_completion_tokens"] = body.pop("max_tokens"); tolto.append(("max_completion", msg))
             elif "thinking" in body and "thinking" in msg:
-                body.pop("thinking")
+                body.pop("thinking"); tolto.append(("thinking", msg))
             elif nativo is not None and any(t is nativo for t in tools):
                 body["tools"] = [t for t in tools if t is not nativo]; tolto.append(("web_nativo", msg))
             elif tools:
                 body["tools"] = []; tolto.append(("strumenti", msg))
+            elif primo != msg:
+                raise Rifiutata("%s (after adapting the request: %s)" % (primo, msg[:200])) from None
             else:
                 raise
             if not body.get("tools"):
@@ -95,6 +98,7 @@ def _invia(url, hdr, body, scadenza, nativo=None):
         for k, msg in tolto:
             STATO[k] = k == "max_completion"
             log.warning("%s (%s)", {"max_completion": "the endpoint wants max_completion_tokens: switching to it",
+                                    "thinking": "the endpoint does not accept the thinking parameter: not sending it",
                                     "web_nativo": "native web search rejected: continuing without it",
                                     "strumenti": "tools rejected by the endpoint or model: continuing without them"}[k], msg[:200])
         return d
@@ -109,8 +113,9 @@ def senza_pensieri(t):
 # ---------- Anthropic Messages API
 def _anthropic(system, messaggi, strumenti, esegui, nativo, scadenza):
     url, hdr = BASE + "/messages", {"x-api-key": KEY, "anthropic-version": "2023-06-01"}
-    body = dict({"model": MODEL, "max_tokens": MAX_TOKENS, "system": system, "messages": messaggi,
-                 "thinking": {"type": "disabled"}}, **EXTRA)   # extended thinking can eat the whole token budget
+    body = dict({"model": MODEL, "max_tokens": MAX_TOKENS, "system": system, "messages": messaggi}, **EXTRA)
+    if STATO["thinking"] and "thinking" not in EXTRA:
+        body["thinking"] = {"type": "disabled"}   # extended thinking can eat the whole token budget
     tools = ([nativo] if nativo else []) + [{"name": s["name"], "description": s["description"], "input_schema": s["parameters"]}
                                             for s in strumenti]
     if tools:
