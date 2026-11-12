@@ -12,12 +12,15 @@
 <body>
   <div id="login" class="login" hidden>
     <form class="login-card" id="login-form">
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" data-lang="it">IT</button><button type="button" data-lang="en">EN</button>
+      </div>
       <img src="/admin/icon.svg" alt="" width="56" height="56">
       <h1>Alexa AI Bridge</h1>
-      <p class="muted">Pannello di gestione</p>
-      <label for="password">Password</label>
+      <p class="muted" data-t="login.sub"></p>
+      <label for="password" data-t="login.password"></label>
       <input id="password" type="password" autocomplete="current-password" required autofocus>
-      <button class="btn primary" type="submit">Entra</button>
+      <button class="btn primary" type="submit" data-t="login.entra"></button>
       <p id="login-errore" class="errore" role="alert"></p>
     </form>
   </div>
@@ -30,37 +33,42 @@
         <span id="versione" class="chip"></span>
       </div>
       <nav class="tabs" role="tablist">
-        <button role="tab" data-tab="panoramica">Panoramica</button>
-        <button role="tab" data-tab="conversazioni">Conversazioni</button>
-        <button role="tab" data-tab="chat">Chat di prova</button>
-        <button role="tab" data-tab="impostazioni">Configurazione</button>
-        <button role="tab" data-tab="registro">Registro</button>
+        <button role="tab" data-tab="panoramica" data-t="tab.panoramica"></button>
+        <button role="tab" data-tab="conversazioni" data-t="tab.conversazioni"></button>
+        <button role="tab" data-tab="chat" data-t="tab.chat"></button>
+        <button role="tab" data-tab="casa" data-t="tab.casa"></button>
+        <button role="tab" data-tab="impostazioni" data-t="tab.impostazioni"></button>
+        <button role="tab" data-tab="sistema" data-t="tab.sistema"></button>
+        <button role="tab" data-tab="registro" data-t="tab.registro"></button>
       </nav>
-      <button id="esci" class="btn ghost small">Esci</button>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button type="button" data-lang="it">IT</button><button type="button" data-lang="en">EN</button>
+      </div>
+      <button id="esci" class="btn ghost small" data-t="esci"></button>
     </header>
 
     <main>
       <section id="tab-panoramica" class="tab">
         <div class="cards" id="stato-cards"></div>
         <div id="adattamenti"></div>
-        <h2>Dall'ultimo avvio</h2>
+        <h2 data-t="pan.dallavvio"></h2>
         <div class="stats" id="stats"></div>
-        <h2>Prove</h2>
-        <p class="muted">Ogni prova usa la configurazione attuale, come farebbe una domanda ad Alexa.</p>
+        <h2 data-t="pan.prove"></h2>
+        <p class="muted" data-t="pan.prove_desc"></p>
         <div class="checks">
           <div class="check" data-prova="modello">
-            <div class="check-head"><strong>Modello</strong><button class="btn small">Prova</button></div>
-            <p class="muted">Una domanda breve al modello.</p>
+            <div class="check-head"><strong data-t="prova.modello"></strong><button class="btn small" data-t="btn.prova"></button></div>
+            <p class="muted" data-t="prova.modello_desc"></p>
             <pre class="esito" hidden></pre>
           </div>
           <div class="check" data-prova="web">
-            <div class="check-head"><strong>Ricerca web</strong><button class="btn small">Prova</button></div>
-            <p class="muted">Il meteo di oggi nella tua città.</p>
+            <div class="check-head"><strong data-t="prova.web"></strong><button class="btn small" data-t="btn.prova"></button></div>
+            <p class="muted" data-t="prova.web_desc"></p>
             <pre class="esito" hidden></pre>
           </div>
           <div class="check" data-prova="casa">
-            <div class="check-head"><strong>Home Assistant</strong><button class="btn small">Prova</button></div>
-            <p class="muted">Il riepilogo della casa, in sola lettura.</p>
+            <div class="check-head"><strong data-t="prova.casa"></strong><button class="btn small" data-t="btn.prova"></button></div>
+            <p class="muted" data-t="prova.casa_desc"></p>
             <pre class="esito" hidden></pre>
           </div>
         </div>
@@ -68,32 +76,50 @@
 
       <section id="tab-conversazioni" class="tab" hidden>
         <div class="toolbar">
-          <input id="filtro" type="search" placeholder="Cerca nelle domande e nelle risposte">
+          <input id="filtro" type="search" data-tp="conv.cerca">
           <select id="filtro-origine">
-            <option value="">Tutte</option>
+            <option value="" data-t="conv.tutte"></option>
             <option value="alexa">Alexa</option>
-            <option value="chat">Chat di prova</option>
+            <option value="chat" data-t="tab.chat"></option>
           </select>
-          <button id="aggiorna-storico" class="btn small">Aggiorna</button>
-          <button id="svuota-storico" class="btn small danger">Svuota</button>
+          <button id="aggiorna-storico" class="btn small" data-t="btn.aggiorna"></button>
+          <button id="svuota-storico" class="btn small danger" data-t="btn.svuota"></button>
         </div>
-        <p class="muted small">Tenute solo in memoria: si azzerano al riavvio. Gli utenti sono anonimizzati.</p>
+        <p class="muted small" data-t="conv.nota"></p>
         <div id="storico" class="lista"></div>
       </section>
 
       <section id="tab-chat" class="tab" hidden>
         <div class="chat">
           <div class="chat-bar">
-            <label class="switch"><input id="simula" type="checkbox" checked><span></span> Simula le azioni sulla casa</label>
-            <button id="nuova-chat" class="btn small ghost">Nuova conversazione</button>
+            <label class="switch"><input id="simula" type="checkbox" checked><span></span> <i data-t="chat.simula"></i></label>
+            <button id="nuova-chat" class="btn small ghost" data-t="chat.nuova"></button>
           </div>
-          <div id="messaggi" class="messaggi" aria-live="polite">
-            <p class="vuoto">Scrivi come parleresti ad Alexa, per esempio <em>che tempo fa domani</em> o <em>accendi la luce del salone</em>.</p>
-          </div>
+          <div id="messaggi" class="messaggi" aria-live="polite"></div>
           <form id="chat-form" class="chat-form">
-            <input id="chat-testo" autocomplete="off" placeholder="Fai una domanda…" maxlength="1000">
-            <button class="btn primary" type="submit">Invia</button>
+            <input id="chat-testo" autocomplete="off" data-tp="chat.placeholder" maxlength="1000">
+            <button class="btn primary" type="submit" data-t="chat.invia"></button>
           </form>
+        </div>
+      </section>
+
+      <section id="tab-casa" class="tab" hidden>
+        <p class="muted" data-t="casa.intro"></p>
+        <div class="toolbar">
+          <input id="casa-filtro" type="search" data-tp="casa.cerca">
+          <select id="casa-vista">
+            <option value="" data-t="casa.vista_tutte"></option>
+            <option value="comandabili" data-t="casa.vista_comandabili"></option>
+            <option value="bloccate" data-t="casa.vista_bloccate"></option>
+            <option value="conferma" data-t="casa.vista_conferma"></option>
+          </select>
+          <button id="casa-aggiorna" class="btn small" data-t="btn.aggiorna"></button>
+        </div>
+        <div id="casa" class="lista"></div>
+        <div class="savebar" id="casa-savebar" hidden>
+          <span id="casa-savebar-testo"></span>
+          <button id="casa-annulla" type="button" class="btn ghost small" data-t="btn.annulla"></button>
+          <button id="casa-salva" type="button" class="btn primary small" data-t="btn.salva"></button>
         </div>
       </section>
 
@@ -102,23 +128,28 @@
         <form id="impostazioni-form"></form>
         <div class="savebar" id="savebar" hidden>
           <span id="savebar-testo"></span>
-          <button id="annulla" type="button" class="btn ghost small">Annulla</button>
-          <button id="salva" type="button" class="btn primary small">Salva e riavvia</button>
+          <button id="annulla" type="button" class="btn ghost small" data-t="btn.annulla"></button>
+          <button id="salva" type="button" class="btn primary small" data-t="btn.salva"></button>
         </div>
+      </section>
+
+      <section id="tab-sistema" class="tab" hidden>
+        <div id="sistema" class="sistema"></div>
       </section>
 
       <section id="tab-registro" class="tab" hidden>
         <div class="toolbar">
           <select id="livello">
-            <option value="">Tutti i livelli</option>
-            <option value="WARNING">Solo avvisi ed errori</option>
+            <option value="" data-t="reg.tutti"></option>
+            <option value="WARNING" data-t="reg.avvisi"></option>
           </select>
-          <label class="switch"><input id="auto-registro" type="checkbox" checked><span></span> Aggiornamento automatico</label>
+          <label class="switch"><input id="auto-registro" type="checkbox" checked><span></span> <i data-t="reg.auto"></i></label>
         </div>
         <div id="registro" class="registro"></div>
       </section>
     </main>
   </div>
+  <input id="importa-file" type="file" accept="application/json,.json" hidden>
   <div id="toast" class="toast" role="status" hidden></div>
 </body>
 </html>

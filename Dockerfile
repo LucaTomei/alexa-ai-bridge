@@ -5,6 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt && useradd -r -m -u 10001 app && mkdir -p /data && chown app /data
 COPY src/ ./
+COPY skill/ ./skill/
 USER app
 EXPOSE 8090
 VOLUME /data

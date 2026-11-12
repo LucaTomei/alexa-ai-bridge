@@ -32,10 +32,11 @@ def url(tmp_path_factory):
     p.wait(10)
 
 
-def apri(url, tab, larghezza=1280):
+def apri(url, tab, lingua="it-IT"):
+    # the page picks its language from the browser's: Italian unless asked otherwise
     r = subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--no-sandbox", "--no-first-run", "--enable-logging=stderr",
-                        "--v=0", "--window-size=%d,900" % larghezza, "--virtual-time-budget=6000", "--dump-dom",
-                        "%s/admin#%s" % (url, tab)], capture_output=True, text=True, timeout=90)
+                        "--v=0", "--window-size=1280,900", "--virtual-time-budget=6000", "--lang=" + lingua,
+                        "--accept-lang=" + lingua, "--dump-dom", "%s/admin#%s" % (url, tab)], capture_output=True, text=True, timeout=90)
     errori = [r for r in r.stderr.splitlines() if "CONSOLE" in r and re.search(r"Uncaught|Error", r)]
     assert not errori, errori
     return r.stdout
@@ -63,11 +64,11 @@ def test_conversations(url):
 def test_settings_without_secrets(url):
     dom = apri(url, "impostazioni")
     assert visibile(dom, "tab-impostazioni") and 'data-campo="LLM_MODEL"' in dom and 'data-campo="HA_VIETATO"' in dom
-    assert dom.count('class="gruppo"') == 7
+    assert dom.count('class="gruppo"') == 8 and "Lingua dell'assistente" in dom
     assert "demo-secret-key" not in dom and "demo-secret-token" not in dom and "demo-password-123" not in dom
 
 
-@pytest.mark.parametrize("scheda", ["panoramica", "conversazioni", "chat", "impostazioni", "registro"])
+@pytest.mark.parametrize("scheda", ["panoramica", "conversazioni", "chat", "casa", "impostazioni", "sistema", "registro"])
 def test_phone_width_has_no_sideways_scroll(url, scheda):
     r = subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--no-sandbox", "--no-first-run", "--window-size=500,900",
                         "--virtual-time-budget=8000", "--dump-dom", "%s/demo-frame/360/%s" % (url, scheda)],
@@ -80,3 +81,32 @@ def test_chat_and_log(url):
     assert visibile(dom, "tab-chat") and 'id="chat-form"' in dom
     dom = apri(url, "registro")
     assert visibile(dom, "tab-registro") and "demo: admin page ready" in dom
+
+
+def test_home_tab(url):
+    dom = apri(url, "casa")
+    assert visibile(dom, "tab-casa") and len(re.findall(r'class="entita(?: bloccata)?"', dom)) == 10
+    for testo in ("Mai comandabile (tipo di entità)", "Bloccata dalle regole di sicurezza incluse", "Vietata da te", "Comandabile",
+                  "Chiedi sempre un sì", "light.studio"):
+        assert testo in dom, testo
+
+
+def test_system_tab(url):
+    dom = apri(url, "sistema")
+    assert visibile(dom, "tab-sistema") and "amzn1.ask.skill.demo" in dom and "https://alexa.example.org/alexa" in dom
+    assert "Scarica it-IT" in dom and "Scarica en-US" in dom and "Cambia la password del pannello" in dom
+    assert "demo-password-123" not in dom
+
+
+@pytest.mark.parametrize("scheda, testi", [
+    ("panoramica", ("Overview", "Up for 2 days", "Checks", "Since the last start")),
+    ("casa", ("Never controllable (entity type)", "Forbidden by you", "Always ask for a yes")),
+    ("impostazioni", ("Assistant language", "API key", "Admin page")),
+    ("sistema", ("Download en-US", "Change the admin page password", "Network and publishing")),
+])
+def test_english(url, scheda, testi):
+    dom = apri(url, scheda, "en-US")
+    assert '<html lang="en"' in dom
+    for testo in testi:
+        assert testo in dom, testo
+    assert "Panoramica" not in dom

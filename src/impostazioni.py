@@ -9,58 +9,109 @@ from urllib.parse import urlsplit
 DATA_DIR = os.environ.get("DATA_DIR", "/data")
 FILE = os.path.join(DATA_DIR, "settings.json")
 
-# name, group, label, kind (text | secret | select | number | textarea), options, help
+# name, group, kind (text | secret | select | number | textarea), options, (label, help) in Italian, (label, help) in English
 CAMPI = [
-    ("SKILL_ID", "Alexa", "Skill ID", "text", None, "amzn1.ask.skill.… dalla console Alexa: le richieste per altre skill sono rifiutate."),
-    ("LANGUAGE", "Alexa", "Lingua dell'assistente", "select", ["it", "en"],
-     "it o en. La skill deve usare il modello di interazione della stessa lingua."),
-    ("LLM_API", "Modello", "Formato API", "select", ["", "anthropic", "openai"],
-     "anthropic (Claude) oppure openai (qualsiasi endpoint compatibile). Vuoto: dedotto dall'URL."),
-    ("LLM_BASE_URL", "Modello", "URL base", "text", None, "Es. https://api.anthropic.com/v1 oppure http://host.docker.internal:11434/v1"),
-    ("LLM_API_KEY", "Modello", "Chiave API", "secret", None, "Vuota per i modelli locali."),
-    ("LLM_MODEL", "Modello", "Modello", "text", None, "Nome del modello dal listino del fornitore. I modelli veloci suonano meglio."),
-    ("LLM_MAX_TOKENS", "Modello", "Token massimi per risposta", "number", None, "Default 1024."),
-    ("LLM_EXTRA_JSON", "Modello", "Campi extra (JSON)", "text", None, "Aggiunti a ogni richiesta, es. {\"reasoning_effort\": \"low\"}"),
-    ("ATTESA_MAX", "Tempi", "Attesa massima (s)", "number", None, "Oltre questo tempo Alexa dice \"Ci sto pensando\". Al massimo 7."),
-    ("LLM_TIMEOUT_LUNGO", "Tempi", "Tempo massimo in background (s)", "number", None, "Default 120."),
-    ("WEB_SEARCH", "Ricerca web", "Ricerca web", "select", ["auto", "native", "searxng", "brave", "tavily", "off"],
-     "auto: Claude usa la ricerca nativa, gli altri modelli il primo servizio configurato."),
-    ("SEARXNG_URL", "Ricerca web", "URL SearXNG", "text", None, "Con il container incluso: http://searxng:8080"),
-    ("BRAVE_API_KEY", "Ricerca web", "Chiave Brave Search", "secret", None, ""),
-    ("TAVILY_API_KEY", "Ricerca web", "Chiave Tavily", "secret", None, ""),
-    ("WEB_RESULTS", "Ricerca web", "Risultati per ricerca", "number", None, "Default 5."),
-    ("WEB_LANGUAGE", "Ricerca web", "Lingua di ricerca", "text", None, "Default it."),
-    ("WEB_MAX", "Ricerca web", "Ricerche native per domanda", "number", None, "Solo Claude. Default 3."),
-    ("HOME_CITY", "Luogo", "Città", "text", None, "Per meteo e ricerche locali."),
-    ("HOME_REGION", "Luogo", "Regione", "text", None, ""),
-    ("HOME_COUNTRY", "Luogo", "Paese (codice)", "text", None, "Es. IT"),
-    ("HOME_TIMEZONE", "Luogo", "Fuso orario", "text", None, "Es. Europe/Rome"),
-    ("HA_URL", "Home Assistant", "URL", "text", None, "Es. https://homeassistant.example.com"),
-    ("HA_TOKEN", "Home Assistant", "Token", "secret", None, "Token di un utente dedicato non amministratore. Vuoto: strumenti casa spenti."),
-    ("HA_TOOLS", "Home Assistant", "Strumenti casa", "select", ["1", "0"], "1 attivi, 0 spenti."),
-    ("HA_GRUPPI", "Home Assistant", "Entità su più stanze", "text", None, "Separate da virgole: chiedono sempre conferma."),
-    ("HA_MAX_SENZA_CONFERMA", "Home Assistant", "Entità senza conferma", "number", None, "Oltre questo numero serve un sì. Default 3."),
-    ("HA_SUMMARY_EXTRA", "Home Assistant", "Righe extra nel riepilogo", "text", None, "entity_id=Etichetta,entity_id=Etichetta"),
-    ("HA_TEMP_PATTERN", "Home Assistant", "Sensori di temperatura (regex)", "text", None, "Vuoto: tutti i sensori di temperatura (max 12)."),
-    ("HA_VIETATO", "Home Assistant", "Altre entità vietate (regex)", "text", None,
-     "Si aggiunge alla lista di sicurezza incorporata, non la sostituisce. Es. garage|irrigazione"),
-    ("SYSTEM_PROMPT", "Avanzate", "Prompt di sistema", "textarea", None, "Vuoto: le regole vocali italiane incluse."),
-    ("ISTRUZIONI_TURNO", "Avanzate", "Istruzioni a ogni domanda", "textarea", None, "Vuoto: quelle incluse."),
-    ("HTTP_USER_AGENT", "Avanzate", "User agent", "text", None, "Default alexa-ai-bridge/1.0"),
+    ("SKILL_ID", "alexa", "text", None,
+     ("Skill ID", "amzn1.ask.skill.… dalla console Alexa: le richieste per altre skill sono rifiutate."),
+     ("Skill ID", "amzn1.ask.skill.… from the Alexa console: requests for other skills are refused.")),
+    ("LANGUAGE", "alexa", "select", ["it", "en"],
+     ("Lingua dell'assistente", "it o en. La skill deve usare il modello di interazione della stessa lingua (scheda Sistema)."),
+     ("Assistant language", "it or en. The skill must use the interaction model of the same language (System tab).")),
+    ("LLM_API", "modello", "select", ["", "anthropic", "openai"],
+     ("Formato API", "anthropic (Claude) oppure openai (qualsiasi endpoint compatibile). Vuoto: dedotto dall'URL."),
+     ("API format", "anthropic (Claude) or openai (any compatible endpoint). Empty: guessed from the URL.")),
+    ("LLM_BASE_URL", "modello", "text", None,
+     ("URL base", "Es. https://api.anthropic.com/v1 oppure http://host.docker.internal:11434/v1. Cambiandolo va reinserita la chiave."),
+     ("Base URL", "E.g. https://api.anthropic.com/v1 or http://host.docker.internal:11434/v1. Changing it requires the key again.")),
+    ("LLM_API_KEY", "modello", "secret", None, ("Chiave API", "Vuota per i modelli locali."), ("API key", "Empty for local models.")),
+    ("LLM_MODEL", "modello", "text", None,
+     ("Modello", "Nome del modello dal listino del fornitore. I modelli veloci suonano meglio."),
+     ("Model", "Model name from the provider's list. Fast models sound best.")),
+    ("LLM_MAX_TOKENS", "modello", "number", None, ("Token massimi per risposta", ""), ("Max tokens per answer", "")),
+    ("LLM_EXTRA_JSON", "modello", "text", None,
+     ("Campi extra (JSON)", "Aggiunti a ogni richiesta, es. {\"reasoning_effort\": \"low\"}"),
+     ("Extra fields (JSON)", "Added to every request, e.g. {\"reasoning_effort\": \"low\"}")),
+    ("ATTESA_MAX", "tempi", "number", None,
+     ("Attesa massima (s)", "Oltre questo tempo Alexa dice \"Ci sto pensando\". Da 1 a 7.5."),
+     ("Maximum wait (s)", "Beyond this Alexa says \"Let me think\". From 1 to 7.5.")),
+    ("LLM_TIMEOUT_LUNGO", "tempi", "number", None, ("Tempo massimo in background (s)", ""), ("Maximum background time (s)", "")),
+    ("WEB_SEARCH", "web", "select", ["auto", "native", "searxng", "brave", "tavily", "off"],
+     ("Ricerca web", "auto: Claude usa la ricerca nativa, gli altri modelli il primo servizio configurato."),
+     ("Web search", "auto: Claude uses its native search, other models the first configured service.")),
+    ("SEARXNG_URL", "web", "text", None, ("URL SearXNG", "Con il container incluso: http://searxng:8080"),
+     ("SearXNG URL", "With the bundled container: http://searxng:8080")),
+    ("BRAVE_API_KEY", "web", "secret", None, ("Chiave Brave Search", ""), ("Brave Search key", "")),
+    ("TAVILY_API_KEY", "web", "secret", None, ("Chiave Tavily", ""), ("Tavily key", "")),
+    ("WEB_RESULTS", "web", "number", None, ("Risultati per ricerca", ""), ("Results per search", "")),
+    ("WEB_LANGUAGE", "web", "text", None, ("Lingua di ricerca", "Vuoto: la lingua dell'assistente."),
+     ("Search language", "Empty: the assistant's language.")),
+    ("WEB_MAX", "web", "number", None, ("Ricerche native per domanda", "Solo Claude."), ("Native searches per question", "Claude only.")),
+    ("HOME_CITY", "luogo", "text", None, ("Città", "Per meteo e ricerche locali."), ("City", "For weather and local searches.")),
+    ("HOME_REGION", "luogo", "text", None, ("Regione", ""), ("Region", "")),
+    ("HOME_COUNTRY", "luogo", "text", None, ("Paese (codice)", "Es. IT"), ("Country (code)", "E.g. GB")),
+    ("HOME_TIMEZONE", "luogo", "text", None, ("Fuso orario", "Es. Europe/Rome"), ("Time zone", "E.g. Europe/London")),
+    ("HA_URL", "casa", "text", None,
+     ("URL", "Es. https://homeassistant.example.com. Cambiandolo va reinserito il token."),
+     ("URL", "E.g. https://homeassistant.example.com. Changing it requires the token again.")),
+    ("HA_TOKEN", "casa", "secret", None,
+     ("Token", "Token di un utente dedicato non amministratore. Vuoto: strumenti casa spenti."),
+     ("Token", "Token of a dedicated non-admin user. Empty: home tools off.")),
+    ("HA_TOOLS", "casa", "select", ["1", "0"], ("Strumenti casa", "1 attivi, 0 spenti."), ("Home tools", "1 on, 0 off.")),
+    ("HA_GRUPPI", "casa", "text", None,
+     ("Entità su più stanze", "Separate da virgole: chiedono sempre conferma. Più comodo dalla scheda Casa."),
+     ("Entities for several rooms", "Comma separated: they always need a yes. Easier from the Home tab.")),
+    ("HA_MAX_SENZA_CONFERMA", "casa", "number", None, ("Entità senza conferma", "Oltre questo numero serve un sì."),
+     ("Entities without confirmation", "Above this number a yes is needed.")),
+    ("HA_SUMMARY_EXTRA", "casa", "text", None, ("Righe extra nel riepilogo", "entity_id=Etichetta,entity_id=Etichetta"),
+     ("Extra summary lines", "entity_id=Label,entity_id=Label")),
+    ("HA_TEMP_PATTERN", "casa", "text", None, ("Sensori di temperatura (regex)", "Vuoto: tutti i sensori di temperatura (max 12)."),
+     ("Temperature sensors (regex)", "Empty: every temperature sensor (max 12).")),
+    ("HA_VIETATO", "casa", "text", None,
+     ("Altre entità vietate (regex)", "Si aggiunge alla lista di sicurezza incorporata. Più comodo dalla scheda Casa."),
+     ("Other forbidden entities (regex)", "Added to the built-in safety list. Easier from the Home tab.")),
+    ("ADMIN_HISTORY", "pannello", "number", None, ("Domande nello storico", "0 spegne lo storico."),
+     ("Questions in the history", "0 turns the history off.")),
+    ("SYSTEM_PROMPT", "avanzate", "textarea", None, ("Prompt di sistema", "Vuoto: le regole vocali incluse, nella lingua scelta."),
+     ("System prompt", "Empty: the built-in voice rules, in the chosen language.")),
+    ("ISTRUZIONI_TURNO", "avanzate", "textarea", None, ("Istruzioni a ogni domanda", "Vuoto: quelle incluse."),
+     ("Instructions with every question", "Empty: the built-in ones.")),
+    ("HTTP_USER_AGENT", "avanzate", "text", None, ("User agent", ""), ("User agent", "")),
+    ("HA_UA", "avanzate", "text", None, ("User agent per Home Assistant", "Vuoto: lo user agent sopra."),
+     ("User agent for Home Assistant", "Empty: the user agent above.")),
+    ("BRAVE_URL", "avanzate", "text", None, ("Endpoint Brave", "Vuoto: l'API ufficiale."), ("Brave endpoint", "Empty: the official API.")),
+    ("TAVILY_URL", "avanzate", "text", None, ("Endpoint Tavily", "Vuoto: l'API ufficiale."), ("Tavily endpoint", "Empty: the official API.")),
 ]
+GRUPPI = {"alexa": ("Alexa", "Alexa"), "modello": ("Modello", "Model"), "tempi": ("Tempi", "Timing"),
+          "web": ("Ricerca web", "Web search"), "luogo": ("Luogo", "Location"), "casa": ("Home Assistant", "Home Assistant"),
+          "pannello": ("Pannello", "Admin page"), "avanzate": ("Avanzate", "Advanced")}
 NOMI = {c[0] for c in CAMPI}
+TIPO = {c[0]: c[2] for c in CAMPI}
+OPZIONI = {c[0]: c[3] for c in CAMPI}
 # what the service uses when a setting is empty (shown as placeholder on the page)
-PREDEFINITI = {"LLM_MAX_TOKENS": "1024", "ATTESA_MAX": "6", "LLM_TIMEOUT_LUNGO": "120", "WEB_RESULTS": "5", "WEB_LANGUAGE": "it",
+PREDEFINITI = {"LLM_MAX_TOKENS": "1024", "ATTESA_MAX": "6", "LLM_TIMEOUT_LUNGO": "120", "WEB_RESULTS": "5",
                "WEB_MAX": "3", "HOME_TIMEZONE": "Europe/Rome", "HA_MAX_SENZA_CONFERMA": "3", "HTTP_USER_AGENT": "alexa-ai-bridge/1.0",
-               "LLM_EXTRA_JSON": "{}", "WEB_SEARCH": "auto", "HA_TOOLS": "1"}
-SEGRETI = {c[0] for c in CAMPI if c[3] == "secret"}
+               "LLM_EXTRA_JSON": "{}", "WEB_SEARCH": "auto", "HA_TOOLS": "1", "LANGUAGE": "it", "ADMIN_HISTORY": "100",
+               "BRAVE_URL": "https://api.search.brave.com/res/v1/web/search", "TAVILY_URL": "https://api.tavily.com/search"}
+SEGRETI = {c[0] for c in CAMPI if c[2] == "secret"}
 
 # numbers: (minimum, maximum, integer only)
 LIMITI = {"LLM_MAX_TOKENS": (1, 200000, True), "ATTESA_MAX": (1, 7.5, False), "LLM_TIMEOUT_LUNGO": (5, 900, False),
-          "WEB_RESULTS": (1, 20, True), "WEB_MAX": (1, 20, True), "HA_MAX_SENZA_CONFERMA": (0, 100, True)}
+          "WEB_RESULTS": (1, 20, True), "WEB_MAX": (1, 20, True), "HA_MAX_SENZA_CONFERMA": (0, 100, True),
+          "ADMIN_HISTORY": (0, 1000, True)}
 # endpoints the service sends keys and tokens to: only http(s), never file:// or other schemes
 URL = ("LLM_BASE_URL", "HA_URL", "SEARXNG_URL", "BRAVE_URL", "TAVILY_URL")
-ETICHETTE = {c[0]: c[2] for c in CAMPI}
+
+
+def etichetta(nome, lingua="en"):
+    for c in CAMPI:
+        if c[0] == nome:
+            return (c[5] if lingua == "en" else c[4])[0]
+    return nome
+
+
+def m(lingua, it, en):
+    return en if lingua == "en" else it
+
 
 BASE = {}        # value from the environment (.env) of every overridden setting, before the override
 OVERRIDE = {}    # settings saved from the admin page
@@ -85,24 +136,27 @@ def carica():
         os.environ[k] = v
 
 
-def errore_valore(nome, valore):
-    """Why a value is not acceptable, or None. Used at startup and by the admin page."""
+def errore_valore(nome, valore, lingua="en"):
+    """Why a value is not acceptable, or None. Used at startup (in English) and by the admin page."""
     valore = (valore or "").strip()
     if not valore:
         return None
-    etichetta = "%s (%s)" % (ETICHETTE.get(nome, nome), nome)
+    nome_campo = "%s (%s)" % (etichetta(nome, lingua), nome)
     if nome in LIMITI:
         minimo, massimo, intero = LIMITI[nome]
         try:
             n = float(valore)
         except ValueError:
-            return "%s deve essere un numero." % etichetta
+            return m(lingua, "%s deve essere un numero.", "%s must be a number.") % nome_campo
         if not math.isfinite(n) or not minimo <= n <= massimo or (intero and n != int(n)):
-            return "%s deve essere un numero %stra %g e %g." % (etichetta, "intero " if intero else "", minimo, massimo)
+            if intero:
+                return m(lingua, "%s deve essere un numero intero tra %g e %g.", "%s must be a whole number between %g and %g.") \
+                    % (nome_campo, minimo, massimo)
+            return m(lingua, "%s deve essere un numero tra %g e %g.", "%s must be a number between %g and %g.") % (nome_campo, minimo, massimo)
     if nome in URL:
         p = urlsplit(valore)
         if p.scheme not in ("http", "https") or not p.hostname:
-            return "%s deve essere un indirizzo http:// o https://." % etichetta
+            return m(lingua, "%s deve essere un indirizzo http:// o https://.", "%s must be an http:// or https:// address.") % nome_campo
     return None
 
 
@@ -125,25 +179,70 @@ def mascherato(url):
     return "%s://%s%s%s" % (p.scheme, "•••@" if p.username or p.password else "", host, p.path) + ("?•••" if p.query else "")
 
 
-def segreto():
-    """Random key that signs the admin session cookie, kept in DATA_DIR (a new one per process without it)."""
+def _scrivi_privato(percorso, dati):
+    fd = os.open(percorso, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "wb") as h:
+        h.write(dati)
+
+
+def segreto(nuovo=False):
+    """Random key that signs the admin session cookie, kept in DATA_DIR (a new one per process without it).
+    nuovo=True replaces it: every session, everywhere, is logged out."""
     f = os.path.join(DATA_DIR, "admin-secret")
-    try:
-        with open(f, "rb") as h:
-            k = h.read()
-        if len(k) >= 32:
-            return k
-    except OSError:
-        pass
+    if not nuovo:
+        try:
+            with open(f, "rb") as h:
+                k = h.read()
+            if len(k) >= 32:
+                return k
+        except OSError:
+            pass
     k = os.urandom(32)
     if scrivibile():
         try:
-            fd = os.open(f, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-            with os.fdopen(fd, "wb") as h:
-                h.write(k)
+            _scrivi_privato(f, k)
         except OSError:
             pass
     return k
+
+
+# ---- admin password changed from the page (scrypt hash in DATA_DIR); without it, ADMIN_PASSWORD from .env is used
+FILE_PASSWORD = os.path.join(DATA_DIR, "admin-password")
+
+
+def password_salvata():
+    try:
+        with open(FILE_PASSWORD, encoding="ascii") as f:
+            v = f.read().strip()
+        return v if v.startswith("scrypt$") else None
+    except (OSError, ValueError):
+        return None
+
+
+def _scrypt(pw, sale, n=2 ** 14, r=8, p=1):
+    import hashlib
+    return hashlib.scrypt(pw.encode("utf-8", "replace"), salt=sale, n=n, r=r, p=p, maxmem=64 * 1024 * 1024, dklen=32)
+
+
+def salva_password(pw):
+    sale = os.urandom(16)
+    _scrivi_privato(FILE_PASSWORD, ("scrypt$16384$8$1$%s$%s" % (sale.hex(), _scrypt(pw, sale).hex())).encode("ascii"))
+
+
+def verifica_password_salvata(pw, registrata):
+    import hmac
+    try:
+        _, n, r, p, sale, hashato = registrata.split("$")
+        return hmac.compare_digest(_scrypt(pw, bytes.fromhex(sale), int(n), int(r), int(p)).hex(), hashato)
+    except (ValueError, TypeError):
+        return False
+
+
+def cancella_password():
+    try:
+        os.unlink(FILE_PASSWORD)
+    except FileNotFoundError:
+        pass
 
 
 def scrivibile():
@@ -175,13 +274,15 @@ def salva(nuovi):
             os.unlink(tmp)
 
 
-def valori():
+def valori(lingua="it"):
     """Current settings for the page; secrets are never sent, only whether they are set."""
     out = []
-    for nome, gruppo, etichetta, tipo, opzioni, aiuto in CAMPI:
+    for nome, gruppo, tipo, opzioni, testi_it, testi_en in CAMPI:
         v = os.environ.get(nome, "")
         nascosto = mascherato(v) if nome in URL else None
-        out.append({"nome": nome, "gruppo": gruppo, "etichetta": etichetta, "tipo": tipo, "opzioni": opzioni, "aiuto": aiuto,
+        nome_campo, aiuto = testi_en if lingua == "en" else testi_it
+        out.append({"nome": nome, "gruppo": gruppo, "nome_gruppo": GRUPPI[gruppo][1 if lingua == "en" else 0],
+                    "etichetta": nome_campo, "tipo": tipo, "opzioni": opzioni, "aiuto": aiuto,
                     "predefinito": PREDEFINITI.get(nome, ""), "mascherato": nascosto,
                     "valore": None if nome in SEGRETI or nascosto else v, "impostato": bool(v),
                     "origine": "pagina" if nome in OVERRIDE else ("env" if nome in os.environ else "default")})

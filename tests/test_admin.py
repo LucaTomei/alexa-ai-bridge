@@ -50,7 +50,7 @@ def test_off_without_a_strong_password(anon, monkeypatch):
 def test_api_needs_login_and_csrf(anon, client):
     fresh = APP.app.test_client()
     assert fresh.get("/admin/api/stato").status_code == 401
-    assert fresh.get("/admin/api/sessione").json == {"autenticato": False, "csrf": None}
+    assert fresh.get("/admin/api/sessione").json == {"autenticato": False, "csrf": None, "lingua": "it"}
     assert client.get("/admin/api/stato").status_code == 200
     assert client.post("/admin/api/prova/casa").status_code == 403                    # no CSRF header
     assert client.post("/admin/api/prova/casa", headers={"X-CSRF": "wrong"}).status_code == 403
@@ -327,3 +327,186 @@ def test_log_captures_service_messages(client, alexa, llm):
     alexa.ask("x")
     voci = client.get("/admin/api/registro").json["voci"]
     assert any("domanda risposta" in v["testo"] for v in voci) and any(v["testo"].startswith("admin: login") for v in voci)
+
+
+# ---------- language of the page
+def test_messages_follow_the_page_language(anon, client, dati):
+    r = anon.post("/admin/api/login", json={"password": "nope"}, headers={"X-Lang": "en"})
+    assert r.json["errore"] == "Wrong password."
+    campi = {c["nome"]: c for c in client.get("/admin/api/impostazioni", headers={"X-Lang": "en"}).json["campi"]}
+    assert campi["LLM_API_KEY"]["etichetta"] == "API key" and campi["LLM_API_KEY"]["nome_gruppo"] == "Model"
+    r = client.post("/admin/api/impostazioni", json={"valori": {"ATTESA_MAX": "99"}}, headers={"X-CSRF": client.csrf, "X-Lang": "en"})
+    assert r.json["errore"] == "Maximum wait (s) (ATTESA_MAX) must be a number between 1 and 7.5."
+    campi = {c["nome"]: c for c in client.get("/admin/api/impostazioni").json["campi"]}
+    assert campi["LLM_API_KEY"]["etichetta"] == "Chiave API"
+
+
+# ---------- home tab
+def test_home_tab_lists_entities_with_their_protection(client, ha, monkeypatch):
+    ha.states.append({"entity_id": "switch.irrigazione", "state": "off", "attributes": {"friendly_name": "Irrigazione"}})
+    monkeypatch.setattr(HOME, "VIETATO", HOME._Vietato(r"^switch\.irrigazione(?:\s|$)|garage"))
+    monkeypatch.setenv("HA_VIETATO", r"^switch\.irrigazione(?:\s|$)|garage")
+    d = client.get("/admin/api/casa").json
+    e = {x["id"]: x for x in d["entita"]}
+    assert e["lock.front_door"]["blocco"] == "dominio" and e["switch.docker_zigbee2mqtt"]["blocco"] == "regole"
+    assert e["switch.irrigazione"]["blocco"] == "pagina" and e["light.kitchen"]["blocco"] is None
+    assert e["cover.all_covers"]["gruppo"] is True and d["vietate"] == ["switch.irrigazione"]
+    assert "sensor.power" not in e and "person.alice" not in e      # only what could ever be controlled
+
+
+def test_home_tab_saves_groups_and_forbidden_entities(client, dati, monkeypatch):
+    monkeypatch.setenv("HA_VIETATO", r"garage|^switch\.old(?:\s|$)")
+    r = post(client, "casa", {"gruppi": ["cover.all_covers", "light.kitchen"], "vietate": ["light.living_room"]})
+    assert r.status_code == 200, r.json
+    salvato = json.loads((dati / "settings.json").read_text())
+    assert salvato["HA_GRUPPI"] == "cover.all_covers,light.kitchen"
+    assert salvato["HA_VIETATO"] == r"garage|^light\.living_room(?:\s|$)"           # your own regex stays
+    assert HOME._Vietato(salvato["HA_VIETATO"]).search("light.living_room Luce salone")
+    assert not HOME._Vietato(salvato["HA_VIETATO"]).search("light.living_room_2 Altra")
+    for corpo in ({"gruppi": ["light.x; rm"], "vietate": []}, {"gruppi": "x", "vietate": []}, {}):
+        assert post(client, "casa", corpo).status_code == 400
+
+
+def test_home_tab_without_home_assistant(client, monkeypatch):
+    monkeypatch.setattr(HOME, "TOKEN", "")
+    assert client.get("/admin/api/casa").json["configurata"] is False
+    monkeypatch.undo()
+    monkeypatch.setattr(HOME, "HA", "http://127.0.0.1:1")
+    assert client.get("/admin/api/casa").json["errore"]
+
+
+# ---------- system tab
+def test_system_info_and_interaction_models(client, monkeypatch):
+    monkeypatch.setenv("PUBLIC_HOST", "alexa.casa.example")
+    s = client.get("/admin/api/sistema").json
+    assert s["skill_id"] == "amzn1.ask.skill.test" and s["endpoint"] == "https://alexa.casa.example/alexa"
+    assert s["modelli_skill"] == ["en-US", "it-IT"] and s["lingua"] == "it" and s["infrastruttura"]["PUBLIC_HOST"] == "alexa.casa.example"
+    for locale, invocazione in (("it-IT", "cervellone"), ("en-US", "big brain")):
+        r = client.get("/admin/api/sistema/modello-skill/" + locale)
+        assert r.status_code == 200 and "attachment" in r.headers["Content-Disposition"]
+        assert json.loads(r.data)["interactionModel"]["languageModel"]["invocationName"] == invocazione
+    assert client.get("/admin/api/sistema/modello-skill/../app.py").status_code == 404
+
+
+def test_restart_and_pending_answers(client, alexa, llm):
+    assert post(client, "sistema/riavvia").json == {"riavvio": False}     # not under gunicorn in the tests
+    llm.delay = 1.2
+    alexa.ask("lenta")
+    assert post(client, "sistema/scarta-sospese").json == {"scartate": 1} and not APP._lavori
+
+
+def test_log_out_everywhere(client):
+    altro = APP.app.test_client()
+    altro.post("/admin/api/login", json={"password": "test-admin-password"})
+    assert post(client, "sistema/esci-ovunque").status_code == 200
+    assert client.get("/admin/api/stato").status_code == 401 and altro.get("/admin/api/stato").status_code == 401
+    assert APP.app.test_client().post("/admin/api/login", json={"password": "test-admin-password"}).status_code == 200
+
+
+@pytest.mark.parametrize("ultima, nuova, sconosciuta", [("v1.2.0", True, False), ("v1.0.0", False, False)])
+def test_update_check(client, monkeypatch, ultima, nuova, sconosciuta):
+    monkeypatch.setattr(ADMIN, "VERSIONE", "1.0.0")
+    monkeypatch.setattr(ADMIN, "_scarica_json", lambda url: {"tag_name": ultima, "html_url": "https://github.com/x/releases/" + ultima})
+    r = client.get("/admin/api/sistema/aggiornamenti").json
+    assert r["nuova"] is nuova and r["sconosciuta"] is sconosciuta and r["ultima"] == ultima.lstrip("v")
+
+
+def test_update_check_offline_and_dev_build(client, monkeypatch):
+    def giu(url):
+        raise OSError("no network")
+    monkeypatch.setattr(ADMIN, "_scarica_json", giu)
+    assert "no network" in client.get("/admin/api/sistema/aggiornamenti").json["errore"]
+    monkeypatch.setattr(ADMIN, "_scarica_json", lambda url: {"tag_name": "v1.0.0"})
+    assert client.get("/admin/api/sistema/aggiornamenti").json["sconosciuta"] is True     # "dev"
+
+
+@pytest.fixture
+def password_pulita():
+    yield
+    IMP.cancella_password()
+
+
+def test_change_the_password_from_the_page(client, password_pulita):
+    altro = APP.app.test_client()
+    altro.post("/admin/api/login", json={"password": "test-admin-password"})
+    assert post(client, "password", {"attuale": "sbagliata", "nuova": "una-nuova-password"}).status_code == 401
+    assert post(client, "password", {"attuale": "test-admin-password", "nuova": "corta"}).status_code == 400
+    r = post(client, "password", {"attuale": "test-admin-password", "nuova": "una-nuova-password"})
+    assert r.status_code == 200
+    client.csrf = r.json["csrf"]
+    assert client.get("/admin/api/stato").status_code == 200          # this browser stays in
+    assert altro.get("/admin/api/stato").status_code == 401            # the others are logged out
+    assert IMP.password_salvata().startswith("scrypt$") and "una-nuova-password" not in IMP.password_salvata()
+    assert login_da("10.9.9.1", "test-admin-password").status_code == 401
+    assert login_da("10.9.9.2", "una-nuova-password").status_code == 200
+    r = client.delete("/admin/api/password", json={"attuale": "una-nuova-password"}, headers={"X-CSRF": client.csrf})
+    assert r.status_code == 200 and IMP.password_salvata() is None
+    assert login_da("10.9.9.3", "test-admin-password").status_code == 200
+
+
+# ---------- backup
+def test_export_never_contains_secrets(client, monkeypatch):
+    monkeypatch.setenv("SEARXNG_URL", "https://u:p@search.example")
+    r = client.get("/admin/api/impostazioni/esporta")
+    d = json.loads(r.data)
+    assert "attachment" in r.headers["Content-Disposition"] and d["app"] == "alexa-ai-bridge"
+    assert d["impostazioni"]["LLM_MODEL"] == "model-test" and d["impostazioni"]["HOME_CITY"] == "Testville"
+    testo = r.data.decode()
+    for segreto in ("test-key", "ha-token", "brave-key", "tvly-key", "u:p@", "test-admin-password"):
+        assert segreto not in testo
+
+
+# ---------- rare paths
+def test_revoked_sessions_survive_a_restart(client):
+    sid = None
+    with client.session_transaction() as s:
+        sid = s["sid"]
+    post(client, "logout")
+    assert sid in ADMIN._leggi_revocate()            # what a new worker loads at start
+
+
+def test_native_web_check_and_hand_written_rule(client, llm, ha, monkeypatch):
+    monkeypatch.setattr(APP, "WEB", "native")
+    llm.queue = [final("Sole a Testville.")]
+    assert post(client, "prova/web").json["esito"] == "Sole a Testville."
+    monkeypatch.setattr(HOME, "VIETATO", HOME._Vietato("cucina"))
+    e = {x["id"]: x for x in client.get("/admin/api/casa").json["entita"]}
+    assert e["light.kitchen"]["blocco"] == "regex"
+
+
+def test_password_endpoints_refuse_bad_requests(client, monkeypatch, password_pulita):
+    r = client.delete("/admin/api/password", json={"attuale": "sbagliata"}, headers={"X-CSRF": client.csrf})
+    assert r.status_code == 401
+    monkeypatch.setattr(IMP, "DATA_DIR", "/nonexistent/aab")
+    assert post(client, "password", {"attuale": "test-admin-password", "nuova": "x" * 20}).status_code == 409
+    monkeypatch.undo()
+    for _ in range(5):
+        login_da("127.0.0.1", "nope")
+    assert post(client, "password", {"attuale": "test-admin-password", "nuova": "x" * 20}).status_code == 429
+
+
+def test_skill_models_missing_from_the_image(client, monkeypatch):
+    monkeypatch.setattr(ADMIN, "CARTELLA_SKILL", None)
+    assert client.get("/admin/api/sistema/modello-skill/it-IT").status_code == 404
+    assert client.get("/admin/api/sistema").json["modelli_skill"] == []
+
+
+def test_settings_helpers(tmp_path, monkeypatch):
+    assert IMP.mascherato("https://u:p@ha.example:8123/x?k=1") == "https://•••@ha.example:8123/x?•••"
+    assert IMP.mascherato("https://ha.example") is None and IMP.etichetta("NON_ESISTE") == "NON_ESISTE"
+    assert IMP.verifica_password_salvata("x", "scrypt$rotto") is False
+    monkeypatch.setattr(IMP, "DATA_DIR", str(tmp_path))
+    (tmp_path / "admin-secret").write_bytes(b"corto")
+    k = IMP.segreto()                                   # a short or broken key is replaced
+    assert len(k) == 32 and (tmp_path / "admin-secret").read_bytes() == k and IMP.segreto() == k
+    monkeypatch.setattr(IMP, "OVERRIDE", {"HOME_CITY": "Roma"})
+    monkeypatch.setattr(IMP, "BASE", {"HOME_CITY": "Testville"})
+    assert IMP.ambiente_con({})["HOME_CITY"] == "Testville"
+
+
+def test_failed_write_leaves_no_temporary_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(IMP, "DATA_DIR", str(tmp_path))
+    monkeypatch.setattr(IMP, "FILE", str(tmp_path / "settings.json"))
+    with pytest.raises(TypeError):
+        IMP.salva({"X": object()})
+    assert list(tmp_path.iterdir()) == []
