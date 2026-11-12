@@ -109,10 +109,10 @@ jobs:
         run: |
           docker logs bridge || true
           for c in caddy-on caddy-off caddy-strano ponte-off; do echo "== $c"; docker logs "$c" 2>&1 | tail -5 || true; done
-      - name: docker compose up, as in the setup guide (pulls the release image, or builds it before the first release)
+      - name: docker compose up, as in the setup guide, with the code of this commit
         run: |
           docker rm -f bridge
-          docker compose up -d --wait --wait-timeout 180
+          docker compose up -d --build --wait --wait-timeout 180
           test "$(curl -s http://127.0.0.1:8090/health)" = '{"ok":true}'
           docker compose logs alexa-ai-bridge
           ! docker compose logs alexa-ai-bridge | grep -i traceback
