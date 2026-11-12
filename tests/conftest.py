@@ -141,7 +141,7 @@ _server(HA_PORT, get=_ha_get, post=_ha_post)
 import app as APP  # noqa: E402  (after the environment is ready)
 import home_tools as HOME  # noqa: E402
 import llm as LLM_MOD  # noqa: E402
-import web_search as WEB_MOD  # noqa: E402
+import web_search as WEB_MOD  # noqa: E402,F401  (used by the tests through conftest)
 WEB_DEFAULT = APP.WEB
 
 

@@ -145,3 +145,27 @@ def test_claude_with_client_side_search(alexa, llm, web, monkeypatch):
     alexa.ask("x")
     names = [t["name"] for t in llm.requests[-1]["tools"]]
     assert names[0] == "cerca_sul_web" and "web_search" not in names and "input_schema" in llm.requests[-1]["tools"][0]
+
+
+def test_unrelated_rejection_does_not_switch_tools_off(alexa, openai, monkeypatch):
+    monkeypatch.setattr(openai, "handle", lambda *a: (400, {"error": {"message": "context length exceeded"}}))
+    assert alexa.said(alexa.ask("x")).startswith("Non sono riuscito")
+    assert LLM_MOD.STATO["strumenti"] is True        # a 400 that tools did not cause must not disable home control
+
+
+def test_overloaded_endpoint_is_retried_once(openai, monkeypatch):
+    calls = []
+    def flaky(body, path, headers):
+        calls.append(path)
+        return (503, {"error": "overloaded"}) if len(calls) == 1 else (200, oa_final("Eccomi."))
+    monkeypatch.setattr(openai, "handle", flaky)
+    assert LLM_MOD.chiedi("s", [{"role": "user", "content": "x"}], [], None, timeout=30) == "Eccomi." and len(calls) == 2
+
+
+def test_wrong_key_is_reported_with_the_body(openai, monkeypatch):
+    monkeypatch.setattr(openai, "handle", lambda *a: (401, {"error": "invalid api key"}))
+    try:
+        LLM_MOD.chiedi("s", [{"role": "user", "content": "x"}], [], None, timeout=30)
+        raise AssertionError("no error")
+    except LLM_MOD.ErroreModello as e:
+        assert "401" in str(e) and "invalid api key" in str(e)

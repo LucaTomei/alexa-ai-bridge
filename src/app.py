@@ -3,8 +3,9 @@
 Verifies every request from Amazon (signature, certificate chain, timestamp, skill ID), asks the model
 (Anthropic Messages API or any OpenAI-compatible endpoint, see llm.py) and speaks the answer.
 See docs/ for the full design. User-facing strings are Italian: the skill is it-IT."""
-import os, re, json, time, base64, logging, posixpath, threading, urllib.request
-from datetime import datetime, timezone
+import os, re, json, time, base64, logging, posixpath, threading, urllib.request, warnings
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from urllib.parse import urlsplit
 from xml.sax.saxutils import escape
 from flask import Flask, request, jsonify, abort
@@ -14,39 +15,48 @@ from cryptography.x509 import DNSName
 from cryptography.x509.verification import PolicyBuilder, Store
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.utils import CryptographyDeprecationWarning
 import llm
 import web_search as web
 import home_tools as casa
 
-SKILL_ID = os.environ["SKILL_ID"]
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+log = logging.getLogger("alexa-ai-bridge")
+if not os.environ.get("SKILL_ID", "").strip():
+    raise SystemExit("SKILL_ID is not set: copy .env.example to .env and fill it in (see docs/setup.md)")
+
+SKILL_ID = os.environ["SKILL_ID"].strip()
 SYSTEM = os.environ.get("SYSTEM_PROMPT",
     "Sei un assistente vocale in italiano. Rispondi in modo naturale e breve, al massimo 2-3 frasi, "
     "senza elenchi, senza markdown, senza emoji: la risposta viene letta ad alta voce.")
 MAXH = 6
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-log = logging.getLogger("alexa-ai-bridge")
 
 # ---------- Amazon request verification (mandatory for a self-hosted skill endpoint)
 def _radici():
+    with open(certifi.where(), "rb") as f:
+        pem = f.read()
     out = []
-    for blocco in re.findall(rb"-----BEGIN CERTIFICATE-----.+?-----END CERTIFICATE-----", open(certifi.where(), "rb").read(), re.S):
-        try:
-            out.append(x509.load_pem_x509_certificate(blocco))
-        except Exception:
-            pass
+    with warnings.catch_warnings():   # a few old roots have non-RFC serial numbers: harmless, but noisy
+        warnings.simplefilter("ignore", CryptographyDeprecationWarning)
+        for blocco in re.findall(rb"-----BEGIN CERTIFICATE-----.+?-----END CERTIFICATE-----", pem, re.S):
+            try:
+                out.append(x509.load_pem_x509_certificate(blocco))
+            except Exception:
+                pass
     return Store(out)
 
-import warnings
-from cryptography.utils import CryptographyDeprecationWarning
-warnings.filterwarnings("ignore", category=CryptographyDeprecationWarning)
 ROOTS = _radici()
 _cache = {}
 
 def url_cert_ok(u):
-    p = urlsplit(u)
+    try:
+        p = urlsplit(u)
+        porta = p.port
+    except ValueError:
+        return False
     if p.scheme.lower() != "https" or (p.hostname or "").lower() != "s3.amazonaws.com":
         return False
-    if p.port not in (None, 443):
+    if porta not in (None, 443):
         return False
     return posixpath.normpath(p.path).startswith("/echo.api/")
 
@@ -73,6 +83,8 @@ def richiesta_valida(body, headers, dati):
         return "firma non valida: %s" % e
     try:
         ts = datetime.fromisoformat(dati["request"]["timestamp"].replace("Z", "+00:00"))
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
     except Exception:
         return "timestamp mancante"
     if abs((datetime.now(timezone.utc) - ts).total_seconds()) > 150:
@@ -96,13 +108,14 @@ HOME_TZ = web.HOME_TZ
 GIORNI = ["lunedi'", "martedi'", "mercoledi'", "giovedi'", "venerdi'", "sabato", "domenica"]
 MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"]
 
+try:
+    _TZ = ZoneInfo(HOME_TZ)
+except Exception:
+    log.warning("unknown HOME_TIMEZONE=%r: using UTC+1 (install tzdata or fix the name)", HOME_TZ)
+    _TZ = timezone(timedelta(hours=1))
+
 def adesso():
-    from datetime import timedelta
-    try:
-        from zoneinfo import ZoneInfo
-        n = datetime.now(ZoneInfo(HOME_TZ))
-    except Exception:
-        n = datetime.now(timezone(timedelta(hours=1)))
+    n = datetime.now(_TZ)
     return "%s %d %s %d, ore %02d:%02d" % (GIORNI[n.weekday()], n.day, MESI[n.month - 1], n.year, n.hour, n.minute)
 
 def web_attivo():
@@ -162,6 +175,19 @@ PAROLE_ATTESA = {"allora", "e allora", "allora che mi dici", "hai finito", "sei 
                  "fatto", "vai", "ci sei", "eccomi", "si", "sì", "la risposta", "dimmi la risposta", "dammi la risposta"}
 _lavori, _lock = {}, threading.Lock()
 
+def pendente(uid):
+    """The pending job of this user, if any and not older than CONSERVA."""
+    with _lock:
+        lav = _lavori.get(uid)
+        if lav and time.time() - lav["t"] > CONSERVA:
+            del _lavori[uid]
+            return None
+        return lav
+
+def scarta(uid):
+    with _lock:
+        _lavori.pop(uid, None)
+
 def utente(d):
     return ((d.get("session") or {}).get("user") or {}).get("userId") \
         or d.get("context", {}).get("System", {}).get("user", {}).get("userId") or "anonimo"
@@ -171,7 +197,9 @@ def calcola(lav):
     casa.azzera_azioni()
     try:
         r = pulisci(ask_llm(lav["hist"], timeout=TIMEOUT_LUNGO))
-        if not r:
+        if not r and casa.azioni_fatte():
+            r = "Fatto."      # the actions ran: asking again could repeat them (a toggle would undo itself)
+        elif not r:
             log.info("risposta vuota, riprovo")
             r = pulisci(ask_llm(lav["hist"], timeout=TIMEOUT_LUNGO))
         if r:
@@ -211,7 +239,7 @@ def ancora(attr, prima_volta):
     return risposta("Ci sto ancora pensando. Dimmi allora tra qualche secondo.", "Vuoi la risposta? Dimmi allora.", attr)
 
 def chiedi_risposta(uid, attr, resta):
-    lav = _lavori.get(uid)
+    lav = pendente(uid)
     if not lav:
         return risposta("Non ho risposte in sospeso. Cosa vuoi sapere?", "Cosa vuoi sapere?", attr)
     if lav["evento"].wait(timeout=max(resta, 0)):
@@ -228,14 +256,18 @@ def gestisci(d, t_req=None):
     attr = (d.get("session") or {}).get("attributes") or {}
     uid = utente(d)
     if tipo == "LaunchRequest":
-        lav = _lavori.get(uid)
+        lav = pendente(uid)
         if lav and lav["evento"].is_set() and lav["risposta"]:
             return consegna(uid, lav, attr, "Ho la risposta alla domanda di prima. ")
-        if lav and not lav["evento"].is_set():
+        if lav and lav["evento"].is_set():
+            scarta(uid)         # failed in the background: forget it, or a later "si'" would hear the error
+        elif lav:
             return risposta("Sto ancora pensando alla domanda di prima. Dimmi allora tra poco, oppure fammi un'altra domanda.",
                             "Cosa vuoi fare?", attr)
         return risposta("Dimmi pure.", "Cosa vuoi sapere?", attr)
-    if tipo == "SessionEndedRequest":
+    if tipo in ("SessionEndedRequest", "System.ExceptionEncountered"):   # Alexa ignores any speech here
+        if tipo == "System.ExceptionEncountered":
+            log.warning("Alexa reported an error: %s", json.dumps(rq.get("error"), ensure_ascii=False)[:300])
         return {"version": "1.0", "response": {}}
     if tipo != "IntentRequest":
         return risposta("Ciao!", fine=True)
@@ -244,16 +276,16 @@ def gestisci(d, t_req=None):
         return risposta("Ciao!", fine=True)
     if nome == "AMAZON.HelpIntent":
         return risposta(AIUTO, "Cosa vuoi sapere?", attr)
+    in_sospeso = pendente(uid) is not None
     q_sino = None
-    if nome == "AMAZON.YesIntent" and uid not in _lavori:
+    if nome == "AMAZON.YesIntent" and not in_sospeso:
         q_sino = "si'"      # answer to a question from the model (e.g. confirming an action)
-    elif nome == "AMAZON.NoIntent" and uid not in _lavori:
+    elif nome == "AMAZON.NoIntent" and not in_sospeso:
         q_sino = "no"
     elif nome in ("AttesaIntent", "AMAZON.YesIntent"):
         return chiedi_risposta(uid, attr, resta())
     if nome == "AMAZON.NoIntent" and not q_sino:
-        with _lock:
-            _lavori.pop(uid, None)
+        scarta(uid)
         return risposta("Va bene. Altro?", "Cosa vuoi sapere?", attr)
     if nome not in ("AskIntent", "FraseBreveIntent") and not q_sino:
         return risposta("Non ho capito. " + AIUTO, "Cosa vuoi sapere?", attr)
@@ -261,7 +293,7 @@ def gestisci(d, t_req=None):
     q = q_sino or (slots.get("query") or {}).get("value") or (slots.get("frase") or {}).get("value")
     if not q:
         return risposta("Non ho capito, puoi ripetere?", "Puoi ripetere?", attr)
-    if q.strip().lower().strip("?!. ") in PAROLE_ATTESA and uid in _lavori:
+    if q.strip().lower().strip("?!. ") in PAROLE_ATTESA and in_sospeso:
         return chiedi_risposta(uid, attr, resta())
     lav = avvia(uid, (attr.get("h") or [])[-MAXH:] + [{"role": "user", "content": q}])
     if lav["evento"].wait(timeout=max(resta(), 0)):

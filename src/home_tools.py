@@ -7,7 +7,7 @@ import json, os, re, threading, time, urllib.request, logging
 HA = os.environ.get("HA_URL", "").rstrip("/")
 TOKEN = os.environ.get("HA_TOKEN", "")
 UA = os.environ.get("HA_UA") or os.environ.get("HTTP_USER_AGENT", "alexa-ai-bridge/1.0")   # Cloudflare blocks the default "Python-urllib" user agent
-ATTIVO = bool(HA and TOKEN) and os.environ.get("HA_TOOLS", "1") == "1"
+ATTIVO = bool(HA and TOKEN) and os.environ.get("HA_TOOLS", "1").strip().lower() in ("1", "true", "yes", "on")
 log = logging.getLogger("alexa-ai-bridge")
 
 LEGGIBILI = ("light", "cover", "climate", "switch", "fan", "humidifier", "scene", "sensor", "binary_sensor", "person", "lock", "weather", "media_player")
@@ -20,16 +20,23 @@ COMANDI = {  # domain -> allowed services
     "humidifier": {"turn_on", "turn_off", "set_humidity"},
     "scene": {"turn_on"},
 }
-VIETATO = re.compile(os.environ.get("HA_VIETATO",
-    r"(^lock\.|^alarm_control_panel\.|^script\.|^automation\.|porta|portone|serratura|cancello|antifurto|allarme|docker|power_control|"
-    r"zigbee|mosquitto|frigate|arcane|nodered|node_red|adguard|backup|proxmox|kuma|_restart|riavvia)"), re.I)
+VIETATO_BASE = (r"^lock\.|^alarm_control_panel\.|^script\.|^automation\.|porta|portone|serratura|cancello|antifurto|allarme|"
+                r"docker|power_control|zigbee|mosquitto|frigate|arcane|nodered|node_red|adguard|backup|proxmox|kuma|_restart|riavvia")
+# HA_VIETATO adds to the built-in list, it never replaces it
+VIETATO = re.compile("|".join("(?:%s)" % r for r in (VIETATO_BASE, os.environ.get("HA_VIETATO", "").strip()) if r), re.I)
+
+
+def _lista(nome_env):
+    return [x.strip() for x in os.environ.get(nome_env, "").split(",") if x.strip()]
+
+
 # entities that act on several rooms (e.g. a cover group): always need a spoken confirmation
-GRUPPI = set(filter(None, os.environ.get("HA_GRUPPI", "").split(",")))
+GRUPPI = set(_lista("HA_GRUPPI"))
 MAX_SENZA_CONFERMA = int(os.environ.get("HA_MAX_SENZA_CONFERMA", "3"))
 # summary: temperature sensors (regex on entity_id; empty = every sensor with device_class temperature)
 TEMP_PATTERN = os.environ.get("HA_TEMP_PATTERN", "")
 # summary: extra entities as "entity_id=Label,entity_id=Label" (power meter, front door, rain sensor...)
-EXTRA = [tuple(x.split("=", 1)) for x in os.environ.get("HA_SUMMARY_EXTRA", "").split(",") if "=" in x]
+EXTRA = [tuple(p.strip() for p in x.split("=", 1)) for x in _lista("HA_SUMMARY_EXTRA") if "=" in x]
 ATTRIBUTI = ("current_position", "current_temperature", "temperature", "hvac_action", "brightness", "unit_of_measurement", "current_humidity", "humidity")
 
 _cache = {"t": 0, "s": []}
@@ -112,12 +119,13 @@ def cerca(testo):
     return "\n".join(("[NON COMANDABILE] " if VIETATO.search(s["entity_id"] + " " + nome(s)) else "") + riga(s) for s in hit)
 
 def esegui(dominio, servizio, entita, dati=None, confermato=False):
-    entita = [e for e in (entita or []) if isinstance(e, str)]
+    if isinstance(entita, str):   # some models send one entity as a plain string
+        entita = [x.strip() for x in entita.split(",")]
+    entita = [e.strip() for e in (entita or []) if isinstance(e, str) and e.strip()]
     if dominio not in COMANDI or servizio not in COMANDI[dominio]:
         return "Azione non permessa: %s.%s. Permesse: %s" % (dominio, servizio, ", ".join("%s(%s)" % (d, "/".join(sorted(v))) for d, v in COMANDI.items()))
     if not entita or "all" in entita:
         return "Indica le entita' una per una (niente 'all')."
-    note = []
     S = {s["entity_id"]: s for s in stati()}
     for e in entita:
         if not e.startswith(dominio + "."):
@@ -126,7 +134,7 @@ def esegui(dominio, servizio, entita, dati=None, confermato=False):
             return "L'entita' %s non esiste: usa cerca_in_casa." % e
         if VIETATO.search(e + " " + nome(S[e])):
             return "Per sicurezza non posso comandare %s (%s): serrature, portone, antifurto e servizi tecnici sono esclusi." % (nome(S[e]), e)
-    dati = {k: v for k, v in (dati or {}).items() if k in ("brightness_pct", "position", "temperature", "hvac_mode", "humidity", "color_temp_kelvin", "rgb_color")}
+    dati = {k: v for k, v in (dati if isinstance(dati, dict) else {}).items() if k in ("brightness_pct", "position", "temperature", "hvac_mode", "humidity", "color_temp_kelvin", "rgb_color")}
     multi = len(entita) > MAX_SENZA_CONFERMA or any(e in GRUPPI for e in entita)
     if multi and not (confermato and getattr(_tl, "consenso", False)):
         return ("SERVE CONFERMA: l'azione riguarda piu' stanze (%s). Chiedi all'utente una conferma breve e non eseguire: "

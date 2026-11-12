@@ -84,3 +84,30 @@ def test_tools_off_without_token(monkeypatch, alexa, llm):
     monkeypatch.setattr(HOME, "ATTIVO", False)
     alexa.ask("x")
     assert [t.get("name") for t in llm.requests[-1]["tools"]] == ["web_search"]
+
+
+def test_empty_answer_after_an_action_is_not_retried(alexa, llm, ha):
+    llm.queue = [tool_use("t", "esegui_azione", {"dominio": "light", "servizio": "toggle", "entita": ["light.kitchen"]}),
+                 {"stop_reason": "end_turn", "content": []}]
+    assert alexa.said(alexa.ask("cambia la cucina")) == "Fatto."
+    assert len(ha.calls) == 1 and len(llm.requests) == 2      # a retry would toggle the light back
+
+
+def test_entity_as_string_and_bad_data(alexa, llm, ha):
+    llm.queue = [tool_use("t", "esegui_azione", {"dominio": "light", "servizio": "turn_on", "entita": "light.kitchen", "dati": "50%"}),
+                 final("Accesa.")]
+    assert alexa.said(alexa.ask("accendi la cucina")) == "Accesa."
+    assert ha.calls == [("/api/services/light/turn_on", {"entity_id": ["light.kitchen"]})]
+
+
+def test_custom_forbidden_list_extends_the_default(monkeypatch):
+    import importlib
+    monkeypatch.setenv("HA_VIETATO", "cucina")
+    monkeypatch.setenv("HA_GRUPPI", " cover.all_covers , cover.bedroom ")
+    try:
+        mod = importlib.reload(HOME)
+        assert mod.VIETATO.search("light.kitchen Luce cucina") and mod.VIETATO.search("lock.front_door Porta di casa")
+        assert mod.GRUPPI == {"cover.all_covers", "cover.bedroom"}
+    finally:
+        monkeypatch.undo()
+        importlib.reload(HOME)

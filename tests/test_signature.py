@@ -79,3 +79,8 @@ def test_untrusted_certificate_chain_is_rejected(client, pki, monkeypatch):
 
 def test_health(client):
     assert client.get("/health").json == {"ok": True}
+
+
+def test_malformed_certificate_url_is_rejected_not_crashing(client, pki):
+    assert post(client, pki[2], launch(), url="https://s3.amazonaws.com:notaport/echo.api/c.pem").status_code == 400
+    assert post(client, pki[2], launch(), url="https://s3.amazonaws.com:8443/echo.api/c.pem").status_code == 400

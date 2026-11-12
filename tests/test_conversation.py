@@ -1,6 +1,8 @@
 """Conversation flow: memory, slow answers ("allora?"), yes/no, short phrases, stop."""
 import time
+import conftest
 from conftest import final
+APP = conftest.APP
 
 
 def test_fast_answer_and_follow_up_memory(alexa, llm):
@@ -84,3 +86,25 @@ def test_stop_help_fallback(alexa):
 def test_speech_is_cleaned_and_escaped(alexa, llm):
     llm.queue = [final("**Grassetto** & <tag> # titolo")]
     assert alexa.said(alexa.ask("x")) == "Grassetto &amp; &lt;tag titolo"
+
+
+def test_failed_background_answer_is_forgotten_on_reopen(alexa, llm, monkeypatch):
+    monkeypatch.setattr(llm, "handle", lambda *a: (time.sleep(1.3), (401, {"error": "bad key"}))[1])
+    alexa.ask("domanda che fallisce")
+    time.sleep(1.5)
+    assert alexa.said(alexa.req({"type": "LaunchRequest"})) == "Dimmi pure."
+    monkeypatch.undo()
+    assert alexa.said(alexa.intent("AMAZON.YesIntent")) == "R1 su: si'"   # not "Non sono riuscito a rispondere"
+
+
+def test_expired_pending_answer_is_not_delivered(alexa, llm, monkeypatch):
+    llm.delay = 1.2
+    alexa.ask("domanda vecchia"); time.sleep(1.3)
+    monkeypatch.setattr(APP, "CONSERVA", 0)
+    assert alexa.said(alexa.req({"type": "LaunchRequest"})) == "Dimmi pure."
+    assert alexa.said(alexa.intent("AttesaIntent")).startswith("Non ho risposte in sospeso")
+
+
+def test_alexa_error_report_gets_an_empty_response(alexa):
+    r = alexa.req({"type": "System.ExceptionEncountered", "error": {"type": "INVALID_RESPONSE", "message": "x"}})
+    assert r == {"version": "1.0", "response": {}}

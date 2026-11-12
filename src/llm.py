@@ -10,9 +10,12 @@ import json, os, re, time, logging, urllib.request, urllib.error
 
 log = logging.getLogger("alexa-ai-bridge")
 
-BASE = os.environ["LLM_BASE_URL"].rstrip("/")
-KEY = os.environ.get("LLM_API_KEY", "")
-MODEL = os.environ["LLM_MODEL"]
+for _v in ("LLM_BASE_URL", "LLM_MODEL"):
+    if not os.environ.get(_v, "").strip():
+        raise SystemExit("%s is not set: pick a model block in .env (see .env.example and docs/providers.md)" % _v)
+BASE = os.environ["LLM_BASE_URL"].strip().rstrip("/")
+KEY = os.environ.get("LLM_API_KEY", "").strip()
+MODEL = os.environ["LLM_MODEL"].strip()
 API = (os.environ.get("LLM_API") or os.environ.get("LLM_FORMAT")
        or ("anthropic" if "anthropic.com" in BASE else "openai")).strip().lower()
 if API not in ("anthropic", "openai"):
@@ -23,8 +26,9 @@ try:
     EXTRA = json.loads(os.environ.get("LLM_EXTRA_JSON") or "{}")   # provider-specific fields, merged into every request
     assert isinstance(EXTRA, dict)
 except (ValueError, AssertionError):
-    raise SystemExit("LLM_EXTRA_JSON must be a JSON object, e.g. {\"reasoning_effort\": \"low\"}")
+    raise SystemExit("LLM_EXTRA_JSON must be a JSON object, e.g. {\"reasoning_effort\": \"low\"}") from None
 MAX_ROUNDS = 8
+RIPROVA = {429, 500, 502, 503, 504, 529}   # rate limit / overloaded / gateway errors: worth one more try
 
 # what the endpoint accepted so far (learned at runtime, shared by all requests)
 STATO = {"web_nativo": True, "strumenti": True, "max_completion": False}
@@ -34,6 +38,13 @@ class Rifiutata(Exception):
     """HTTP 400/422: the endpoint rejected something in the request body."""
 
 
+class ErroreModello(Exception):
+    """Any other HTTP error from the endpoint, with the start of its body (wrong key, unknown model...)."""
+    def __init__(self, testo, codice):
+        super().__init__(testo)
+        self.codice = codice
+
+
 def _post(url, hdr, body, timeout):
     h = dict(hdr, **{"Content-Type": "application/json", "User-Agent": UA})
     req = urllib.request.Request(url, json.dumps(body).encode(), h)
@@ -41,9 +52,10 @@ def _post(url, hdr, body, timeout):
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return json.load(r)
     except urllib.error.HTTPError as e:
+        testo = e.read()[:400].decode("utf-8", "replace")
         if e.code in (400, 422):
-            raise Rifiutata(e.read()[:400].decode("utf-8", "replace")) from None
-        raise
+            raise Rifiutata(testo) from None
+        raise ErroreModello("HTTP %d: %s" % (e.code, testo), e.code) from None
 
 
 def _resta(scadenza):
@@ -51,26 +63,41 @@ def _resta(scadenza):
 
 
 def _invia(url, hdr, body, scadenza, nativo=None):
-    """POST, adapting the body once per kind of rejection: max_tokens name, native web search, tools."""
+    """POST, adapting the body once per kind of rejection: max_tokens name, thinking, native web search, tools.
+    What was turned off is remembered for the next requests only if the request then succeeds: a 400 caused by
+    something else (a malformed message, a context that is too long) must not switch home control off for good."""
+    tolto, riprovato = [], False
     while True:
         try:
-            return _post(url, hdr, body, _resta(scadenza))
+            d = _post(url, hdr, body, _resta(scadenza))
+        except ErroreModello as e:
+            if riprovato or e.codice not in RIPROVA or scadenza - time.time() < 8:
+                raise
+            riprovato = True
+            log.warning("model endpoint: %s, retrying once", str(e)[:200])
+            time.sleep(2)
+            continue
         except Rifiutata as e:
             msg, tools = str(e), body.get("tools") or []
             if "max_tokens" in body and "max_completion_tokens" in msg:
-                body["max_completion_tokens"] = body.pop("max_tokens"); STATO["max_completion"] = True
+                body["max_completion_tokens"] = body.pop("max_tokens"); tolto.append(("max_completion", msg))
+            elif "thinking" in body and "thinking" in msg:
+                body.pop("thinking")
             elif nativo is not None and any(t is nativo for t in tools):
-                log.warning("native web search rejected (%s): continuing without it", msg[:200])
-                STATO["web_nativo"] = False
-                body["tools"] = [t for t in tools if t is not nativo]
+                body["tools"] = [t for t in tools if t is not nativo]; tolto.append(("web_nativo", msg))
             elif tools:
-                log.warning("tools rejected by the endpoint or model (%s): continuing without them", msg[:200])
-                STATO["strumenti"] = False
-                body["tools"] = []
+                body["tools"] = []; tolto.append(("strumenti", msg))
             else:
                 raise
             if not body.get("tools"):
                 body.pop("tools", None); body.pop("tool_choice", None)
+            continue
+        for k, msg in tolto:
+            STATO[k] = k == "max_completion"
+            log.warning("%s (%s)", {"max_completion": "the endpoint wants max_completion_tokens: switching to it",
+                                    "web_nativo": "native web search rejected: continuing without it",
+                                    "strumenti": "tools rejected by the endpoint or model: continuing without them"}[k], msg[:200])
+        return d
 
 
 def senza_pensieri(t):
