@@ -19,7 +19,8 @@ Implemented in `src/app.py` with `cryptography` (Amazon's own `ask-sdk-webservic
 | Freshness | `request.timestamp` within 150 seconds |
 | Skill | `applicationId` equal to `SKILL_ID` |
 
-Anything else gets **400** with no detail; the reason is only logged. Only `/alexa` (POST) and `/health` exist.
+Anything else gets **400** with no detail; the reason is only logged. Only `/alexa` (POST), `/health` and, when
+`ADMIN_PASSWORD` is set, the [admin page](admin.md#security) under `/admin` exist.
 
 ## Home control
 

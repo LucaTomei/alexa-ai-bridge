@@ -14,6 +14,7 @@
   <a href="docs/architecture.md">Architecture</a> ·
   <a href="docs/setup.md">Setup guide</a> ·
   <a href="docs/home-assistant.md">Home Assistant</a> ·
+  <a href="docs/admin.md">Admin page</a> ·
   <a href="docs/security.md">Security</a> ·
   <a href="docs/lessons-learned.md">Lessons learned</a> ·
   <a href="CHANGELOG.md">Changelog</a>
@@ -69,6 +70,11 @@ These are real conversations in the Alexa developer console simulator, which sen
   - every request from Amazon is verified: signature, certificate chain, timestamp and skill ID;
   - locks, alarms, scripts and technical services can never be controlled;
   - multi-room actions need a spoken *yes*, and the **service** checks it, not the model.
+- 🖥️ **Admin page**: status and one-click checks, conversation history, a test chat with simulated home actions,
+  and every setting editable from the browser. Off until you set a password; reachable from the server, your home
+  network or anywhere, as you choose ([details](docs/admin.md)).
+
+  <img src="docs/images/admin-overview.png" width="100%" alt="Admin page">
 - 🛟 **Degrades gracefully**: if a model has no tool support, rejects a parameter or returns its reasoning in
   `<think>` tags, the service adapts on its own.
 - 🧪 **Tested**:
@@ -187,7 +193,9 @@ All fifteen, with their fixes, are in [docs/lessons-learned.md](docs/lessons-lea
 │   ├── app.py              # Alexa endpoint: request verification, conversation, slow answers
 │   ├── llm.py              # Anthropic + OpenAI-compatible adapters, tool loop, graceful degradation
 │   ├── web_search.py       # native search (Claude) or SearXNG / Brave / Tavily (any model)
-│   └── home_tools.py       # Home Assistant tools with allow-lists and server-side confirmation
+│   ├── home_tools.py       # Home Assistant tools with allow-lists and server-side confirmation
+│   ├── admin.py · admin/   # admin page: status, history, test chat, settings, log
+│   └── impostazioni.py     # settings saved from the admin page
 ├── skill/
 │   └── interaction-model.it-IT.json   # paste into the Alexa console JSON editor
 ├── deploy/                 # Caddyfile example, SearXNG settings

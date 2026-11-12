@@ -28,6 +28,9 @@ First release with a prebuilt Docker image for amd64 and arm64: `ghcr.io/lucatom
 
 ### Added
 
+- **Admin page** (`/admin`, off until `ADMIN_PASSWORD` is set): status and checks, conversation history, a test chat
+  with simulated home actions, settings editable from the browser with validation and automatic restart, log.
+  Reachable from the server, the home network (`BRIDGE_BIND`) or anywhere (`ADMIN_PUBLIC`).
 - Bundled Caddy for HTTPS: `docker compose --profile caddy up -d`.
 - One retry on rate limits and temporary errors (429, 5xx, 529); provider errors are logged with their message.
 - Clear startup messages for missing or invalid settings.

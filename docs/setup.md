@@ -15,6 +15,7 @@ From zero to *"Alexa, apri cervellone"* in about 45 minutes. At the end you will
 [6. Web search for non-Claude models](#6-web-search-for-non-claude-models-optional) ·
 [7. Home Assistant](#7-home-assistant-optional) ·
 [8. End-to-end check](#8-end-to-end-check) ·
+[9. Admin page](#9-admin-page-optional) ·
 [Updating](#updating) ·
 [Troubleshooting](#troubleshooting) ·
 [Configuration reference](#configuration-reference)
@@ -221,6 +222,13 @@ PUBLIC_URL=https://alexa.example.com python3 scripts/e2e.py
 The only real action is on the light you choose, and the script puts it back as it was. Without Home Assistant the
 home checks are skipped. It ends with `RESULT: ALL OK` (exit code 0) when every check passed.
 
+## 9. Admin page (optional)
+
+Set `ADMIN_PASSWORD` in `.env` (12 characters or more) and `docker compose up -d`: the page is at
+`http://127.0.0.1:8090/admin` on the server. From there you can check every part, read the conversations, try the
+assistant by text and change the settings without touching `.env`. To open it from your home network or from
+anywhere, see [admin.md](admin.md#turn-it-on).
+
 ## Updating
 
 Every release publishes a new image. `BRIDGE_VERSION` in `.env` chooses which one you run: `1` (the default in
@@ -298,3 +306,7 @@ All variables go in `.env`. Only `SKILL_ID`, `LLM_BASE_URL` and `LLM_MODEL` are 
 | `HA_TEMP_PATTERN` | – | Regex of temperature sensors for the summary |
 | `HA_VIETATO` | – | Regex (on entity ID and name) of extra entities that can never be controlled, **added** to the built-in list |
 | `SYSTEM_PROMPT`, `ISTRUZIONI_TURNO` | Italian voice rules | Override the instructions |
+| `ADMIN_PASSWORD` | – | Turns the [admin page](admin.md) on (12 characters or more) |
+| `ADMIN_HISTORY` | `100` | Questions kept in the admin page history; `0` turns it off |
+| `BRIDGE_BIND` | `127.0.0.1` | Address of the published port; `0.0.0.0` opens it to your home network |
+| `ADMIN_PUBLIC` | `off` | `on` publishes `/admin` through the bundled Caddy |
