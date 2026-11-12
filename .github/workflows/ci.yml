@@ -86,3 +86,23 @@ jobs:
           docker compose logs alexa-ai-bridge
           ! docker compose logs alexa-ai-bridge | grep -i traceback
           docker compose down
+
+  release-dry-run:
+    name: Multi-arch image build (as on release, without publishing)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: type=sha
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
