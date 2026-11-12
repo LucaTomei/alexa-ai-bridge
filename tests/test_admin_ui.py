@@ -6,6 +6,8 @@ import pytest
 CANDIDATI = [os.environ.get("CHROME", ""), "google-chrome", "google-chrome-stable", "chromium", "chromium-browser",
              "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"]
 CHROME = next((c for c in CANDIDATI if c and (shutil.which(c) or os.path.exists(c))), None)
+if not CHROME and os.environ.get("REQUIRE_BROWSER"):      # CI sets it: a missing browser must fail, not skip
+    raise RuntimeError("REQUIRE_BROWSER is set but no Chrome or Chromium was found")
 pytestmark = pytest.mark.skipif(not CHROME, reason="no Chrome or Chromium installed")
 
 
