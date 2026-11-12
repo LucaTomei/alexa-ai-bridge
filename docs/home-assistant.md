@@ -15,8 +15,11 @@ Optional. Without `HA_TOKEN` the tools are simply not offered to the model.
 1. **Allowed services only**: `light` on/off/toggle, `cover` open/close/stop/position, `climate` on/off/temperature/mode,
    `switch`, `fan`, `humidifier`, `scene.turn_on`.
 2. **Forbidden entities** (regex on entity ID *and* friendly name): locks, alarms, scripts, automations,
-   anything named like a door, gate or alarm, and technical services (containers, Zigbee, MQTT broker, NVR,
-   backups…). Extend it with `HA_VIETATO`.
+   anything named like a door, gate or alarm in Italian or English (*porta, portone, cancello, allarme, door, gate,
+   garage door, siren…*), and technical services (containers, Zigbee, MQTT broker, NVR, backups…).
+   `HA_VIETATO` **adds** your own regex to this list, e.g. `HA_VIETATO=garage|irrigazione`; it can never remove
+   a built-in rule. The check is on names: a switch that opens the gate but is called *"relay 3"* is not caught,
+   so give such entities a descriptive name or list them in `HA_VIETATO`.
 3. **Explicit targets**: every entity must exist and belong to the requested domain; `all` is refused.
 4. **Allowed data keys only**: `brightness_pct`, `position`, `temperature`, `hvac_mode`, `humidity`,
    `color_temp_kelvin`, `rgb_color`. Anything else (e.g. an `entity_id` smuggled into `dati`) is dropped.
@@ -24,6 +27,10 @@ Optional. Without `HA_TOKEN` the tools are simply not offered to the model.
    `HA_GRUPPI`, runs only if `confermato=true` **and the user's last sentence is a yes** (*sì, certo, va bene,
    procedi…*). The model cannot confirm on its own.
 6. **Every executed action is logged** (`azione HA: …`) and recorded in the conversation memory.
+
+> ⚠️ **Scenes** run whatever they contain. `scene.turn_on` needs no confirmation, so a scene that unlocks a door or
+> changes several rooms bypasses rules 2 and 5. Keep locks and alarms out of scenes, or forbid those scenes with
+> `HA_VIETATO`.
 
 ## Dedicated Home Assistant user
 

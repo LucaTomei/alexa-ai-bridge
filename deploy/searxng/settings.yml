@@ -1,7 +1,7 @@
 # Minimal SearXNG settings for Alexa AI Bridge (everything else uses SearXNG's defaults).
 use_default_settings: true
 server:
-  # replace with: openssl rand -hex 32
+  # overridden by SEARXNG_SECRET in .env (openssl rand -hex 32): no need to edit this file
   secret_key: "change-this-secret"
   # only the bridge can reach this instance (no published port)
   limiter: false

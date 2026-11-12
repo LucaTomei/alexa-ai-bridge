@@ -80,10 +80,12 @@ In `.env`, set at least:
 Every other variable has a working default and is described in the
 [configuration reference](#configuration-reference).
 
-Start it and check it:
+Start it and check it. Compose downloads the prebuilt image for your CPU (amd64 or arm64, e.g. a Raspberry Pi)
+from the [releases](https://github.com/LucaTomei/alexa-ai-bridge/releases); add `--build` to build it from source
+instead.
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 docker compose ps                         # alexa-ai-bridge: Up ... (healthy) after a minute
 curl -s http://127.0.0.1:8090/health      # {"ok":true}
 ```
@@ -184,14 +186,11 @@ How to talk to it:
 Claude searches the web natively, nothing to do. Every other model needs a search backend: the free option is the
 bundled SearXNG.
 
-```bash
-sed -i.bak "s/change-this-secret/$(openssl rand -hex 32)/" deploy/searxng/settings.yml && rm deploy/searxng/settings.yml.bak
-```
-
-Set `SEARXNG_URL=http://searxng:8080` in `.env` (the line already exists), then:
+In `.env` set `SEARXNG_URL=http://searxng:8080` and `SEARXNG_SECRET` to a random value (`openssl rand -hex 32`
+prints one); both lines already exist. Then:
 
 ```bash
-docker compose --profile searxng up -d --build      # add --profile caddy if you use option A
+docker compose --profile searxng up -d      # add --profile caddy if you use option A
 docker exec alexa-ai-bridge python -c "import web_search as w; print(w.cerca('meteo Roma domani', 'searxng'))"
 ```
 
@@ -205,7 +204,8 @@ Full guide in [home-assistant.md](home-assistant.md). In short:
 2. Set `HA_URL` and `HA_TOKEN` in `.env`. List groups that act on several rooms in `HA_GRUPPI`.
 3. `docker compose up -d` and ask *"com'è la casa?"*.
 
-Locks, doors, alarms, scripts and automations can never be controlled, whatever the model asks.
+Locks, alarms, scripts and automations can never be controlled, whatever the model asks; neither can entities
+whose ID or name says door, gate or alarm (Italian or English words). Add your own with `HA_VIETATO`.
 
 ## 8. End-to-end check
 
@@ -223,13 +223,29 @@ home checks are skipped. It ends with `RESULT: ALL OK` (exit code 0) when every 
 
 ## Updating
 
+Every release publishes a new image. `BRIDGE_VERSION` in `.env` chooses which one you run: `1` (the default in
+`.env.example`) follows every `1.x` release, which never needs changes to your configuration; an exact version such as
+`1.0.0` stays put until you change it; `latest` follows every release.
+
 ```bash
 cd alexa-ai-bridge
-git pull
-docker compose up -d --build        # with the same profiles you use
+git pull                                  # docs, compose file and .env.example
+docker compose pull && docker compose up -d
 ```
 
-`.env` is never touched by an update. After an update, compare it with `.env.example` for new options.
+`.env` is never touched by an update. After a new major version, compare it with `.env.example`.
+
+**Automatic updates** (optional): a nightly cron job on the host keeps the service on the newest image of your
+`BRIDGE_VERSION`. Run `crontab -e` and add:
+
+```
+30 4 * * * cd /path/to/alexa-ai-bridge && docker compose pull -q && docker compose up -d && docker image prune -f
+```
+
+`up -d` only recreates the container when the image changed, so most nights nothing happens. Use your own path,
+and the same profiles you start the service with (or set `COMPOSE_PROFILES` in `.env`).
+
+Running a build from source (`--build`) instead? Update with `git pull && docker compose up -d --build`.
 
 ## Troubleshooting
 
@@ -260,6 +276,7 @@ All variables go in `.env`. Only `SKILL_ID`, `LLM_BASE_URL` and `LLM_MODEL` are 
 |---|---|---|
 | `SKILL_ID` | – | Only requests for this skill are accepted |
 | `PUBLIC_HOST` | `alexa.example.com` | DNS name used by the bundled Caddy (`--profile caddy`) |
+| `BRIDGE_VERSION` | `latest` | Image version to run: `latest`, a major (`1`) or an exact version (`1.0.0`) |
 | `COMPOSE_PROFILES` | – | Optional containers started by `docker compose up`, e.g. `caddy,searxng` |
 | `LLM_API` | `anthropic` if the URL is api.anthropic.com, else `openai` | Wire format: `anthropic` or `openai` (OpenAI-compatible) |
 | `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | – | Endpoint, key (empty for local models) and model ([examples](providers.md)) |
@@ -269,6 +286,7 @@ All variables go in `.env`. Only `SKILL_ID`, `LLM_BASE_URL` and `LLM_MODEL` are 
 | `LLM_TIMEOUT_LUNGO` | `120` | Max seconds for a background answer |
 | `WEB_SEARCH` | `auto` | `auto`, `native` (Claude only), `searxng`, `brave`, `tavily`, `off` |
 | `SEARXNG_URL`, `BRAVE_API_KEY`, `TAVILY_API_KEY` | – | Client-side search backends |
+| `SEARXNG_SECRET` | – | Secret of the bundled SearXNG container (`openssl rand -hex 32`) |
 | `BRAVE_URL`, `TAVILY_URL` | the official APIs | Alternative endpoints for Brave / Tavily |
 | `WEB_RESULTS`, `WEB_LANGUAGE`, `WEB_MAX` | `5`, `it`, `3` | Results per search, search language, native searches per question |
 | `HOME_CITY`, `HOME_REGION`, `HOME_COUNTRY`, `HOME_TIMEZONE` | –, –, –, `Europe/Rome` | Local searches and "today" |
@@ -278,5 +296,5 @@ All variables go in `.env`. Only `SKILL_ID`, `LLM_BASE_URL` and `LLM_MODEL` are 
 | `HA_MAX_SENZA_CONFERMA` | `3` | More entities than this → confirmation |
 | `HA_SUMMARY_EXTRA` | – | `entity_id=Label,…` extra lines in the home summary |
 | `HA_TEMP_PATTERN` | – | Regex of temperature sensors for the summary |
-| `HA_VIETATO` | – | Regex of extra entities that can never be controlled, **added** to the built-in list |
+| `HA_VIETATO` | – | Regex (on entity ID and name) of extra entities that can never be controlled, **added** to the built-in list |
 | `SYSTEM_PROMPT`, `ISTRUZIONI_TURNO` | Italian voice rules | Override the instructions |

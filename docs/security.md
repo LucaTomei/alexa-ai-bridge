@@ -27,6 +27,11 @@ Defence in depth: forbidden entities are blocked in code, not in the prompt; dat
 actions need a *yes* that the service reads from the user's own words; every action is logged. Use a dedicated
 non-admin Home Assistant user so the token cannot change the configuration.
 
+Forbidden entities are recognised by domain (locks, alarms, scripts, automations) and by words in the entity ID or
+name. An entity with a meaningless name (*"relay 3"*) that opens a gate is not recognised: name it properly or add
+it to `HA_VIETATO`. Scenes run whatever they contain, so keep locks and alarms out of them
+([details](home-assistant.md#rules-enforced-by-the-service-not-by-the-prompt)).
+
 ## Web content and model choice
 
 - Search results are untrusted text and could carry instructions written by someone else (prompt injection).

@@ -2,7 +2,7 @@
 
 <p align="center">
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-a78bfa">
-  <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-38bdf8">
+  <img alt="Python 3.11-3.15" src="https://img.shields.io/badge/python-3.11--3.15-38bdf8">
   <img alt="Docker" src="https://img.shields.io/badge/run%20with-Docker-38bdf8">
   <a href="https://github.com/LucaTomei/alexa-ai-bridge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucaTomei/alexa-ai-bridge/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Alexa skill: it-IT" src="https://img.shields.io/badge/Alexa%20skill-it--IT-f0abfc">
@@ -15,7 +15,8 @@
   <a href="docs/setup.md">Setup guide</a> ·
   <a href="docs/home-assistant.md">Home Assistant</a> ·
   <a href="docs/security.md">Security</a> ·
-  <a href="docs/lessons-learned.md">Lessons learned</a>
+  <a href="docs/lessons-learned.md">Lessons learned</a> ·
+  <a href="CHANGELOG.md">Changelog</a>
 </p>
 
 ---
@@ -130,11 +131,14 @@ Full details: [docs/architecture.md](docs/architecture.md).
    ```bash
    git clone https://github.com/LucaTomei/alexa-ai-bridge.git && cd alexa-ai-bridge
    cp .env.example .env && chmod 600 .env     # SKILL_ID, PUBLIC_HOST, one model block, optional WEB_* and HA_*
-   docker compose --profile caddy up -d --build   # bridge + HTTPS (add --profile searxng for free web search)
+   docker compose --profile caddy up -d           # bridge + HTTPS (add --profile searxng for free web search)
    curl -s https://alexa.example.com/health       # {"ok":true}
    ```
 
-   Already have a reverse proxy? Skip `--profile caddy` and point it to `127.0.0.1:8090`.
+   Already have a reverse proxy? Skip `--profile caddy` and point it to `127.0.0.1:8090`. The image is prebuilt
+   for amd64 and arm64 (Raspberry Pi included) and published with every
+   [release](https://github.com/LucaTomei/alexa-ai-bridge/releases); updates are one
+   `docker compose pull && docker compose up -d` away, or automatic ([how](docs/setup.md#updating)).
 3. **Set the skill endpoint** to `https://<your-host>/alexa` and choose *"certificate from a trusted certificate
    authority"*.
 4. **Test** in the console simulator, then on your Echo: *"Alexa, apri cervellone"*.
@@ -192,7 +196,7 @@ All fifteen, with their fixes, are in [docs/lessons-learned.md](docs/lessons-lea
 │   └── check_repo.py       # consistency checks run by CI
 ├── tests/                  # pytest suite with fake models, fake Home Assistant, fake search
 ├── docs/                   # providers, architecture, setup, Home Assistant, security, lessons
-├── .github/workflows/      # CI: lint, tests on Python 3.11-3.14, repository checks, Docker smoke test
+├── .github/workflows/      # CI (lint, tests, coverage, Docker smoke test) and releases (image on ghcr.io)
 └── Dockerfile · compose.yaml · .env.example
 ```
 

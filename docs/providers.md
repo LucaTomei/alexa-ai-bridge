@@ -56,7 +56,7 @@ well within Alexa's 8 seconds.
 ### Check your choice
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 docker exec alexa-ai-bridge python -c "import app; print(app.ask_llm([{'role':'user','content':'ciao, chi sei?'}]))"
 docker logs alexa-ai-bridge 2>&1 | grep -E "rejected|without text" || echo "no warnings"
 ```
@@ -84,9 +84,8 @@ model never sees full URLs, and the voice rules tell it never to read them aloud
 `compose.yaml` includes an optional SearXNG service, which is not published on any port:
 
 ```bash
-sed -i.bak "s/change-this-secret/$(openssl rand -hex 32)/" deploy/searxng/settings.yml && rm deploy/searxng/settings.yml.bak
-# in .env:  SEARXNG_URL=http://searxng:8080
-docker compose --profile searxng up -d --build
+# in .env:  SEARXNG_URL=http://searxng:8080  and  SEARXNG_SECRET=<output of: openssl rand -hex 32>
+docker compose --profile searxng up -d
 docker exec alexa-ai-bridge python -c "import web_search as w; print(w.cerca('meteo Roma domani', 'searxng'))"
 ```
 

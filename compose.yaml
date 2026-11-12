@@ -3,8 +3,9 @@
 # Keep ONE gunicorn worker: pending "slow" answers live in memory.
 services:
   alexa-ai-bridge:
+    # prebuilt image (amd64 + arm64) from the releases; "docker compose up -d --build" builds it from source instead
+    image: ghcr.io/lucatomei/alexa-ai-bridge:${BRIDGE_VERSION:-latest}
     build: .
-    image: alexa-ai-bridge:local
     container_name: alexa-ai-bridge
     restart: unless-stopped
     env_file: .env
@@ -43,6 +44,7 @@ services:
     restart: unless-stopped
     environment:
       - SEARXNG_BASE_URL=http://searxng:8080/
+      - SEARXNG_SECRET=${SEARXNG_SECRET:-change-this-secret}   # set it in .env: openssl rand -hex 32
     volumes:
       - ./deploy/searxng:/etc/searxng
     mem_limit: 512m
