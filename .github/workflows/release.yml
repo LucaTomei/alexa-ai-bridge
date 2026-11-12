@@ -70,10 +70,13 @@ jobs:
       - uses: actions/checkout@v7
       - name: Create the release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # a personal token in the RELEASE_TOKEN secret makes the release appear under its owner's name
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
           VERSION="${GITHUB_REF_NAME#v}"
+          # the section of CHANGELOG.md for this version, if there is one
+          awk -v v="## $VERSION" '$0 == v {on=1; next} on && /^## / {exit} on' CHANGELOG.md > changelog.md
           cat > notes.md <<NOTES
           ## Docker image
 
@@ -85,4 +88,5 @@ jobs:
           To update an existing installation: \`docker compose pull && docker compose up -d\`.
           See [docs/setup.md](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs/setup.md#updating).
           NOTES
+          if [ -s changelog.md ]; then cat changelog.md notes.md > all.md && mv all.md notes.md; fi
           gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" --notes-file notes.md --generate-notes
