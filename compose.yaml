@@ -1,0 +1,27 @@
+# Alexa AI Bridge. Put an HTTPS reverse proxy in front (see deploy/Caddyfile.example).
+# Keep ONE gunicorn worker: pending "slow" answers live in memory.
+services:
+  alexa-ai-bridge:
+    build: .
+    image: alexa-ai-bridge:local
+    container_name: alexa-ai-bridge
+    restart: unless-stopped
+    env_file: .env
+    mem_limit: 256m
+    ports:
+      - "127.0.0.1:8090:8090"   # only reachable by the local reverse proxy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # reach Ollama / LM Studio / SearXNG running on the host
+
+  # Optional, free web search for models other than Claude:  docker compose --profile searxng up -d
+  # then SEARXNG_URL=http://searxng:8080 in .env (see docs/providers.md#web-search)
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    profiles: ["searxng"]
+    restart: unless-stopped
+    environment:
+      - SEARXNG_BASE_URL=http://searxng:8080/
+    volumes:
+      - ./deploy/searxng:/etc/searxng
+    mem_limit: 512m

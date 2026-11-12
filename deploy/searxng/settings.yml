@@ -1,0 +1,13 @@
+# Minimal SearXNG settings for Alexa AI Bridge (everything else uses SearXNG's defaults).
+use_default_settings: true
+server:
+  # replace with: openssl rand -hex 32
+  secret_key: "change-this-secret"
+  # only the bridge can reach this instance (no published port)
+  limiter: false
+  image_proxy: false
+search:
+  # the bridge reads results as JSON
+  formats:
+    - html
+    - json

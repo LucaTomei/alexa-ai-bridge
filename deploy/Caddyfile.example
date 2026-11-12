@@ -1,0 +1,9 @@
+# Alexa needs a public HTTPS endpoint with a certificate from a trusted CA.
+# Caddy obtains it automatically from Let's Encrypt.
+alexa.example.com {
+	reverse_proxy 127.0.0.1:8090
+	log {
+		output stdout
+		format json
+	}
+}

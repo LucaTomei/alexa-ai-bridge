@@ -1,0 +1,603 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "cervellone",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": [
+            "ciao",
+            "ciao ciao",
+            "grazie ciao",
+            "grazie",
+            "ho finito",
+            "a posto così",
+            "basta così",
+            "abbiamo finito",
+            "buonanotte"
+          ]
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.YesIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NoIntent",
+          "samples": []
+        },
+        {
+          "name": "AskIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "domanda {query}",
+            "dimmi {query}",
+            "mi dici {query}",
+            "sai dirmi {query}",
+            "chiedi {query}",
+            "spiegami {query}",
+            "raccontami {query}",
+            "parlami di {query}",
+            "cerca {query}",
+            "trova {query}",
+            "voglio sapere {query}",
+            "e {query}",
+            "e se {query}",
+            "e invece {query}",
+            "ma {query}",
+            "ma se {query}",
+            "anche {query}",
+            "allora dimmi {query}",
+            "che {query}",
+            "che cosa {query}",
+            "cosa {query}",
+            "come {query}",
+            "come mai {query}",
+            "com'è {query}",
+            "perché {query}",
+            "quanto {query}",
+            "quanta {query}",
+            "quanti {query}",
+            "quante {query}",
+            "quando {query}",
+            "dove {query}",
+            "chi {query}",
+            "quale {query}",
+            "quali {query}",
+            "qual è {query}",
+            "a che ora {query}",
+            "a quanto {query}",
+            "in che {query}",
+            "di che {query}",
+            "da dove {query}",
+            "per quanto {query}",
+            "fino a quando {query}",
+            "c'è {query}",
+            "ci sono {query}",
+            "ci sarà {query}",
+            "è {query}",
+            "sono {query}",
+            "era {query}",
+            "sarà {query}",
+            "esiste {query}",
+            "il {query}",
+            "lo {query}",
+            "la {query}",
+            "i {query}",
+            "gli {query}",
+            "le {query}",
+            "un {query}",
+            "una {query}",
+            "oggi {query}",
+            "domani {query}",
+            "stasera {query}",
+            "ieri {query}",
+            "posso {query}",
+            "si può {query}",
+            "devo {query}",
+            "dovrei {query}",
+            "conviene {query}",
+            "mi serve {query}",
+            "ho bisogno di {query}",
+            "vorrei {query}",
+            "fammi {query}",
+            "dammi {query}",
+            "consigliami {query}",
+            "suggeriscimi {query}",
+            "aiutami a {query}",
+            "traduci {query}",
+            "calcola {query}",
+            "secondo te {query}",
+            "sai {query}",
+            "conosci {query}",
+            "ricordami come {query}",
+            "accendi {query}",
+            "spegni {query}",
+            "apri {query}",
+            "chiudi {query}",
+            "alza {query}",
+            "abbassa {query}",
+            "metti {query}",
+            "imposta {query}",
+            "porta {query}",
+            "attiva {query}",
+            "disattiva {query}",
+            "regola {query}",
+            "aumenta {query}",
+            "diminuisci {query}",
+            "fai {query}",
+            "lancia {query}",
+            "avvia {query}",
+            "ferma {query}",
+            "cambia {query}",
+            "controlla {query}",
+            "guarda {query}",
+            "verifica {query}",
+            "leggi {query}",
+            "alzami {query}",
+            "abbassami {query}",
+            "accendimi {query}",
+            "spegnimi {query}",
+            "mettimi {query}",
+            "accendere {query}",
+            "spegnere {query}",
+            "aprire {query}",
+            "chiudere {query}",
+            "puoi {query}",
+            "potresti {query}",
+            "riesci a {query}",
+            "per favore {query}",
+            "ho {query}",
+            "hai {query}",
+            "abbiamo {query}",
+            "siamo {query}",
+            "sei {query}",
+            "non {query}",
+            "nessuno {query}",
+            "qualcuno {query}",
+            "tutto {query}",
+            "voglio {query}",
+            "fammi sapere {query}",
+            "mostrami {query}",
+            "ricordami {query}",
+            "informami su {query}",
+            "aggiornami su {query}",
+            "dimmi se {query}",
+            "sai se {query}",
+            "controlla se {query}",
+            "vedi se {query}",
+            "come sta {query}",
+            "come va {query}",
+            "quale è {query}",
+            "ce {query}",
+            "quanto manca {query}",
+            "manca {query}",
+            "accendo {query}",
+            "spengo {query}",
+            "apro {query}",
+            "chiudo {query}",
+            "devi {query}",
+            "bisogna {query}",
+            "serve {query}",
+            "servono {query}",
+            "mettiamo {query}",
+            "facciamo {query}",
+            "proviamo {query}",
+            "prova a {query}"
+          ]
+        },
+        {
+          "name": "AttesaIntent",
+          "slots": [],
+          "samples": [
+            "allora",
+            "allora che mi dici",
+            "hai finito",
+            "sei pronto",
+            "quindi",
+            "pronto",
+            "fatto",
+            "vai",
+            "eccomi",
+            "la risposta",
+            "dammi la risposta"
+          ]
+        },
+        {
+          "name": "FraseBreveIntent",
+          "slots": [
+            {
+              "name": "frase",
+              "type": "FRASE_BREVE"
+            }
+          ],
+          "samples": [
+            "{frase}"
+          ]
+        }
+      ],
+      "types": [
+        {
+          "name": "FRASE_BREVE",
+          "values": [
+            {
+              "name": {
+                "value": "spegnila"
+              }
+            },
+            {
+              "name": {
+                "value": "spegnile"
+              }
+            },
+            {
+              "name": {
+                "value": "spegnilo"
+              }
+            },
+            {
+              "name": {
+                "value": "spegnili"
+              }
+            },
+            {
+              "name": {
+                "value": "accendila"
+              }
+            },
+            {
+              "name": {
+                "value": "accendile"
+              }
+            },
+            {
+              "name": {
+                "value": "accendilo"
+              }
+            },
+            {
+              "name": {
+                "value": "accendili"
+              }
+            },
+            {
+              "name": {
+                "value": "aprila"
+              }
+            },
+            {
+              "name": {
+                "value": "aprile"
+              }
+            },
+            {
+              "name": {
+                "value": "aprilo"
+              }
+            },
+            {
+              "name": {
+                "value": "aprili"
+              }
+            },
+            {
+              "name": {
+                "value": "chiudila"
+              }
+            },
+            {
+              "name": {
+                "value": "chiudile"
+              }
+            },
+            {
+              "name": {
+                "value": "chiudilo"
+              }
+            },
+            {
+              "name": {
+                "value": "chiudili"
+              }
+            },
+            {
+              "name": {
+                "value": "alzala"
+              }
+            },
+            {
+              "name": {
+                "value": "alzale"
+              }
+            },
+            {
+              "name": {
+                "value": "alzalo"
+              }
+            },
+            {
+              "name": {
+                "value": "alzali"
+              }
+            },
+            {
+              "name": {
+                "value": "abbassala"
+              }
+            },
+            {
+              "name": {
+                "value": "abbassale"
+              }
+            },
+            {
+              "name": {
+                "value": "abbassalo"
+              }
+            },
+            {
+              "name": {
+                "value": "abbassali"
+              }
+            },
+            {
+              "name": {
+                "value": "fermala"
+              }
+            },
+            {
+              "name": {
+                "value": "fermale"
+              }
+            },
+            {
+              "name": {
+                "value": "fermalo"
+              }
+            },
+            {
+              "name": {
+                "value": "fermali"
+              }
+            },
+            {
+              "name": {
+                "value": "di più"
+              }
+            },
+            {
+              "name": {
+                "value": "di meno"
+              }
+            },
+            {
+              "name": {
+                "value": "un po' di più"
+              }
+            },
+            {
+              "name": {
+                "value": "un po' di meno"
+              }
+            },
+            {
+              "name": {
+                "value": "ancora"
+              }
+            },
+            {
+              "name": {
+                "value": "ancora un po'"
+              }
+            },
+            {
+              "name": {
+                "value": "a metà"
+              }
+            },
+            {
+              "name": {
+                "value": "tutte"
+              }
+            },
+            {
+              "name": {
+                "value": "tutti"
+              }
+            },
+            {
+              "name": {
+                "value": "anche quella"
+              }
+            },
+            {
+              "name": {
+                "value": "anche quelle"
+              }
+            },
+            {
+              "name": {
+                "value": "anche quello"
+              }
+            },
+            {
+              "name": {
+                "value": "anche quelli"
+              }
+            },
+            {
+              "name": {
+                "value": "più forte"
+              }
+            },
+            {
+              "name": {
+                "value": "più piano"
+              }
+            },
+            {
+              "name": {
+                "value": "più luce"
+              }
+            },
+            {
+              "name": {
+                "value": "meno luce"
+              }
+            },
+            {
+              "name": {
+                "value": "più caldo"
+              }
+            },
+            {
+              "name": {
+                "value": "più freddo"
+              }
+            },
+            {
+              "name": {
+                "value": "al massimo"
+              }
+            },
+            {
+              "name": {
+                "value": "al minimo"
+              }
+            },
+            {
+              "name": {
+                "value": "quella"
+              }
+            },
+            {
+              "name": {
+                "value": "quelle"
+              }
+            },
+            {
+              "name": {
+                "value": "buongiorno"
+              }
+            },
+            {
+              "name": {
+                "value": "buonasera"
+              }
+            },
+            {
+              "name": {
+                "value": "va bene"
+              }
+            },
+            {
+              "name": {
+                "value": "ok"
+              }
+            },
+            {
+              "name": {
+                "value": "perfetto"
+              }
+            },
+            {
+              "name": {
+                "value": "capito"
+              }
+            },
+            {
+              "name": {
+                "value": "fantastico"
+              }
+            },
+            {
+              "name": {
+                "value": "bravo"
+              }
+            },
+            {
+              "name": {
+                "value": "ottimo"
+              }
+            },
+            {
+              "name": {
+                "value": "e poi"
+              }
+            },
+            {
+              "name": {
+                "value": "e adesso"
+              }
+            },
+            {
+              "name": {
+                "value": "e ora"
+              }
+            },
+            {
+              "name": {
+                "value": "dimmi di più"
+              }
+            },
+            {
+              "name": {
+                "value": "spiegati meglio"
+              }
+            },
+            {
+              "name": {
+                "value": "ripeti"
+              }
+            },
+            {
+              "name": {
+                "value": "puoi ripetere"
+              }
+            },
+            {
+              "name": {
+                "value": "non ho capito"
+              }
+            },
+            {
+              "name": {
+                "value": "in breve"
+              }
+            },
+            {
+              "name": {
+                "value": "più breve"
+              }
+            },
+            {
+              "name": {
+                "value": "più dettagli"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
