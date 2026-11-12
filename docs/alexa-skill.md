@@ -11,6 +11,25 @@ Paste it into **Build → Interaction Model → JSON Editor**, then **Save** and
 both files for download (**Sistema**). For English locales other than US (UK, Canada, Australia, India), add the
 locale in the console and paste the same English model.
 
+## One skill, both languages
+
+With `LANGUAGE=auto` (the default) the service answers in the language of each request: Alexa tells it which locale
+the Echo speaks. To make one skill speak Italian and English:
+
+1. In the console, **Build → Languages** (*Language settings*) → add **English (US)** (and any other English locale).
+2. Switch the language selector at the top of the console to English (US) → **Interaction Model → JSON Editor** →
+   paste [`skill/interaction-model.en-US.json`](../skill/interaction-model.en-US.json) → **Save** → **Build skill**.
+3. The endpoint is shared by every language: nothing else to set.
+
+An Italian Echo opens it with *"Alexa, apri cervellone"*, an English one with *"Alexa, open big brain"*. Test the
+English side in the simulator by choosing **English (US)** next to the text box.
+
+## Keeping the interaction model up to date
+
+The models in [`skill/`](../skill/) are versioned with the service. Every release in the
+[changelog](../CHANGELOG.md) says whether they changed. Only then download the new file (admin page → **Sistema**, or
+from the repository), paste it in the JSON Editor of each language, **Save** and **Build skill**.
+
 ## Intents
 
 | Intent | Samples | What the service does |

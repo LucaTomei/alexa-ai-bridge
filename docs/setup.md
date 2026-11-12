@@ -74,7 +74,7 @@ nano .env        # or any editor
 In `.env`, set at least:
 
 - `SKILL_ID`: the ID from step 1;
-- `LANGUAGE`: `it` or `en`, the language of the model you pasted;
+- `LANGUAGE`: `auto` (the default) answers in the language of each request, so Italian and English both work;
 - **one model block**: `LLM_API`, `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`. Claude is active by default; to use
   another provider, comment out the Claude lines and uncomment another block ([all presets](providers.md));
 - `PUBLIC_HOST`: your DNS name, if you will use the bundled Caddy in step 3;
@@ -314,7 +314,7 @@ All variables go in `.env`. Only `SKILL_ID`, `LLM_BASE_URL` and `LLM_MODEL` are 
 | Variable | Default | Meaning |
 |---|---|---|
 | `SKILL_ID` | – | Only requests for this skill are accepted |
-| `LANGUAGE` | `it` | Language of the assistant: `it` or `en`; use the interaction model of the same language |
+| `LANGUAGE` | `auto` | Language of the assistant: `auto` (the language the Echo speaks), `it` or `en` |
 | `PUBLIC_HOST` | `alexa.example.com` | DNS name used by the bundled Caddy (`--profile caddy`) |
 | `BRIDGE_VERSION` | `latest` | Image version to run: `latest`, a major (`1`) or an exact version (`1.0.0`) |
 | `COMPOSE_PROFILES` | – | Optional containers started by `docker compose up`, e.g. `caddy,searxng` |

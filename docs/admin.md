@@ -86,9 +86,10 @@ docker compose exec alexa-ai-bridge rm /data/admin-password
 
 ## Conversation history
 
-Kept **in memory only**: it is lost at every restart and never written to disk. `ADMIN_HISTORY` sets how many
-questions are kept (default `100`); `ADMIN_HISTORY=0` turns the history off. Amazon user IDs are replaced by a
-short anonymous code.
+Kept in the data volume (`/data/history.json`), so it survives restarts, settings saves and updates, and it collects
+the questions from Alexa, the test chat and `scripts/e2e.py` (marked *Test e2e*). `ADMIN_HISTORY` sets how many
+questions are kept (default `100`); `ADMIN_HISTORY=0` turns the history off and nothing is written. Amazon user IDs
+are replaced by a short anonymous code. *Svuota* deletes it. Without a writable data folder it is kept in memory only.
 
 ## How saved settings work
 

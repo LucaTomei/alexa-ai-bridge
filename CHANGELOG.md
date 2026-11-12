@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.1.0
+
+**Interaction model: unchanged** (nothing to do in the Alexa console; to add English, see below).
+
+- **One skill, two languages**: `LANGUAGE=auto`, now the default, answers in the language each Echo speaks. Add
+  English (US) to the skill and paste `skill/interaction-model.en-US.json` there
+  ([guide](docs/alexa-skill.md#one-skill-both-languages)). `LANGUAGE=it` or `en` still forces one.
+- **Admin page redesigned**: side navigation with icons, calmer look, a new logo. The test chat answers in the
+  language of the page.
+- **Model picker**: the settings list the models your provider offers (from its `/models` endpoint), with *Other…*
+  to type any name.
+- Every setting shows its default value next to it; menus show readable choices.
+- The conversation history is kept in the data volume: it survives restarts and updates, and includes the test chat
+  and `scripts/e2e.py`.
+- The old `LLM_FORMAT` setting is shown as the API format; an empty choice shows the default in use.
+- `BRIDGE_PORT` chooses the host port when 8090 is already taken.
+- Docs: Cloudflare Tunnel setup, and the wildcard certificate option to pick in the Alexa console behind Cloudflare.
+
 ## 1.0.0
 
 First release with a prebuilt Docker image for amd64 and arm64: `ghcr.io/lucatomei/alexa-ai-bridge`.

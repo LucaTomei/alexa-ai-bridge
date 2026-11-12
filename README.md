@@ -33,8 +33,8 @@ can read and control your home through Home Assistant within strict limits that 
 > 🗣️ *"Che tempo fa domani?"* — 🔊 *"Domani sole al mattino, nuvole dal pomeriggio e massima di 21 gradi."*<br>
 > 🗣️ *"Accendi la luce dello stanzino."* — 🔊 *"Fatto."* — 🗣️ *"Spegnila."* — 🔊 *"Spenta."*
 
-The assistant speaks **Italian or English** (`LANGUAGE=it` or `en`): both interaction models are included, and the
-admin page has an IT / EN switch too.
+The assistant speaks **Italian and English**: it answers in the language each Echo speaks, so one skill can serve
+both (both interaction models are included), and the admin page has an IT / EN switch too.
 
 ## Demo
 
