@@ -8,6 +8,7 @@ With ``WEB_SEARCH=auto`` (default) Claude uses ``native`` and any other model us
 configured. The client-side backends are exposed to the model as an ordinary tool, ``cerca_sul_web``."""
 import json, os, re, logging, urllib.request
 from urllib.parse import urlencode, urlsplit
+import lingua as L
 
 log = logging.getLogger("alexa-ai-bridge")
 
@@ -18,7 +19,7 @@ BRAVE_URL = os.environ.get("BRAVE_URL", "https://api.search.brave.com/res/v1/web
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY", "")
 TAVILY_URL = os.environ.get("TAVILY_URL", "https://api.tavily.com/search")
 RISULTATI = int(os.environ.get("WEB_RESULTS", "5"))
-LINGUA = os.environ.get("WEB_LANGUAGE", "it")
+LINGUA = os.environ.get("WEB_LANGUAGE") or L.LINGUA
 UA = os.environ.get("HTTP_USER_AGENT", "alexa-ai-bridge/1.0")
 
 HOME_TZ = os.environ.get("HOME_TIMEZONE", "Europe/Rome")
@@ -29,14 +30,13 @@ _LOC = {k: v for k, v in (("city", HOME_CITY), ("region", os.environ.get("HOME_R
 NATIVO = {"type": "web_search_20250305", "name": "web_search", "max_uses": int(os.environ.get("WEB_MAX", "3")),
           **({"user_location": dict({"type": "approximate"}, **_LOC)} if _LOC else {})}
 
-STRUMENTO = {
-    "name": "cerca_sul_web",
-    "description": "Cerca informazioni aggiornate sul web: meteo, notizie, risultati sportivi, orari, prezzi, eventi, "
-                   "qualsiasi fatto che puo' essere cambiato di recente. Restituisce titolo ed estratto dei primi risultati.",
-    "parameters": {"type": "object", "properties": {
-        "query": {"type": "string", "description": "cosa cercare, con luogo e data quando servono (es. 'meteo Roma domani')"}},
-        "required": ["query"]},
-}
+NOME_STRUMENTO = "cerca_sul_web"
+
+
+def strumento():
+    return {"name": NOME_STRUMENTO, "description": L.t("web_desc"),
+            "parameters": {"type": "object", "properties": {"query": {"type": "string", "description": L.t("web_query")}},
+                           "required": ["query"]}}
 
 _CONFIGURATO = {"searxng": SEARXNG_URL, "brave": BRAVE_API_KEY, "tavily": TAVILY_API_KEY}
 
@@ -80,11 +80,11 @@ def _pulito(t):
 
 
 def _formatta(risultati, risposte=()):
-    righe = ["Risposta diretta: " + _pulito(a) for a in risposte if _pulito(a)]
+    righe = [L.t("web_diretta") + _pulito(a) for a in risposte if _pulito(a)]
     for i, (titolo, estratto, url) in enumerate(risultati[:RISULTATI], 1):
         fonte = (urlsplit(url).hostname or "").removeprefix("www.")
         righe.append("%d. %s - %s (%s)" % (i, _pulito(titolo), _pulito(estratto)[:500], fonte))
-    return "\n".join(righe) or "Nessun risultato."
+    return "\n".join(righe) or L.t("web_niente")
 
 
 def _searxng(q):
@@ -110,11 +110,11 @@ def cerca(query, quale):
     """Run a client-side search and return a short text for the model."""
     query = (query or "").strip()
     if not query:
-        return "Specifica cosa cercare."
+        return L.t("web_vuota")
     try:
         out = {"searxng": _searxng, "brave": _brave, "tavily": _tavily}[quale](query)
-        log.info("web search (%s): %d results", quale, out.count("\n") + 1 if out != "Nessun risultato." else 0)
+        log.info("web search (%s): %d results", quale, out.count("\n") + 1 if out != L.t("web_niente") else 0)
         return out
     except Exception as e:
         log.warning("web search (%s): %s", quale, e)
-        return "Ricerca web non disponibile in questo momento (%s)." % str(e)[:120]
+        return L.t("web_errore") % str(e)[:120]

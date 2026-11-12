@@ -12,7 +12,7 @@ DATA = os.path.join(os.path.dirname(__file__), "data")
 
 # ---------- configuration errors are explained at startup
 def _start(**env):
-    base = {k: v for k, v in os.environ.items() if not k.startswith(("LLM_", "SKILL_", "HOME_", "HA_", "ADMIN_"))}
+    base = {k: v for k, v in os.environ.items() if not k.startswith(("LLM_", "SKILL_", "HOME_", "HA_", "ADMIN_", "LANGUAGE"))}
     base.update(SKILL_ID="amzn1.ask.skill.x", LLM_BASE_URL="http://127.0.0.1:9/v1", LLM_MODEL="m")
     base.update({k: v for k, v in env.items() if v is not None})
     for k, v in env.items():
@@ -34,6 +34,7 @@ def _start(**env):
     ({"HA_URL": "ftp://ha"}, "HA_URL) deve essere un indirizzo http"),
     ({"ATTESA_MAX": "inf"}, "ATTESA_MAX) deve essere un numero tra 1 e 7.5"),
     ({"ADMIN_HISTORY": "molti"}, "ADMIN_HISTORY must be a number"),
+    ({"LANGUAGE": "fr"}, "LANGUAGE must be 'it' (Italian) or 'en' (English)"),
 ])
 def test_configuration_errors_are_clear(env, message):
     r = _start(**env)
@@ -43,6 +44,7 @@ def test_configuration_errors_are_clear(env, message):
 def test_valid_configuration_starts_and_warns_about_a_bad_timezone():
     assert _start().returncode == 0
     assert _start(ADMIN_HISTORY="", ATTESA_MAX="7").returncode == 0      # empty = default
+    assert _start(LANGUAGE="en").returncode == 0 and _start(LANGUAGE="EN").returncode == 0
     r = _start(HOME_TIMEZONE="Europe/Atlantide")
     assert r.returncode == 0 and "unknown HOME_TIMEZONE" in r.stderr
 

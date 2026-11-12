@@ -42,6 +42,11 @@ for model in (ROOT / "skill").glob("interaction-model.*.json"):
     dups = sorted({s for s in samples if samples.count(s) > 1})
     if dups:
         errors.append("%s: duplicate samples %s" % (model.name, dups))
+    per_intent = {i["name"]: {x.lower() for x in i.get("samples", [])} for i in lm["intents"]}
+    brevi = {v["name"]["value"].lower() for t in lm.get("types", []) for v in t["values"]}
+    for nome in ("AttesaIntent", "AMAZON.StopIntent"):
+        if per_intent.get(nome, set()) & brevi:
+            errors.append("%s: %s and FRASE_BREVE share %s" % (model.name, nome, sorted(per_intent[nome] & brevi)))
     if not re.fullmatch(r"[a-zà-ù ]+", lm["invocationName"]):
         errors.append("%s: invocation name must be lowercase words" % model.name)
 

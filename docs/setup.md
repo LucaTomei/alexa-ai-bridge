@@ -283,6 +283,7 @@ All variables go in `.env`. Only `SKILL_ID`, `LLM_BASE_URL` and `LLM_MODEL` are 
 | Variable | Default | Meaning |
 |---|---|---|
 | `SKILL_ID` | – | Only requests for this skill are accepted |
+| `LANGUAGE` | `it` | Language of the assistant: `it` or `en`; use the interaction model of the same language |
 | `PUBLIC_HOST` | `alexa.example.com` | DNS name used by the bundled Caddy (`--profile caddy`) |
 | `BRIDGE_VERSION` | `latest` | Image version to run: `latest`, a major (`1`) or an exact version (`1.0.0`) |
 | `COMPOSE_PROFILES` | – | Optional containers started by `docker compose up`, e.g. `caddy,searxng` |

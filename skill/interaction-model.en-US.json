@@ -1,0 +1,649 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "big brain",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": [
+            "bye",
+            "goodbye",
+            "bye bye",
+            "thanks bye",
+            "that's all",
+            "I'm done",
+            "we're done",
+            "nothing else",
+            "that's it for now",
+            "good night"
+          ]
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.YesIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NoIntent",
+          "samples": []
+        },
+        {
+          "name": "AskIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "what {query}",
+            "what's {query}",
+            "what is {query}",
+            "what are {query}",
+            "what about {query}",
+            "what time {query}",
+            "what day {query}",
+            "who {query}",
+            "who's {query}",
+            "who is {query}",
+            "who was {query}",
+            "how {query}",
+            "how's {query}",
+            "how is {query}",
+            "how do {query}",
+            "how does {query}",
+            "how can {query}",
+            "how much {query}",
+            "how many {query}",
+            "how long {query}",
+            "how far {query}",
+            "how old {query}",
+            "why {query}",
+            "why is {query}",
+            "why do {query}",
+            "when {query}",
+            "when is {query}",
+            "when does {query}",
+            "where {query}",
+            "where's {query}",
+            "where is {query}",
+            "which {query}",
+            "whose {query}",
+            "is {query}",
+            "is it {query}",
+            "is there {query}",
+            "are {query}",
+            "are there {query}",
+            "can {query}",
+            "can you {query}",
+            "can I {query}",
+            "could {query}",
+            "could you {query}",
+            "would {query}",
+            "would you {query}",
+            "should {query}",
+            "should I {query}",
+            "will {query}",
+            "will it {query}",
+            "do {query}",
+            "do you {query}",
+            "does {query}",
+            "did {query}",
+            "tell me {query}",
+            "tell me about {query}",
+            "let me know {query}",
+            "explain {query}",
+            "explain to me {query}",
+            "describe {query}",
+            "define {query}",
+            "spell {query}",
+            "translate {query}",
+            "summarize {query}",
+            "compare {query}",
+            "calculate {query}",
+            "convert {query}",
+            "count {query}",
+            "list {query}",
+            "name {query}",
+            "search {query}",
+            "search for {query}",
+            "look up {query}",
+            "find {query}",
+            "find me {query}",
+            "check {query}",
+            "give me {query}",
+            "show me {query}",
+            "read me {query}",
+            "recommend {query}",
+            "suggest {query}",
+            "help me {query}",
+            "help me with {query}",
+            "I want {query}",
+            "I want to know {query}",
+            "I need {query}",
+            "I'd like {query}",
+            "I wonder {query}",
+            "I think {query}",
+            "I have {query}",
+            "please {query}",
+            "let's {query}",
+            "turn on {query}",
+            "turn off {query}",
+            "switch on {query}",
+            "switch off {query}",
+            "open {query}",
+            "close {query}",
+            "raise {query}",
+            "lower {query}",
+            "set {query}",
+            "dim {query}",
+            "brighten {query}",
+            "start {query}",
+            "put {query}",
+            "make {query}",
+            "activate {query}",
+            "deactivate {query}",
+            "increase {query}",
+            "decrease {query}",
+            "lock {query}",
+            "unlock {query}",
+            "warm {query}",
+            "cool {query}",
+            "and {query}",
+            "and what about {query}",
+            "and if {query}",
+            "and then {query}",
+            "but {query}",
+            "also {query}",
+            "then {query}",
+            "so tell me {query}",
+            "now {query}",
+            "again {query}",
+            "the {query}",
+            "a {query}",
+            "an {query}",
+            "my {query}",
+            "our {query}",
+            "today {query}",
+            "tomorrow {query}",
+            "tonight {query}",
+            "yesterday {query}",
+            "this morning {query}",
+            "this evening {query}",
+            "this week {query}",
+            "next {query}",
+            "last {query}",
+            "in {query}",
+            "on {query}",
+            "at {query}",
+            "for {query}",
+            "from {query}",
+            "about {query}",
+            "with {query}",
+            "without {query}",
+            "before {query}",
+            "after {query}",
+            "during {query}",
+            "any {query}",
+            "some {query}",
+            "every {query}",
+            "there {query}",
+            "here {query}",
+            "it {query}",
+            "you {query}",
+            "we {query}",
+            "they {query}",
+            "he {query}",
+            "she {query}",
+            "if {query}",
+            "maybe {query}",
+            "actually {query}",
+            "by the way {query}",
+            "quick question {query}",
+            "one more thing {query}",
+            "remind me {query}",
+            "guess {query}",
+            "imagine {query}",
+            "write {query}",
+            "create {query}",
+            "plan {query}",
+            "choose {query}",
+            "pick {query}",
+            "cook {query}",
+            "play {query}"
+          ]
+        },
+        {
+          "name": "AttesaIntent",
+          "slots": [],
+          "samples": [
+            "so",
+            "well",
+            "so what",
+            "and so",
+            "are you done",
+            "are you ready",
+            "is it ready",
+            "ready",
+            "done",
+            "go on",
+            "I'm here",
+            "the answer",
+            "give me the answer",
+            "tell me the answer",
+            "what's the answer"
+          ]
+        },
+        {
+          "name": "FraseBreveIntent",
+          "slots": [
+            {
+              "name": "frase",
+              "type": "FRASE_BREVE"
+            }
+          ],
+          "samples": [
+            "{frase}"
+          ]
+        }
+      ],
+      "types": [
+        {
+          "name": "FRASE_BREVE",
+          "values": [
+            {
+              "name": {
+                "value": "turn it off"
+              }
+            },
+            {
+              "name": {
+                "value": "turn them off"
+              }
+            },
+            {
+              "name": {
+                "value": "turn it on"
+              }
+            },
+            {
+              "name": {
+                "value": "turn them on"
+              }
+            },
+            {
+              "name": {
+                "value": "switch it off"
+              }
+            },
+            {
+              "name": {
+                "value": "switch it on"
+              }
+            },
+            {
+              "name": {
+                "value": "open it"
+              }
+            },
+            {
+              "name": {
+                "value": "open them"
+              }
+            },
+            {
+              "name": {
+                "value": "close it"
+              }
+            },
+            {
+              "name": {
+                "value": "close them"
+              }
+            },
+            {
+              "name": {
+                "value": "raise it"
+              }
+            },
+            {
+              "name": {
+                "value": "raise them"
+              }
+            },
+            {
+              "name": {
+                "value": "lower it"
+              }
+            },
+            {
+              "name": {
+                "value": "lower them"
+              }
+            },
+            {
+              "name": {
+                "value": "stop it"
+              }
+            },
+            {
+              "name": {
+                "value": "stop them"
+              }
+            },
+            {
+              "name": {
+                "value": "more"
+              }
+            },
+            {
+              "name": {
+                "value": "less"
+              }
+            },
+            {
+              "name": {
+                "value": "a bit more"
+              }
+            },
+            {
+              "name": {
+                "value": "a bit less"
+              }
+            },
+            {
+              "name": {
+                "value": "a little more"
+              }
+            },
+            {
+              "name": {
+                "value": "a little less"
+              }
+            },
+            {
+              "name": {
+                "value": "again"
+              }
+            },
+            {
+              "name": {
+                "value": "halfway"
+              }
+            },
+            {
+              "name": {
+                "value": "all of them"
+              }
+            },
+            {
+              "name": {
+                "value": "that one too"
+              }
+            },
+            {
+              "name": {
+                "value": "those too"
+              }
+            },
+            {
+              "name": {
+                "value": "louder"
+              }
+            },
+            {
+              "name": {
+                "value": "quieter"
+              }
+            },
+            {
+              "name": {
+                "value": "brighter"
+              }
+            },
+            {
+              "name": {
+                "value": "dimmer"
+              }
+            },
+            {
+              "name": {
+                "value": "more light"
+              }
+            },
+            {
+              "name": {
+                "value": "less light"
+              }
+            },
+            {
+              "name": {
+                "value": "warmer"
+              }
+            },
+            {
+              "name": {
+                "value": "cooler"
+              }
+            },
+            {
+              "name": {
+                "value": "to the max"
+              }
+            },
+            {
+              "name": {
+                "value": "to the minimum"
+              }
+            },
+            {
+              "name": {
+                "value": "that one"
+              }
+            },
+            {
+              "name": {
+                "value": "those"
+              }
+            },
+            {
+              "name": {
+                "value": "good morning"
+              }
+            },
+            {
+              "name": {
+                "value": "good evening"
+              }
+            },
+            {
+              "name": {
+                "value": "okay"
+              }
+            },
+            {
+              "name": {
+                "value": "ok"
+              }
+            },
+            {
+              "name": {
+                "value": "great"
+              }
+            },
+            {
+              "name": {
+                "value": "got it"
+              }
+            },
+            {
+              "name": {
+                "value": "perfect"
+              }
+            },
+            {
+              "name": {
+                "value": "awesome"
+              }
+            },
+            {
+              "name": {
+                "value": "nice"
+              }
+            },
+            {
+              "name": {
+                "value": "well done"
+              }
+            },
+            {
+              "name": {
+                "value": "and then"
+              }
+            },
+            {
+              "name": {
+                "value": "and now"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me more"
+              }
+            },
+            {
+              "name": {
+                "value": "say more"
+              }
+            },
+            {
+              "name": {
+                "value": "explain better"
+              }
+            },
+            {
+              "name": {
+                "value": "repeat"
+              }
+            },
+            {
+              "name": {
+                "value": "say that again"
+              }
+            },
+            {
+              "name": {
+                "value": "repeat please"
+              }
+            },
+            {
+              "name": {
+                "value": "I didn't get it"
+              }
+            },
+            {
+              "name": {
+                "value": "in short"
+              }
+            },
+            {
+              "name": {
+                "value": "shorter"
+              }
+            },
+            {
+              "name": {
+                "value": "more details"
+              }
+            },
+            {
+              "name": {
+                "value": "why"
+              }
+            },
+            {
+              "name": {
+                "value": "how come"
+              }
+            },
+            {
+              "name": {
+                "value": "really"
+              }
+            },
+            {
+              "name": {
+                "value": "seriously"
+              }
+            },
+            {
+              "name": {
+                "value": "keep going"
+              }
+            },
+            {
+              "name": {
+                "value": "the other one"
+              }
+            },
+            {
+              "name": {
+                "value": "the kitchen one"
+              }
+            },
+            {
+              "name": {
+                "value": "the bedroom one"
+              }
+            },
+            {
+              "name": {
+                "value": "only that one"
+              }
+            },
+            {
+              "name": {
+                "value": "both"
+              }
+            },
+            {
+              "name": {
+                "value": "neither"
+              }
+            },
+            {
+              "name": {
+                "value": "the first one"
+              }
+            },
+            {
+              "name": {
+                "value": "the second one"
+              }
+            },
+            {
+              "name": {
+                "value": "the last one"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

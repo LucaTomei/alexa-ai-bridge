@@ -10,7 +10,7 @@ def test_plain_answer_and_request_shape(alexa, openai):
     assert alexa.said(r) == "R1 su: come si cucina il risotto"
     body, path, hdr = openai.requests[-1], openai.paths[-1], openai.headers[-1]
     assert path == "/v1/chat/completions" and hdr["Authorization"] == "Bearer test-key"
-    assert body["messages"][0] == {"role": "system", "content": APP.SYSTEM} and body["max_tokens"] == LLM_MOD.MAX_TOKENS
+    assert body["messages"][0] == {"role": "system", "content": APP.sistema()} and body["max_tokens"] == LLM_MOD.MAX_TOKENS
     assert "thinking" not in body
     names = [t["function"]["name"] for t in body["tools"]]
     assert names == ["cerca_sul_web", "riepilogo_casa", "cerca_in_casa", "esegui_azione"]

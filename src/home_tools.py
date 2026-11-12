@@ -3,6 +3,7 @@
 Never: locks, doors/gates, alarms, scripts, automations, technical services. Actions on several rooms need
 the user's spoken "yes" (checked by the service, not by the model). Tool descriptions are Italian (it-IT skill)."""
 import json, os, re, threading, time, urllib.request, logging
+import lingua as L
 
 HA = os.environ.get("HA_URL", "").rstrip("/")
 TOKEN = os.environ.get("HA_TOKEN", "")
@@ -58,7 +59,7 @@ ATTRIBUTI = ("current_position", "current_temperature", "temperature", "hvac_act
 
 _cache = {"t": 0, "s": []}
 _tl = threading.local()
-SI = re.compile(r"^\s*(s[ii\u00ec]'?|si'|certo|confermo|conferma|ok|okay|va bene|procedi|vai|fallo|esatto|d'accordo|perfetto)\b", re.I)
+SI = L.SI        # a "yes" in Italian or English
 
 def azzera_azioni():
     _tl.azioni = []
@@ -112,17 +113,17 @@ def riepilogo():
     S = stati(); m = {s["entity_id"]: s for s in S}
     out = []
     pp = [s for s in S if s["entity_id"].startswith("person.")]
-    out.append("Persone: " + "; ".join("%s=%s" % (nome(s), {"home": "a casa", "not_home": "fuori"}.get(s["state"], s["state"])) for s in pp))
+    out.append(L.t("persone") + ": " + "; ".join("%s=%s" % (nome(s), {"home": L.t("a_casa"), "not_home": L.t("fuori")}.get(s["state"], s["state"])) for s in pp))
     luci = [nome(s) for s in S if s["entity_id"].startswith("light.") and s["state"] == "on" and not re.search(r"channel", s["entity_id"])]
-    out.append("Luci accese: " + (", ".join(luci) if luci else "nessuna"))
+    out.append(L.t("luci_accese") + ": " + (", ".join(luci) if luci else L.t("nessuna")))
     tp = [s for s in S if s["entity_id"].startswith("cover.") and not s["entity_id"].endswith("_alexa")]
-    out.append("Tapparelle (100=aperta): " + "; ".join("%s %s" % (nome(s), s["attributes"].get("current_position", s["state"])) for s in tp))
+    out.append(L.t("tapparelle") + ": " + "; ".join("%s %s" % (nome(s), s["attributes"].get("current_position", s["state"])) for s in tp))
     temps = [s for s in S if re.match(TEMP_PATTERN, s["entity_id"])] if TEMP_PATTERN else \
             [s for s in S if s["entity_id"].startswith("sensor.") and s.get("attributes", {}).get("device_class") == "temperature"][:12]
     if temps:
-        out.append("Temperature: " + "; ".join("%s %s°" % (nome(s), s["state"]) for s in temps))
+        out.append(L.t("temperature") + ": " + "; ".join("%s %s°" % (nome(s), s["state"]) for s in temps))
     cl = [s for s in S if s["entity_id"].startswith("climate.")]
-    out.append("Clima: " + "; ".join("%s %s (stanza %s°, impostata %s°)" % (nome(s), s["state"], s["attributes"].get("current_temperature"), s["attributes"].get("temperature")) for s in cl))
+    out.append(L.t("clima") + ": " + "; ".join(L.t("clima_riga") % (nome(s), s["state"], s["attributes"].get("current_temperature"), s["attributes"].get("temperature")) for s in cl))
     for e, n in EXTRA:
         if e in m:
             out.append("%s: %s%s" % (n, m[e]["state"], (" " + m[e]["attributes"]["unit_of_measurement"]) if m[e]["attributes"].get("unit_of_measurement") else ""))
@@ -136,49 +137,49 @@ def cerca(testo):
         hit = [s for s in S if any(p in (s["entity_id"] + " " + nome(s)).lower() for p in parole)]
     hit = hit[:40]
     if not hit:
-        return "Nessuna entita' trovata per '%s'." % testo
-    return "\n".join(("[NON COMANDABILE] " if VIETATO.search(s["entity_id"] + " " + nome(s)) else "") + riga(s) for s in hit)
+        return L.t("nessuna_entita") % testo
+    return "\n".join((L.t("non_comandabile") if VIETATO.search(s["entity_id"] + " " + nome(s)) else "") + riga(s) for s in hit)
 
 def esegui(dominio, servizio, entita, dati=None, confermato=False):
     if isinstance(entita, str):   # some models send one entity as a plain string
         entita = [x.strip() for x in entita.split(",")]
     entita = [e.strip() for e in (entita or []) if isinstance(e, str) and e.strip()]
     if dominio not in COMANDI or servizio not in COMANDI[dominio]:
-        return "Azione non permessa: %s.%s. Permesse: %s" % (dominio, servizio, ", ".join("%s(%s)" % (d, "/".join(sorted(v))) for d, v in COMANDI.items()))
+        return L.t("non_permessa") % (dominio, servizio, ", ".join("%s(%s)" % (d, "/".join(sorted(v))) for d, v in COMANDI.items()))
     if not entita or "all" in entita:
-        return "Indica le entita' una per una (niente 'all')."
+        return L.t("niente_all")
     S = {s["entity_id"]: s for s in stati()}
     for e in entita:
         if not e.startswith(dominio + "."):
-            return "L'entita' %s non e' del dominio %s." % (e, dominio)
+            return L.t("altro_dominio") % (e, dominio)
         if e not in S:
-            return "L'entita' %s non esiste: usa cerca_in_casa." % e
+            return L.t("non_esiste") % e
         if VIETATO.search(e + " " + nome(S[e])):
-            return "Per sicurezza non posso comandare %s (%s): serrature, portone, antifurto e servizi tecnici sono esclusi." % (nome(S[e]), e)
+            return L.t("vietata") % (nome(S[e]), e)
     dati = {k: v for k, v in (dati if isinstance(dati, dict) else {}).items() if k in ("brightness_pct", "position", "temperature", "hvac_mode", "humidity", "color_temp_kelvin", "rgb_color")}
     multi = len(entita) > MAX_SENZA_CONFERMA or any(e in GRUPPI for e in entita)
     if multi and not (confermato and getattr(_tl, "consenso", False)):
-        return ("SERVE CONFERMA: l'azione riguarda piu' stanze (%s). Chiedi all'utente una conferma breve e non eseguire: "
-                "solo quando l'utente avra' risposto si', richiama esegui_azione con confermato=true.") % ", ".join(nome(S[e]) for e in entita)
+        return L.t("serve_conferma") % ", ".join(nome(S[e]) for e in entita)
     simulata = getattr(_tl, "simula", False)
     if not simulata:
         _req("POST", "services/%s/%s" % (dominio, servizio), dict(dati, entity_id=entita), timeout=15)
         _cache["t"] = 0
     log.info("azione HA%s: %s.%s %s %s", " (simulata)" if simulata else "", dominio, servizio, ",".join(entita), json.dumps(dati) if dati else "")
     _tl.azioni = getattr(_tl, "azioni", []) + ["%s%s.%s %s%s" % ("[simulata] " if simulata else "", dominio, servizio, ",".join(entita), (" " + json.dumps(dati)) if dati else "")]
-    return "Fatto: %s.%s su %s." % (dominio, servizio, ", ".join(nome(S[e]) for e in entita))
+    return L.t("fatto_su") % (dominio, servizio, ", ".join(nome(S[e]) for e in entita))
 
-STRUMENTI = [
-    {"name": "riepilogo_casa", "description": "Stato generale della casa: chi e' a casa, luci accese, tapparelle, temperature, clima, consumo, porta, rifiuti, pioggia. Usalo per domande generiche sulla casa.",
-     "parameters": {"type": "object", "properties": {}}},
-    {"name": "cerca_in_casa", "description": "Cerca dispositivi e sensori di casa per nome o stanza (es. 'luci salone', 'tapparella camera', 'temperatura bagno', 'lavatrice'). Restituisce entity_id, nome e stato. Usalo prima di comandare per trovare l'entity_id giusto.",
-     "parameters": {"type": "object", "properties": {"testo": {"type": "string"}}, "required": ["testo"]}},
-    {"name": "esegui_azione", "description": "Comanda dispositivi di casa. Domini e servizi permessi: light(turn_on,turn_off,toggle; dati: brightness_pct), cover(open_cover,close_cover,stop_cover,set_cover_position; dati: position 0=chiusa 100=aperta), climate(turn_on,turn_off,set_temperature,set_hvac_mode; dati: temperature, hvac_mode), switch(turn_on,turn_off,toggle), fan, humidifier(set_humidity), scene(turn_on). Serrature, portone e antifurto NON sono comandabili. Per azioni su piu' stanze serve confermato=true dopo il si' dell'utente.",
-     "parameters": {"type": "object", "properties": {
-         "dominio": {"type": "string"}, "servizio": {"type": "string"},
-         "entita": {"type": "array", "items": {"type": "string"}, "description": "entity_id esatti"},
-         "dati": {"type": "object"}, "confermato": {"type": "boolean"}}, "required": ["dominio", "servizio", "entita"]}},
-]
+def strumenti():
+    """The three tools, described in the assistant's language (names and parameters never change)."""
+    return [
+        {"name": "riepilogo_casa", "description": L.t("riepilogo_desc"), "parameters": {"type": "object", "properties": {}}},
+        {"name": "cerca_in_casa", "description": L.t("cerca_desc"),
+         "parameters": {"type": "object", "properties": {"testo": {"type": "string"}}, "required": ["testo"]}},
+        {"name": "esegui_azione", "description": L.t("esegui_desc"),
+         "parameters": {"type": "object", "properties": {
+             "dominio": {"type": "string"}, "servizio": {"type": "string"},
+             "entita": {"type": "array", "items": {"type": "string"}, "description": L.t("entita_desc")},
+             "dati": {"type": "object"}, "confermato": {"type": "boolean"}}, "required": ["dominio", "servizio", "entita"]}},
+    ]
 
 def esegui_strumento(nome_s, inp):
     try:
@@ -188,7 +189,7 @@ def esegui_strumento(nome_s, inp):
             return cerca(inp.get("testo", ""))
         if nome_s == "esegui_azione":
             return esegui(inp.get("dominio", ""), inp.get("servizio", ""), inp.get("entita") or [], inp.get("dati") or {}, bool(inp.get("confermato")))
-        return "Strumento sconosciuto."
+        return L.t("strumento_ignoto")
     except Exception as e:
         log.warning("strumento %s: %s", nome_s, e)
-        return "Errore nel contattare Home Assistant: %s" % str(e)[:150]
+        return L.t("errore_ha") % str(e)[:150]

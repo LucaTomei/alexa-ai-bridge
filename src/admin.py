@@ -224,17 +224,17 @@ def _cronometra(f):
 def prova(cosa):
     A = _a()
     if cosa == "modello":
-        r = _cronometra(lambda: A.ask_llm([{"role": "user", "content": "Rispondi solo con: tutto funziona."}], timeout=30)
+        r = _cronometra(lambda: A.ask_llm([{"role": "user", "content": A.L.t("prova_modello")}], timeout=30)
                         or "(risposta vuota)")
     elif cosa == "web":
         if not A.WEB:
             return jsonify(ok=False, esito="Ricerca web spenta o non configurata.", durata=0)
-        citta = A.web.HOME_CITY or "Roma"
+        citta = A.web.HOME_CITY or A.L.t("citta_prova")
         if A.WEB == "native":
-            r = _cronometra(lambda: A.ask_llm([{"role": "user", "content": "che tempo fa oggi a %s? cercalo sul web" % citta}], timeout=60))
+            r = _cronometra(lambda: A.ask_llm([{"role": "user", "content": A.L.t("prova_web") % citta}], timeout=60))
         else:
-            r = _cronometra(lambda: A.web.cerca("meteo %s oggi" % citta, A.WEB))
-            r["ok"] = r["ok"] and not r["esito"].startswith("Ricerca web non disponibile")
+            r = _cronometra(lambda: A.web.cerca(("meteo %s oggi" if A.L.LINGUA == "it" else "weather %s today") % citta, A.WEB))
+            r["ok"] = r["ok"] and not r["esito"].startswith(A.L.t("web_errore").split("(")[0].strip())
     else:
         if not A.casa.ATTIVO:
             return jsonify(ok=False, esito="Home Assistant non configurato (HA_URL e HA_TOKEN).", durata=0)

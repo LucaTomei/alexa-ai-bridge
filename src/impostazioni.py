@@ -12,6 +12,8 @@ FILE = os.path.join(DATA_DIR, "settings.json")
 # name, group, label, kind (text | secret | select | number | textarea), options, help
 CAMPI = [
     ("SKILL_ID", "Alexa", "Skill ID", "text", None, "amzn1.ask.skill.… dalla console Alexa: le richieste per altre skill sono rifiutate."),
+    ("LANGUAGE", "Alexa", "Lingua dell'assistente", "select", ["it", "en"],
+     "it o en. La skill deve usare il modello di interazione della stessa lingua."),
     ("LLM_API", "Modello", "Formato API", "select", ["", "anthropic", "openai"],
      "anthropic (Claude) oppure openai (qualsiasi endpoint compatibile). Vuoto: dedotto dall'URL."),
     ("LLM_BASE_URL", "Modello", "URL base", "text", None, "Es. https://api.anthropic.com/v1 oppure http://host.docker.internal:11434/v1"),

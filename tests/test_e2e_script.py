@@ -2,6 +2,7 @@
 model and the fake Home Assistant, with a scripted conversation: the script must report ALL OK and exit 0, and must
 fail when the home does not do what the model says."""
 import importlib.util, os, subprocess, sys
+import pytest
 from conftest import tool_use, final
 
 ROOT = os.path.join(os.path.dirname(__file__), "..")
@@ -28,19 +29,20 @@ def _conversation():
     ]
 
 
-def _run(tmp_path):
+def _run(tmp_path, lingua="it"):
     script = tmp_path / "inner.py"
     script.write_text(E2E.INNER)
-    env = dict(os.environ, PYTHONPATH=os.path.join(ROOT, "src"), E2E_LIGHT="light.kitchen",
-               E2E_LIGHT_NAME="la luce della cucina", E2E_LOCK="lock.front_door")
+    env = dict(os.environ, PYTHONPATH=os.path.join(ROOT, "src"), E2E_LIGHT="light.kitchen", LANGUAGE=lingua,
+               E2E_LIGHT_NAME="la luce della cucina" if lingua == "it" else "the kitchen light", E2E_LOCK="lock.front_door")
     return subprocess.run([sys.executable, str(script)], env=env, capture_output=True, text=True, timeout=120)
 
 
-def test_e2e_checks_pass_on_a_working_setup(llm, ha, tmp_path):
+@pytest.mark.parametrize("lingua", ["it", "en"])
+def test_e2e_checks_pass_on_a_working_setup(llm, ha, tmp_path, lingua):
     llm.queue = _conversation()
-    r = _run(tmp_path)
+    r = _run(tmp_path, lingua)
     assert r.returncode == 0 and "RESULT: ALL OK" in r.stdout, r.stdout + r.stderr
-    assert "ERR" not in r.stdout and not llm.queue
+    assert "ERR" not in r.stdout and not llm.queue and ("language: %s" % lingua) in r.stdout
     assert [c[0] for c in ha.calls] == ["/api/services/light/turn_on", "/api/services/light/turn_off"]
     assert next(s for s in ha.states if s["entity_id"] == "lock.front_door")["state"] == "locked"
 
