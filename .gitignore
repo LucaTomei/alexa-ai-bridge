@@ -9,3 +9,5 @@ venv/
 # files SearXNG writes next to its settings
 deploy/searxng/*
 !deploy/searxng/settings.yml
+.coverage
+htmlcov/

@@ -8,6 +8,10 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    ignore:
+      # moving to a new Python minor version is a deliberate choice (tested first in the CI matrix)
+      - dependency-name: python
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
