@@ -1,6 +1,6 @@
 # Lessons learned
 
-Fifteen problems we hit while building this, in the order you are likely to meet them, with the fix that is now
+Sixteen problems we hit while building this, in the order you are likely to meet them, with the fix that is now
 in the code.
 
 ## 1. The 8-second limit
@@ -126,3 +126,14 @@ the alarm automation that uses them silently stops working).
 only the last one. The log says *"contains duplicate key"*, as a warning.
 
 **Fix:** `template: !include_dir_merge_list templates`, one file per topic.
+
+## 16. Behind Cloudflare, the certificate is a wildcard
+
+**Symptom:** the endpoint answers `curl` from outside, Cloudflare shows no security event, yet the simulator says
+*"Non posso raggiungere la Skill richiesta"* and not a single request reaches the bridge.
+
+**Cause:** Cloudflare serves a certificate for `*.example.com`. With the certificate type *"trusted certificate
+authority"* in the Alexa console, Alexa rejects it before sending anything.
+
+**Fix:** choose *"…sub-domain of a domain that has a wildcard certificate…"* in **Build → Endpoint**. Check the
+certificate with `openssl s_client … | openssl x509 -noout -ext subjectAltName`.

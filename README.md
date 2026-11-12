@@ -146,7 +146,8 @@ Full details: [docs/architecture.md](docs/architecture.md).
    curl -s https://alexa.example.com/health       # {"ok":true}
    ```
 
-   Already have a reverse proxy? Skip `--profile caddy` and point it to `127.0.0.1:8090`. The image is prebuilt
+   Already have a reverse proxy, or a Cloudflare Tunnel? Skip `--profile caddy` and see
+   [setup → step 3](docs/setup.md#3-expose-it-over-https). The image is prebuilt
    for amd64 and arm64 (Raspberry Pi included) and published with every
    [release](https://github.com/LucaTomei/alexa-ai-bridge/releases); updates are one
    `docker compose pull && docker compose up -d` away, or automatic ([how](docs/setup.md#updating)).
@@ -186,10 +187,11 @@ Most of the work in a voice assistant on Alexa goes into Alexa's limits. These c
 - Free text only works **after a carrier phrase**, and one-word follow-ups need a custom slot ([details](docs/alexa-skill.md#carrier-phrases)).
 - **Brand-like invocation names** that work typed in the simulator can fail by voice.
 - **Cloudflare Bot Fight Mode** silently blocks Alexa's requests and Python's default user agent.
+- Behind Cloudflare the certificate is a **wildcard**: pick that option in the Alexa console, or no request is ever sent.
 - Reasoning can eat the whole token budget and return **no text at all**.
 - Conversation memory must include **what the assistant actually did**, not only what it said.
 
-All fifteen, with their fixes, are in [docs/lessons-learned.md](docs/lessons-learned.md).
+All sixteen, with their fixes, are in [docs/lessons-learned.md](docs/lessons-learned.md).
 
 ## Project structure
 

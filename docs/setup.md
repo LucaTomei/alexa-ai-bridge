@@ -136,6 +136,27 @@ If your proxy runs in Docker, attach it to the same network as the bridge and us
 upstream. Whatever the proxy, it must pass the request **body and headers unchanged**: Amazon signs the raw body
 and sends the signature in the `Signature-256` and `SignatureCertChainUrl` headers.
 
+### Option C: Cloudflare Tunnel (no open ports at home)
+
+If you already run `cloudflared`, the bridge can be published through it: no port forwarding, works behind CGNAT.
+
+1. In `.env` set `BRIDGE_BIND` to the LAN address of the machine running the bridge (and `BRIDGE_PORT` if 8090 is
+   taken), so that `cloudflared` can reach it: `docker compose up -d`.
+2. Cloudflare → **Zero Trust → Networks → Tunnels** → your tunnel → **Public Hostname / Routes** → add
+   `alexa.example.com` → type `HTTP` → `<lan-ip>:<port>` of the bridge.
+3. On the domain, **Security → Settings** (*Bot traffic*): **Bot Fight Mode off**. It blocks Alexa's requests,
+   which come from AWS data centres, and it cannot be skipped per hostname on the free plan. Check also that no
+   custom rule blocks other countries (Alexa calls from the US or Ireland) or challenges the skill's hostname.
+4. Optional, defence in depth: **Security → WAF → Custom rules** → block
+   `(http.host eq "alexa.example.com" and starts_with(http.request.uri.path, "/admin"))`. The bridge already refuses
+   `/admin` through any proxy unless `ADMIN_PUBLIC=on`.
+5. In step 4 below choose the **wildcard** certificate option: Cloudflare serves a certificate for
+   `*.example.com`, not one issued for the skill's hostname.
+
+If the simulator answers *"Non posso raggiungere la Skill richiesta"* and nothing reaches the bridge's log, look at
+**Security → Events** filtered on the skill's host: a blocked request shows which feature stopped it. No event at all
+means Alexa never sent the request, usually because of the certificate type in step 4.
+
 ### Check from outside
 
 From another network (your phone on mobile data, or any other machine):
@@ -153,7 +174,15 @@ In the developer console, **Build → Endpoint**:
 
 1. Service endpoint type: **HTTPS**.
 2. Default Region: `https://alexa.example.com/alexa` (your name, with `/alexa` at the end).
-3. SSL certificate type: *"My development endpoint has a certificate from a trusted certificate authority"*.
+3. SSL certificate type:
+   - *"My development endpoint has a certificate from a trusted certificate authority"* when the certificate is
+     issued for that exact name (Caddy, options A and B);
+   - *"My development endpoint is a sub-domain of a domain that has a wildcard certificate from a certificate
+     authority"* when it is a wildcard certificate, as with **Cloudflare** (option C or any proxied record).
+
+   The wrong choice fails silently: Alexa does not send the request at all, so nothing shows up anywhere.
+   To see which one you have: `echo | openssl s_client -connect alexa.example.com:443 -servername alexa.example.com 2>/dev/null | openssl x509 -noout -ext subjectAltName`
+   (a `*.` name means wildcard).
 4. **Save Endpoints**.
 
 ## 5. Test
@@ -262,7 +291,7 @@ Running a build from source (`--build`) instead? Update with `git pull && docker
 | Symptom | Cause and fix |
 |---|---|
 | The container restarts in a loop | A required variable is missing: `docker logs alexa-ai-bridge` names it (`SKILL_ID`, `LLM_BASE_URL`, `LLM_MODEL`). |
-| Simulator: *"Non posso raggiungere la Skill richiesta"*, **JSON Input** filled | Alexa found the skill but your endpoint did not answer. Run the [outside checks](#check-from-outside); check the endpoint URL ends with `/alexa` and the certificate type of step 4. |
+| Simulator: *"Non posso raggiungere la Skill richiesta"*, **JSON Input** filled | Alexa found the skill but your endpoint did not answer. Run the [outside checks](#check-from-outside); check the endpoint URL ends with `/alexa` and the certificate type of step 4 (**wildcard** behind Cloudflare). |
 | Same, and the service log shows nothing | The request is blocked before your host: Cloudflare proxy / Bot Fight Mode (use a **DNS-only** record), a firewall, or a router without port forwarding. |
 | Log: `richiesta rifiutata: skill diversa` | `SKILL_ID` in `.env` is not the ID of this skill. Fix it and `docker compose up -d`. |
 | Log: `richiesta rifiutata: richiesta troppo vecchia` | The host's clock is wrong: enable time sync (`sudo timedatectl set-ntp true`). |
