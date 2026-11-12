@@ -1,7 +1,15 @@
 # The Alexa skill
 
-The whole interaction model is in [`skill/interaction-model.it-IT.json`](../skill/interaction-model.it-IT.json).
-Paste it into **Build → Interaction Model → JSON Editor**, then **Save** and **Build skill**.
+The skill comes in two languages; use the one that matches `LANGUAGE` in `.env`:
+
+| `LANGUAGE` | Skill locale | Interaction model | Invocation |
+|---|---|---|---|
+| `it` | Italian (IT) | [`skill/interaction-model.it-IT.json`](../skill/interaction-model.it-IT.json) | *"Alexa, apri cervellone"* |
+| `en` | English (US), or any English locale | [`skill/interaction-model.en-US.json`](../skill/interaction-model.en-US.json) | *"Alexa, open big brain"* |
+
+Paste it into **Build → Interaction Model → JSON Editor**, then **Save** and **Build skill**. The admin page offers
+both files for download (**Sistema**). For English locales other than US (UK, Canada, Australia, India), add the
+locale in the console and paste the same English model.
 
 ## Intents
 
@@ -55,7 +63,7 @@ was just turned on.
   [lessons learned](lessons-learned.md)).
 - If the **JSON Input** panel is empty, Alexa did not match the skill at all: invocation name or build.
 
-## Translating the skill
+## Translating the skill to another language
 
 1. Copy the interaction model to your locale and translate invocation name, carrier phrases, short phrases and
    the Attesa/Stop samples.

@@ -41,7 +41,7 @@ In the [Alexa developer console](https://developer.amazon.com/alexa/console/ask)
 | Field | Value |
 |---|---|
 | Name | anything (e.g. *Cervellone*) |
-| Primary locale | Italian (IT) |
+| Primary locale | Italian (IT), or English (US) for an English assistant |
 | Type of experience | Other |
 | Model | **Custom** |
 | Hosting | **Provision your own** |
@@ -50,7 +50,8 @@ In the [Alexa developer console](https://developer.amazon.com/alexa/console/ask)
 Then:
 
 1. **Build → Interaction Model → JSON Editor**: select everything, paste the content of
-   [`skill/interaction-model.it-IT.json`](../skill/interaction-model.it-IT.json), click **Save**.
+   [`skill/interaction-model.it-IT.json`](../skill/interaction-model.it-IT.json) (Italian) or
+   [`skill/interaction-model.en-US.json`](../skill/interaction-model.en-US.json) (English), click **Save**.
 2. Click **Build skill** and wait for *Build Successful* (a minute or two).
 3. Check **Intents**: you must see `AskIntent`, `AttesaIntent` and `FraseBreveIntent`. If you still see
    `HelloWorldIntent`, the JSON was not saved: paste it again and **Save** before building.
@@ -73,6 +74,7 @@ nano .env        # or any editor
 In `.env`, set at least:
 
 - `SKILL_ID`: the ID from step 1;
+- `LANGUAGE`: `it` or `en`, the language of the model you pasted;
 - **one model block**: `LLM_API`, `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`. Claude is active by default; to use
   another provider, comment out the Claude lines and uncomment another block ([all presets](providers.md));
 - `PUBLIC_HOST`: your DNS name, if you will use the bundled Caddy in step 3;
@@ -226,8 +228,8 @@ home checks are skipped. It ends with `RESULT: ALL OK` (exit code 0) when every 
 
 Set `ADMIN_PASSWORD` in `.env` (12 characters or more) and `docker compose up -d`: the page is at
 `http://127.0.0.1:8090/admin` on the server. From there you can check every part, read the conversations, try the
-assistant by text and change the settings without touching `.env`. To open it from your home network or from
-anywhere, see [admin.md](admin.md#turn-it-on).
+assistant by text, choose which devices it may control and change the settings without touching `.env`. To open it
+from your home network or from anywhere, see [admin.md](admin.md#turn-it-on).
 
 ## Updating
 

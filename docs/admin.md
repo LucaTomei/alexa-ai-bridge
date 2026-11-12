@@ -1,7 +1,8 @@
 # Admin page
 
 A web page to look after the bridge without a terminal: see whether everything works, read what was asked, try the
-assistant by text, and change the settings.
+assistant by text, decide which home devices it may control, change every setting and run the service. In Italian or
+English: the **IT / EN** switch is at the top of every page (the first time, it follows your browser's language).
 
 <p align="center"><img src="images/admin-overview.png" width="85%" alt="Admin page: overview"></p>
 
@@ -10,9 +11,15 @@ assistant by text, and change the settings.
 | **Panoramica** | Service, model, web search and Home Assistant at a glance; questions, average time, slow answers, errors and home actions since the last start; one-click checks of the model, the web search and Home Assistant. |
 | **Conversazioni** | The latest questions and answers with their time, the home actions they ran and any error. Searchable. Users are anonymised. |
 | **Chat di prova** | Talk to the assistant by text, with the same model, tools and rules as on the Echo. Home actions are **simulated** by default: every safety check runs, but nothing is sent to Home Assistant. |
-| **Configurazione** | Every setting with its explanation. Saving checks the new values, then restarts the service in a few seconds. Keys and tokens are never shown, only whether they are set. |
-| **Registro** | The latest log lines, with a filter for warnings and errors. |
+| **Casa** (*Home*) | Every Home Assistant entity the assistant could control, with what protects it: never controllable by type (locks, alarms, scripts), blocked by the built-in rules, or forbidden by you. One switch forbids an entity, another makes it always ask for a spoken *yes* (they edit `HA_VIETATO` and `HA_GRUPPI` for you). |
+| **Configurazione** (*Settings*) | Every setting with its explanation, including the assistant's language. Saving checks the new values, then restarts the service in a few seconds. Keys and tokens are never shown, only whether they are set. |
+| **Sistema** (*System*) | Skill ID and the endpoint to paste in the Alexa console, download of the interaction model in both languages, version and update check, restart, answers still waiting, the admin password, *log out everywhere*, settings backup (export and import), and the network settings that live in `.env`. |
+| **Registro** (*Log*) | The latest log lines, with a filter for warnings and errors. |
 
+<p align="center">
+  <img src="images/admin-home.png" width="49%" alt="Admin page: home safety rules">
+  <img src="images/admin-system.png" width="49%" alt="Admin page: system, in English">
+</p>
 <p align="center">
   <img src="images/admin-conversations.png" width="49%" alt="Admin page: conversations">
   <img src="images/admin-settings.png" width="49%" alt="Admin page: settings">
@@ -64,6 +71,18 @@ page on the internet.
   a stored key to another server.
 - Every value is checked before saving (type, length, characters, number ranges, allowed options) and then loaded
   with the startup checks in a separate process: nothing that would stop the service can be saved.
+
+## The password
+
+`ADMIN_PASSWORD` in `.env` turns the page on. You can then change the password from **Sistema**: the new one is
+stored as a scrypt hash in the data volume and replaces `ADMIN_PASSWORD` (which must stay set, or the page turns off).
+Changing it keeps you logged in and logs out every other session. *"Torna alla password del .env"* goes back.
+
+Forgot the password changed from the page? Remove it on the server and `ADMIN_PASSWORD` from `.env` works again:
+
+```bash
+docker compose exec alexa-ai-bridge rm /data/admin-password
+```
 
 ## Conversation history
 

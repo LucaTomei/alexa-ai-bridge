@@ -28,9 +28,13 @@ First release with a prebuilt Docker image for amd64 and arm64: `ghcr.io/lucatom
 
 ### Added
 
+- **Italian or English** everywhere: `LANGUAGE=it|en` for the assistant (spoken texts, instructions, tools, home
+  summary), an English interaction model (`skill/interaction-model.en-US.json`), and an IT / EN switch on the admin page.
 - **Admin page** (`/admin`, off until `ADMIN_PASSWORD` is set): status and checks, conversation history, a test chat
-  with simulated home actions, settings editable from the browser with validation and automatic restart, log.
-  Reachable from the server, the home network (`BRIDGE_BIND`) or anywhere (`ADMIN_PUBLIC`).
+  with simulated home actions, the home's safety rules entity by entity, settings editable from the browser with
+  validation and automatic restart, system actions (skill endpoint and interaction models, update check, restart,
+  password, log out everywhere, backup), log. Reachable from the server, the home network (`BRIDGE_BIND`) or anywhere
+  (`ADMIN_PUBLIC`).
 - Bundled Caddy for HTTPS: `docker compose --profile caddy up -d`.
 - One retry on rate limits and temporary errors (429, 5xx, 529); provider errors are logged with their message.
 - Clear startup messages for missing or invalid settings.

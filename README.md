@@ -5,7 +5,7 @@
   <img alt="Python 3.11-3.15" src="https://img.shields.io/badge/python-3.11--3.15-38bdf8">
   <img alt="Docker" src="https://img.shields.io/badge/run%20with-Docker-38bdf8">
   <a href="https://github.com/LucaTomei/alexa-ai-bridge/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/LucaTomei/alexa-ai-bridge/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="Alexa skill: it-IT" src="https://img.shields.io/badge/Alexa%20skill-it--IT-f0abfc">
+  <img alt="Alexa skill: it-IT and en-US" src="https://img.shields.io/badge/Alexa%20skill-it--IT%20%C2%B7%20en--US-f0abfc">
 </p>
 
 <p align="center">
@@ -33,8 +33,8 @@ can read and control your home through Home Assistant within strict limits that 
 > 🗣️ *"Che tempo fa domani?"* — 🔊 *"Domani sole al mattino, nuvole dal pomeriggio e massima di 21 gradi."*<br>
 > 🗣️ *"Accendi la luce dello stanzino."* — 🔊 *"Fatto."* — 🗣️ *"Spegnila."* — 🔊 *"Spenta."*
 
-The skill in this repository speaks **Italian** (`it-IT`), but nothing in the design depends on the language: every
-spoken string and every sample utterance lives in two files you can translate.
+The assistant speaks **Italian or English** (`LANGUAGE=it` or `en`): both interaction models are included, and the
+admin page has an IT / EN switch too.
 
 ## Demo
 
@@ -70,9 +70,13 @@ These are real conversations in the Alexa developer console simulator, which sen
   - every request from Amazon is verified: signature, certificate chain, timestamp and skill ID;
   - locks, alarms, scripts and technical services can never be controlled;
   - multi-room actions need a spoken *yes*, and the **service** checks it, not the model.
-- 🖥️ **Admin page**: status and one-click checks, conversation history, a test chat with simulated home actions,
-  and every setting editable from the browser. Off until you set a password; reachable from the server, your home
-  network or anywhere, as you choose ([details](docs/admin.md)).
+- 🖥️ **Admin page**, in Italian or English:
+  - status and one-click checks, conversation history, a test chat with simulated home actions;
+  - the home's safety rules entity by entity: forbid a device or make it always ask for a spoken *yes*;
+  - every setting editable from the browser, checked before saving, applied with an automatic restart;
+  - the skill's endpoint and interaction models, update check, restart, password, backup;
+  - off until you set a password; reachable from the server, your home network or anywhere, as you choose
+    ([details](docs/admin.md)).
 
   <img src="docs/images/admin-overview.png" width="100%" alt="Admin page">
 - 🛟 **Degrades gracefully**: if a model has no tool support, rejects a parameter or returns its reasoning in
@@ -130,7 +134,8 @@ Full details: [docs/architecture.md](docs/architecture.md).
 
 1. **Create the skill** in the [Alexa developer console](https://developer.amazon.com/alexa/console/ask):
    - choose a *Custom* model with *Provision your own* hosting;
-   - paste [`skill/interaction-model.it-IT.json`](skill/interaction-model.it-IT.json) into the JSON editor;
+   - paste [`skill/interaction-model.it-IT.json`](skill/interaction-model.it-IT.json) (Italian) or
+     [`skill/interaction-model.en-US.json`](skill/interaction-model.en-US.json) (English) into the JSON editor;
    - click **Save**, then **Build**, and copy the **Skill ID**.
 2. **Run the service** on your host:
 
@@ -194,10 +199,12 @@ All fifteen, with their fixes, are in [docs/lessons-learned.md](docs/lessons-lea
 │   ├── llm.py              # Anthropic + OpenAI-compatible adapters, tool loop, graceful degradation
 │   ├── web_search.py       # native search (Claude) or SearXNG / Brave / Tavily (any model)
 │   ├── home_tools.py       # Home Assistant tools with allow-lists and server-side confirmation
-│   ├── admin.py · admin/   # admin page: status, history, test chat, settings, log
-│   └── impostazioni.py     # settings saved from the admin page
+│   ├── lingua.py           # every text of the assistant, in Italian and English
+│   ├── admin.py · admin/   # admin page: status, history, test chat, home rules, settings, system, log
+│   └── impostazioni.py     # settings saved from the admin page, validation
 ├── skill/
-│   └── interaction-model.it-IT.json   # paste into the Alexa console JSON editor
+│   ├── interaction-model.it-IT.json   # paste into the Alexa console JSON editor (Italian)
+│   └── interaction-model.en-US.json   # the same for English
 ├── deploy/                 # Caddyfile example, SearXNG settings
 ├── scripts/
 │   ├── e2e.py              # end-to-end check against a running deployment
