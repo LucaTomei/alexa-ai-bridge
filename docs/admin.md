@@ -109,5 +109,6 @@ short anonymous code.
 |---|---|---|
 | `ADMIN_PASSWORD` | – | Turns the page on (12 characters or more) |
 | `ADMIN_HISTORY` | `100` | Questions kept in the history; `0` turns it off |
+| `BRIDGE_PORT` | `8090` | Port on the host, if 8090 is already in use |
 | `BRIDGE_BIND` | `127.0.0.1` | Address the service port is published on (the server's LAN IP = home network too) |
 | `ADMIN_PUBLIC` | `off` | `on` allows `/admin` through a reverse proxy (the bundled Caddy or your own) |

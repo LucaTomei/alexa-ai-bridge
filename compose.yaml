@@ -13,7 +13,8 @@ services:
     ports:
       # 127.0.0.1: only this host (and its reverse proxy); BRIDGE_BIND=<server LAN IP> also opens it to your home
       # network, e.g. for the admin page at http://<server-ip>:8090/admin (never 0.0.0.0 on a VPS)
-      - "${BRIDGE_BIND:-127.0.0.1}:8090:8090"
+      # BRIDGE_PORT: the port on the host, if 8090 is already taken by something else
+      - "${BRIDGE_BIND:-127.0.0.1}:${BRIDGE_PORT:-8090}:8090"
     volumes:
       - bridge_data:/data       # settings saved from the admin page
     extra_hosts:

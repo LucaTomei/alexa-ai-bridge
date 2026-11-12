@@ -742,7 +742,7 @@ async function caricaSistema() {
         s.dati_persistenti ? bottone(t("sis.importa"), () => $("#importa-file").click()) : null)),
     sezione(t("sis.rete"),
       el("p", { class: "muted small", text: t("sis.rete_desc") }),
-      ...["PUBLIC_HOST", "BRIDGE_BIND", "ADMIN_PUBLIC", "BRIDGE_VERSION", "COMPOSE_PROFILES"].map((k) => rigaVariabile(k, infra[k])),
+      ...["PUBLIC_HOST", "BRIDGE_BIND", "BRIDGE_PORT", "ADMIN_PUBLIC", "BRIDGE_VERSION", "COMPOSE_PROFILES"].map((k) => rigaVariabile(k, infra[k])),
       el("p", { class: "muted small", text: s.pubblico ? t("sis.pubblico_on") : t("sis.pubblico_off") })),
   );
 }

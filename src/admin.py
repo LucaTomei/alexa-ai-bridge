@@ -516,7 +516,7 @@ def salva_casa():
 
 # ---------- system
 def _infrastruttura():
-    return {k: os.environ.get(k, "") for k in ("PUBLIC_HOST", "BRIDGE_BIND", "ADMIN_PUBLIC", "BRIDGE_VERSION", "COMPOSE_PROFILES")}
+    return {k: os.environ.get(k, "") for k in ("PUBLIC_HOST", "BRIDGE_BIND", "BRIDGE_PORT", "ADMIN_PUBLIC", "BRIDGE_VERSION", "COMPOSE_PROFILES")}
 
 
 @bp.get("/admin/api/sistema")
