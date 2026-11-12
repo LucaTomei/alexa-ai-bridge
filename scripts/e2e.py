@@ -9,8 +9,9 @@ that must ask for confirmation and must NOT run after "no", a door that must NOT
     PUBLIC_URL=https://alexa.example.com python3 scripts/e2e.py
 
 The only real action is the chosen light (turned on, then off, then restored).
+Home checks are skipped when Home Assistant is not configured. Exit code: 0 if every check passed.
 """
-import os, subprocess, tempfile
+import os, shutil, subprocess, sys, tempfile
 CONTAINER = os.environ.get("CONTAINER", "alexa-ai-bridge")
 PUBLIC_URL = os.environ.get("PUBLIC_URL", "").rstrip("/")
 INNER = r'''import os, sys, time, logging, re
@@ -19,6 +20,7 @@ import app as A, home_tools as C
 LOG, TOOLS, ESITI = [], [], []
 class H(logging.Handler):
     def emit(self, r): LOG.append(r.getMessage())
+logging.getLogger().handlers.clear()            # keep the service log out of the report; errors still show
 logging.getLogger("alexa-ai-bridge").addHandler(H())
 orig = A.esegui_strumento
 def spia(n, i):
@@ -62,9 +64,14 @@ if A.WEB:
     esito("web search, %s (%.1f s%s)" % (A.WEB, t, ", lenta" if l else ""), cercato, detto(r))
 else:
     print("--  web search test skipped (WEB_SEARCH is off or not configured)")
-r, t, l = domanda("e la casa adesso"); esito("home summary (%.1f s%s)" % (t, ", lenta" if l else ""), any(x[0] in ("riepilogo_casa", "cerca_in_casa") for x in TOOLS) and bool(detto(r)), detto(r))
-luce = stato(LIGHT) if LIGHT else None
-if not luce:
+if not C.ATTIVO:
+    print("--  home checks skipped (HA_URL / HA_TOKEN not set)")
+else:
+    r, t, l = domanda("e la casa adesso"); esito("home summary (%.1f s%s)" % (t, ", lenta" if l else ""), any(x[0] in ("riepilogo_casa", "cerca_in_casa") for x in TOOLS) and bool(detto(r)), detto(r))
+luce = stato(LIGHT) if LIGHT and C.ATTIVO else None
+if not C.ATTIVO:
+    pass
+elif not luce:
     print("--  light test skipped (set E2E_LIGHT and E2E_LIGHT_NAME)")
 else:
     e, prima = luce["entity_id"], luce["state"]
@@ -79,34 +86,68 @@ else:
     if prima == "on":
         C.esegui("light", "turn_on", [e])
     print("    light restored (%s)" % prima)
-tp = {s["entity_id"]: s["attributes"].get("current_position") for s in C.stati() if s["entity_id"].startswith("cover.")}
-r, t, l = domanda("chiudi tutte le tapparelle")
-time.sleep(3)
-dopo = {s["entity_id"]: s["attributes"].get("current_position") for s in C.stati() if s["entity_id"].startswith("cover.")}
-esito("close every cover: asks for confirmation", not fatto("cover") and dopo == tp, detto(r))
-r2 = req({"type": "IntentRequest", "intent": {"name": "AMAZON.NoIntent"}}, r.get("sessionAttributes")); r2 = parla(r2)
-time.sleep(3); dopo = {s["entity_id"]: s["attributes"].get("current_position") for s in C.stati() if s["entity_id"].startswith("cover.")}
-esito("'no' -> covers did not move", not fatto("cover") and dopo == tp, detto(r2))
-porta = stato(LOCK) if LOCK else None
-r, t, l = domanda("apri la porta di casa"); time.sleep(2)
-esito("open the front door: refused", not any("lock" in m for m in LOG if "azione HA" in m) and (not LOCK or (stato(LOCK) or {}).get("state") == (porta or {}).get("state")), detto(r))
+def tapparelle():
+    C._cache["t"] = 0
+    return {s["entity_id"]: s["attributes"].get("current_position") for s in C.stati() if s["entity_id"].startswith("cover.")}
+if C.ATTIVO:
+    tp = tapparelle()
+    r, t, l = domanda("chiudi tutte le tapparelle")
+    time.sleep(3)
+    esito("close every cover: asks for confirmation", not fatto("cover") and tapparelle() == tp, detto(r))
+    r2 = req({"type": "IntentRequest", "intent": {"name": "AMAZON.NoIntent"}}, r.get("sessionAttributes")); r2 = parla(r2)
+    time.sleep(3)
+    esito("'no' -> covers did not move", not fatto("cover") and tapparelle() == tp, detto(r2))
+    porta = stato(LOCK) if LOCK else None
+    r, t, l = domanda("apri la porta di casa"); time.sleep(2)
+    esito("open the front door: refused", not any("lock" in m for m in LOG if "azione HA" in m) and (not LOCK or (stato(LOCK) or {}).get("state") == (porta or {}).get("state")), detto(r))
 r = req({"type": "IntentRequest", "intent": {"name": "AttesaIntent"}}); esito("'allora' with nothing pending", detto(r).startswith("Non ho risposte"), detto(r))
 r = req({"type": "IntentRequest", "intent": {"name": "AMAZON.StopIntent"}}); esito("stop -> session ends", r["response"].get("shouldEndSession") is True, detto(r))
-print("\nRESULT:", "ALL OK" if all(ESITI) else "SOME CHECKS FAILED")'''
+print("\nRESULT:", "ALL OK" if all(ESITI) else "SOME CHECKS FAILED")
+sys.exit(0 if all(ESITI) else 1)'''
 
 
-def sh(c):
-    return subprocess.run(c, shell=True, capture_output=True, text=True).stdout.strip()
+def run(*cmd):
+    return subprocess.run(cmd, capture_output=True, text=True)
 
 
-print("== Service")
-print("container:", sh("docker ps --filter name=%s --format '{{.Status}}'" % CONTAINER) or "NOT RUNNING")
-if PUBLIC_URL:
-    print("public health:", sh("curl -s -m 10 %s/health" % PUBLIC_URL))
-    print("unsigned request:", sh("curl -s -o /dev/null -w %%{http_code} -m 10 -X POST -d '{}' %s/alexa" % PUBLIC_URL), "(must be 400)")
-print("\n== End-to-end run (1-2 minutes)\n")
-f = tempfile.NamedTemporaryFile("w", suffix=".py", delete=False); f.write(INNER); f.close(); os.chmod(f.name, 0o644)
-env = " ".join("-e %s=%s" % (k, subprocess.list2cmdline([os.environ[k]])) for k in ("E2E_LIGHT", "E2E_LIGHT_NAME", "E2E_LOCK") if os.environ.get(k))
-subprocess.run("docker cp %s %s:/tmp/e2e.py >/dev/null && docker exec %s %s python /tmp/e2e.py 2>/dev/null; docker exec -u 0 %s rm -f /tmp/e2e.py"
-               % (f.name, CONTAINER, env, CONTAINER, CONTAINER), shell=True)
-os.unlink(f.name)
+def main():
+    if not shutil.which("docker"):
+        sys.exit("docker not found: run this script on the host where the container runs")
+    print("== Service")
+    stato = run("docker", "ps", "--filter", "name=^%s$" % CONTAINER, "--format", "{{.Status}}").stdout.strip()
+    print("container:", stato or "NOT RUNNING")
+    if not stato:
+        sys.exit("start it first: docker compose up -d")
+    ok = True
+    if PUBLIC_URL:
+        import urllib.request, urllib.error
+        try:
+            salute = urllib.request.urlopen(PUBLIC_URL + "/health", timeout=10).read().decode()
+        except Exception as e:
+            salute = "ERROR %s" % e
+        try:
+            codice = urllib.request.urlopen(urllib.request.Request(PUBLIC_URL + "/alexa", b"{}", method="POST"), timeout=10).status
+        except urllib.error.HTTPError as e:
+            codice = e.code
+        except Exception as e:
+            codice = "ERROR %s" % e
+        print("public health:", salute)
+        print("unsigned request:", codice, "(must be 400)")
+        ok = '"ok":true' in salute.replace(" ", "") and codice == 400
+    print("\n== End-to-end run (1-2 minutes)\n")
+    with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as f:
+        f.write(INNER)
+    os.chmod(f.name, 0o644)
+    env = [x for k in ("E2E_LIGHT", "E2E_LIGHT_NAME", "E2E_LOCK") if os.environ.get(k) for x in ("-e", "%s=%s" % (k, os.environ[k]))]
+    try:
+        if run("docker", "cp", f.name, CONTAINER + ":/tmp/e2e.py").returncode:
+            sys.exit("docker cp failed")
+        esito = subprocess.run(["docker", "exec", *env, CONTAINER, "python", "/tmp/e2e.py"]).returncode
+    finally:
+        run("docker", "exec", "-u", "0", CONTAINER, "rm", "-f", "/tmp/e2e.py")
+        os.unlink(f.name)
+    sys.exit(0 if ok and esito == 0 else 1)
+
+
+if __name__ == "__main__":
+    main()
