@@ -169,6 +169,10 @@ def clean():
     HOME.ATTIVO = True; HOME._cache["t"] = 0; HOME.imposta_simulazione(False)
     ADMIN.svuota(); ADMIN._tentativi.clear(); ADMIN.RITARDO = 0
     yield
+    # background answers of this test must end here: a late one would take the scripted answers of the next test
+    for t in threading.enumerate():
+        if getattr(t, "_target", None) is APP.calcola:
+            t.join(timeout=10)
 
 
 @pytest.fixture
