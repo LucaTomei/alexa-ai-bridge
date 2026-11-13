@@ -146,13 +146,16 @@ def esegui_strumento(nome, argomenti):
 
 def ask_llm(history, timeout=60):
     ultima = history[-1]["content"] if history and history[-1]["role"] == "user" else ""
-    casa.imposta_domanda(ultima if isinstance(ultima, str) else "")
+    prima = history[-2]["content"] if len(history) > 1 and history[-2]["role"] == "assistant" else ""
+    chiesto = isinstance(prima, str) and L.NOTA_AZIONI.sub("", prima).strip().endswith("?")   # "Vuoi che le chiuda tutte?"
+    casa.imposta_domanda(ultima if isinstance(ultima, str) else "", chiesto)
     strumenti = ([web.strumento()] if WEB not in (None, "native") else []) + (casa.strumenti() if casa.ATTIVO else [])
     return llm.chiedi(sistema(), con_istruzioni(history), strumenti, esegui_strumento,
                       nativo=web.NATIVO if WEB == "native" else None, timeout=timeout)
 
 def pulisci(t):
     t = L.NOTA_AZIONI.sub("", t)
+    t = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\ufffe\uffff]", " ", t)   # not allowed in SSML: Alexa would refuse the answer
     t = re.sub(r"[*_#`>|]+", "", t)
     t = re.sub(r"\s+", " ", t).strip()
     if len(t) > 700:
@@ -213,8 +216,12 @@ def calcola(lav):
     if lav["errore"]:
         log.warning("modello: %s (%.1f s)", lav["errore"], time.time() - t0)
     lav["durata"] = time.time() - t0
-    admin.registra(lav, lav["uid"], "alexa")   # before the answer is handed over: the history is never behind
-    lav["evento"].set()
+    try:
+        admin.registra(lav, lav["uid"], "alexa")   # before the answer is handed over: the history is never behind
+    except Exception as e:
+        log.warning("admin: history not saved (%s)", e)
+    finally:
+        lav["evento"].set()                        # whatever happens, the answer is never stuck
 
 def avvia(uid, hist):
     lav = {"hist": hist, "evento": threading.Event(), "risposta": None, "errore": None, "t": time.time(), "uid": uid,
@@ -306,6 +313,7 @@ def gestisci(d, t_req=None):
     return ancora(attr, True)
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 512 * 1024     # Alexa requests are a few KB: a huge body is refused before it is read
 admin.configura(app)
 
 
@@ -316,6 +324,9 @@ def _lingua_pulita():
 @app.post("/alexa")
 def alexa():
     t_req = time.time()
+    if not request.headers.get("Signature-256") or not url_cert_ok(request.headers.get("SignatureCertChainUrl", "")):
+        log.warning("richiesta rifiutata: intestazioni di firma mancanti o non valide")
+        abort(400)
     body = request.get_data()
     try:
         d = json.loads(body)

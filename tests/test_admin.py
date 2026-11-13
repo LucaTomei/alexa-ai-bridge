@@ -236,8 +236,8 @@ def test_settings_never_expose_secrets(client, dati):
     ({"HOME_CITY": "\udc80"}, "caratteri non validi"),
     ({"SYSTEM_PROMPT": "x" * 20001}, "troppo lungo"),
     ({"HOME_CITY": True}, "Valore non valido"),
-    ({"LLM_BASE_URL": "https://attacker.example/v1"}, "inserisci di nuovo Chiave API"),
-    ({"HA_URL": "https://attacker.example"}, "inserisci di nuovo Token"),
+    ({"LLM_BASE_URL": "https://attacker.example/v1"}, "scrivi di nuovo Modello: Chiave API"),
+    ({"HA_URL": "https://attacker.example"}, "scrivi di nuovo Home Assistant: Token"),
 ])
 def test_dangerous_or_broken_values_are_refused(client, dati, valori, messaggio):
     r = post(client, "impostazioni", {"valori": valori})

@@ -12,7 +12,7 @@ const TESTI = {
     "tab.impostazioni": "Configurazione", "tab.sistema": "Sistema", "tab.registro": "Registro", "esci": "Esci",
     "btn.prova": "Prova", "btn.in_corso": "In corso…", "btn.aggiorna": "Aggiorna", "btn.svuota": "Svuota", "btn.annulla": "Annulla",
     "btn.salva": "Salva e riavvia", "btn.verifica": "Verifica…", "btn.riavvio": "Riavvio…",
-    "pan.dallavvio": "Dall'ultimo avvio", "pan.prove": "Prove",
+    "pan.dallavvio": "Nello storico", "pan.prove": "Prove",
     "pan.prove_desc": "Ogni prova usa la configurazione attuale, come farebbe una domanda ad Alexa.",
     "prova.modello": "Modello", "prova.modello_desc": "Una domanda breve al modello.",
     "prova.web": "Ricerca web", "prova.web_desc": "Il meteo di oggi nella tua città.",
@@ -52,7 +52,8 @@ const TESTI = {
     "casa.nota_conferma": "Le azioni su più di %s entità chiedono comunque conferma.",
     "modifiche.una": "1 modifica non salvata", "modifiche.tante": "%s modifiche non salvate",
     "imp.sola_lettura": "Sola lettura. ", "imp.sola_lettura_desc": "Per salvare dalla pagina serve una cartella dati scrivibile (%s): con il compose incluso è già montata; altrimenti vedi docs/admin.md.",
-    "imp.salvata": "salvata qui", "imp.env": "da .env", "imp.predefinita": "predefinita", "imp.torna_env": "Torna al valore del .env",
+    "imp.salvata": "salvata qui", "imp.env": "da .env", "imp.predefinita": "predefinita", "imp.torna_env": "Torna al valore del .env", "imp.torna_predefinito": "Torna al predefinito",
+    "imp.valore_env": "valore del .env",
     "imp.cancella": "Cancella", "imp.cancellata": "verrà cancellata al salvataggio", "imp.segreta": "•••••••• impostata: scrivi per cambiarla",
     "imp.non_impostata": "non impostata", "imp.credenziali": "  (contiene credenziali: scrivi per cambiarlo)",
     "imp.predefinito": "predefinito: %s", "imp.automatico": "(automatico)", "imp.non_impostato": "(non impostato)",
@@ -74,10 +75,13 @@ const TESTI = {
     "sis.pw_da_pagina": "La password è stata cambiata da questa pagina e vale al posto di ADMIN_PASSWORD.",
     "sis.pw_da_env": "Vale la password ADMIN_PASSWORD del .env.", "sis.pw_ripristina": "Torna alla password del .env",
     "sis.pw_ripristinata": "Ora vale di nuovo la password del .env.",
+    "sis.pw_serve_attuale": "Scrivi la password attuale nel primo campo, poi riprova.",
     "sis.esci_ovunque": "Esci da tutti i dispositivi", "sis.esci_conferma": "Chiudere tutte le sessioni, compresa questa?",
     "sis.backup": "Backup delle impostazioni", "sis.backup_desc": "Esporta tutte le impostazioni senza chiavi, token e indirizzi con credenziali; importandole vengono controllate come un salvataggio normale.",
     "sis.esporta": "Esporta", "sis.importa": "Importa", "sis.importa_conferma": "Importare %s impostazioni e riavviare?",
     "sis.importa_errore": "Il file non è un backup valido.", "sis.importate": "Impostazioni importate.",
+    "sis.importa_saltati": "Da reimpostare in Configurazione insieme alla loro chiave: %s.",
+    "sis.importa_solo_url": "Nel backup ci sono solo indirizzi senza chiave (%s): impostali in Configurazione insieme alla chiave.",
     "sis.rete": "Rete e pubblicazione", "sis.rete_desc": "Queste si cambiano nel .env sul server, poi docker compose up -d: decidono dove il servizio è raggiungibile.",
     "sis.pubblico_on": "Il pannello può essere raggiunto attraverso il reverse proxy.", "sis.pubblico_off": "Il pannello non è pubblicato attraverso il reverse proxy.",
     "sis.non_impostato": "non impostato",
@@ -91,7 +95,7 @@ const TESTI = {
     "sub.sistema": "Quello che serve alla console Alexa, la versione, l'accesso al pannello e il backup.",
     "sub.registro": "Le ultime righe scritte dal servizio.",
     "conv.e2e": "Test e2e",
-    "imp.predefinita_valore": "predefinita: %s", "imp.vale": "predefinito: %s", "imp.vuota": "vuota",
+    "imp.predefinita_valore": "valore predefinito: %s", "imp.vale": "valore predefinito: %s", "imp.vuota": "vuota",
     "imp.altro_modello": "Altro… (scrivilo a mano)", "imp.modelli_n": "Elenco dal fornitore: %s modelli.",
     "imp.modelli_errore": "Elenco dei modelli non disponibile (%s): scrivi il nome a mano.",
     "imp.non_impostata_c": "non impostata",
@@ -108,7 +112,7 @@ const TESTI = {
     "tab.impostazioni": "Settings", "tab.sistema": "System", "tab.registro": "Log", "esci": "Log out",
     "btn.prova": "Run", "btn.in_corso": "Running…", "btn.aggiorna": "Refresh", "btn.svuota": "Clear", "btn.annulla": "Cancel",
     "btn.salva": "Save and restart", "btn.verifica": "Checking…", "btn.riavvio": "Restarting…",
-    "pan.dallavvio": "Since the last start", "pan.prove": "Checks",
+    "pan.dallavvio": "In the history", "pan.prove": "Checks",
     "pan.prove_desc": "Every check uses the current settings, just like a question to Alexa.",
     "prova.modello": "Model", "prova.modello_desc": "A short question to the model.",
     "prova.web": "Web search", "prova.web_desc": "Today's weather in your city.",
@@ -148,7 +152,8 @@ const TESTI = {
     "casa.nota_conferma": "Actions on more than %s entities always ask for a yes anyway.",
     "modifiche.una": "1 unsaved change", "modifiche.tante": "%s unsaved changes",
     "imp.sola_lettura": "Read only. ", "imp.sola_lettura_desc": "Saving from the page needs a writable data folder (%s): the bundled compose file mounts it; otherwise see docs/admin.md.",
-    "imp.salvata": "saved here", "imp.env": "from .env", "imp.predefinita": "default", "imp.torna_env": "Back to the .env value",
+    "imp.salvata": "saved here", "imp.env": "from .env", "imp.predefinita": "default", "imp.torna_env": "Back to the .env value", "imp.torna_predefinito": "Back to the default",
+    "imp.valore_env": "value from .env",
     "imp.cancella": "Clear", "imp.cancellata": "will be cleared on save", "imp.segreta": "•••••••• set: type to change it",
     "imp.non_impostata": "not set", "imp.credenziali": "  (contains credentials: type to change it)",
     "imp.predefinito": "default: %s", "imp.automatico": "(automatic)", "imp.non_impostato": "(not set)",
@@ -170,10 +175,13 @@ const TESTI = {
     "sis.pw_da_pagina": "The password was changed from this page and replaces ADMIN_PASSWORD.",
     "sis.pw_da_env": "ADMIN_PASSWORD from .env is in use.", "sis.pw_ripristina": "Go back to the .env password",
     "sis.pw_ripristinata": "The .env password is in use again.",
+    "sis.pw_serve_attuale": "Type the current password in the first box, then try again.",
     "sis.esci_ovunque": "Log out everywhere", "sis.esci_conferma": "Log out every session, this one included?",
     "sis.backup": "Settings backup", "sis.backup_desc": "Exports every setting except keys, tokens and addresses with credentials; importing checks them like a normal save.",
     "sis.esporta": "Export", "sis.importa": "Import", "sis.importa_conferma": "Import %s settings and restart?",
     "sis.importa_errore": "The file is not a valid backup.", "sis.importate": "Settings imported.",
+    "sis.importa_saltati": "Set these again in Settings, together with their key: %s.",
+    "sis.importa_solo_url": "The backup only holds addresses without their key (%s): set them in Settings together with the key.",
     "sis.rete": "Network and publishing", "sis.rete_desc": "These are changed in .env on the server, then docker compose up -d: they decide where the service can be reached.",
     "sis.pubblico_on": "The page can be reached through the reverse proxy.", "sis.pubblico_off": "The page is not published through the reverse proxy.",
     "sis.non_impostato": "not set",
@@ -227,7 +235,7 @@ function cambiaLingua(l) {
   const tab = document.getElementById("tab-" + location.hash.slice(1)) ? location.hash.slice(1) : "panoramica";
   intestazione(tab);
   if (tab === "conversazioni") disegnaStorico();
-  if (tab === "impostazioni") caricaImpostazioni();
+  if (tab === "impostazioni") caricaImpostazioni(true);
   if (tab === "casa") disegnaCasa();
   if (tab === "sistema") caricaSistema();
   if (tab === "chat" && !conversazione.length) messaggioVuoto(t("chat.vuoto"));
@@ -326,10 +334,11 @@ function vaiA(tab) {
   document.querySelectorAll(".tab").forEach((s) => { s.hidden = s.id !== "tab-" + tab; });
   intestazione(tab);
   if (location.hash !== "#" + tab) history.replaceState(null, "", "#" + tab);
+  document.querySelector('.tabs button[aria-selected="true"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
   clearInterval(timerRegistro);
   if (tab === "conversazioni") caricaStorico();
-  if (tab === "impostazioni") caricaImpostazioni();
-  if (tab === "casa") caricaCasa();
+  if (tab === "impostazioni") caricaImpostazioni(true);
+  if (tab === "casa" && !modificheCasa()) caricaCasa();
   if (tab === "sistema") caricaSistema();
   if (tab === "registro") { caricaRegistro(); timerRegistro = setInterval(() => { if ($("#auto-registro").checked) caricaRegistro(); }, 5000); }
   if (tab === "chat") {
@@ -567,7 +576,9 @@ async function salvaCasa() {
 // ---------- settings
 let campi = [], modifiche = {}, configurabile = false, elencoModelli = null;
 
-async function caricaImpostazioni() {
+// conserva: keep what was changed and not saved yet (switching tab or language must never lose it)
+async function caricaImpostazioni(conserva) {
+  const prima = conserva ? { ...modifiche } : {};
   let d;
   const elenco = api("GET", "modelli").catch((e) => ({ modelli: [], errore: e.message }));
   try { d = await api("GET", "impostazioni"); } catch (e) { toast(e.message); return; }
@@ -575,15 +586,29 @@ async function caricaImpostazioni() {
   $("#impostazioni-avviso").replaceChildren(...(configurabile ? [] : [el("div", { class: "notice" },
     el("strong", { text: t("imp.sola_lettura") }), t("imp.sola_lettura_desc", d.cartella))]));
   disegnaImpostazioni();
+  ripristinaModifiche(prima);
   elencoModelli = await elenco;
   sceltaModello(elencoModelli);
+  ripristinaModifiche(prima);
+}
+
+function ripristinaModifiche(prima) {
+  for (const [nome, valore] of Object.entries(prima)) {
+    if (!campi.some((c) => c.nome === nome)) continue;
+    const f = document.getElementById("f-" + nome);
+    if (f && valore !== null) {
+      if (f.tagName === "SELECT" && ![...f.options].some((o) => o.value === valore)) f.append(el("option", { value: valore, text: valore }));
+      f.value = valore;
+    }
+    segnaModifica(nome, valore);
+  }
 }
 
 // the model field becomes the list of what the provider offers, with "Other…" to type any name
 function sceltaModello(r) {
   const riga = document.querySelector('[data-campo="LLM_MODEL"] .campo-edit');
   const c = campi.find((x) => x.nome === "LLM_MODEL");
-  if (!riga || !c || "LLM_MODEL" in modifiche || riga.querySelector(".nota-modelli")) return;
+  if (!riga || !c || riga.querySelector(".nota-modelli")) return;
   const elenco = r.modelli || [];
   const nota = el("p", { class: "muted small nota-modelli",
     text: elenco.length ? t("imp.modelli_n", elenco.length) : t("imp.modelli_errore", r.errore || "0") });
@@ -593,13 +618,16 @@ function sceltaModello(r) {
     if (e.target.value !== "__altro__") { segnaModifica("LLM_MODEL", e.target.value); return; }
     const i = el("input", { id: "f-LLM_MODEL", type: "text", spellcheck: "false", placeholder: c.valore,
       oninput: (ev) => segnaModifica("LLM_MODEL", ev.target.value || undefined) });
+    segnaModifica("LLM_MODEL", undefined);      // the menu choice no longer counts: what is typed does
     e.target.replaceWith(i);
     i.focus();
   } },
   ids.includes(c.valore) || !c.valore ? [] : [el("option", { value: c.valore, text: c.valore })],
   elenco.map((m) => el("option", { value: m.id, text: m.nome && m.nome !== m.id ? m.nome + " — " + m.id : m.id })),
   el("option", { value: "__altro__", text: t("imp.altro_modello") }));
-  s.value = c.valore || ids[0];
+  const inSospeso = modifiche.LLM_MODEL;          // typed before the list arrived: keep it
+  if (typeof inSospeso === "string" && inSospeso && !ids.includes(inSospeso)) s.prepend(el("option", { value: inSospeso, text: inSospeso }));
+  s.value = typeof inSospeso === "string" && inSospeso ? inSospeso : c.valore || ids[0];
   riga.querySelector("#f-LLM_MODEL").replaceWith(s);
   riga.append(nota);
 }
@@ -682,8 +710,12 @@ function disegnaImpostazioni() {
         controllo(c),
         el("div", { class: "campo-azioni" },
           origineChip(c),
-          c.origine === "pagina" && configurabile ? el("button", { type: "button", class: "link", text: t("imp.torna_env"),
-            onclick: () => segnaModifica(c.nome, null) }) : null,
+          c.origine === "pagina" && configurabile ? el("button", { type: "button", class: "link",
+            text: c.base ? t("imp.torna_env") : t("imp.torna_predefinito"), onclick: () => {
+              const f = document.getElementById("f-" + c.nome);
+              if (f && f.tagName !== "SELECT" && c.tipo !== "secret") { f.value = ""; f.placeholder = c.base ? t("imp.valore_env") : (valorePredefinito(c) || ""); }
+              segnaModifica(c.nome, null);
+            } }) : null,
           c.tipo === "secret" && c.impostato && configurabile ? el("button", { type: "button", class: "link", text: t("imp.cancella"),
             onclick: () => { document.getElementById("f-" + c.nome).placeholder = t("imp.cancellata"); segnaModifica(c.nome, ""); } }) : null)))))));
   $("#savebar").hidden = true;
@@ -789,6 +821,7 @@ async function caricaSistema() {
     } catch (e) { toast(e.message, 6000); }
   };
   const ripristinaPw = async () => {
+    if (!attuale.value) { toast(t("sis.pw_serve_attuale"), 5000); attuale.focus(); return; }
     try {
       csrf = (await api("DELETE", "password", { attuale: attuale.value })).csrf;
       toast(t("sis.pw_ripristinata"), 5000);
@@ -850,12 +883,18 @@ async function importa(ev) {
     if (d && d.app === "alexa-ai-bridge" && d.impostazioni && typeof d.impostazioni === "object" && !Array.isArray(d.impostazioni)) valori = d.impostazioni;
   } catch (e) { valori = null; }
   if (!valori) { toast(t("sis.importa_errore"), 6000); return; }
+  // a backup never holds keys: an address whose key is missing is left out, to be set again with its key
+  const coppie = { LLM_BASE_URL: "LLM_API_KEY", HA_URL: "HA_TOKEN", BRAVE_URL: "BRAVE_API_KEY", TAVILY_URL: "TAVILY_API_KEY" };
+  const saltati = Object.keys(coppie).filter((u) => u in valori && !(coppie[u] in valori));
+  saltati.forEach((u) => delete valori[u]);
+  if (!Object.keys(valori).length) { toast(t("sis.importa_solo_url", saltati.join(", ")), 9000); return; }
   if (!confirm(t("sis.importa_conferma", Object.keys(valori).length))) return;
   const avvioPrima = stato ? stato.avvio : 0;
   try {
     const r = await api("POST", "impostazioni", { valori });
     if (r.riavvio) await attendiRiavvio(avvioPrima);
-    toast(t("sis.importate"));
+    campi = null;
+    toast((r.riavvio ? t("sis.importate") : t("imp.salvate_riavvia")) + (saltati.length ? " " + t("sis.importa_saltati", saltati.join(", ")) : ""), 9000);
   } catch (e) { toast(e.message, 8000); }
 }
 

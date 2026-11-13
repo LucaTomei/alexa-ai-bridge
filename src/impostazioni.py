@@ -3,7 +3,7 @@
 They are stored as JSON in DATA_DIR/settings.json (a Docker volume) and override the values from .env. This module is
 imported before every other one, so the overrides are in os.environ when the other modules read their settings.
 Saving restarts the gunicorn worker, which imports everything again with the new values."""
-import json, math, os, tempfile
+import json, math, os, re, tempfile
 from urllib.parse import urlsplit
 
 DATA_DIR = os.environ.get("DATA_DIR", "/data")
@@ -123,6 +123,14 @@ def etichetta(nome, lingua="en"):
     return nome
 
 
+def etichetta_piena(nome, lingua="en"):
+    """The label with its group, e.g. "Home Assistant: URL", for messages about a field."""
+    for c in CAMPI:
+        if c[0] == nome:
+            return "%s: %s" % (GRUPPI[c[1]][1 if lingua == "en" else 0], etichetta(nome, lingua))
+    return nome
+
+
 def m(lingua, it, en):
     return en if lingua == "en" else it
 
@@ -162,7 +170,7 @@ def errore_valore(nome, valore, lingua="en"):
             n = float(valore)
         except ValueError:
             return m(lingua, "%s deve essere un numero.", "%s must be a number.") % nome_campo
-        if not math.isfinite(n) or not minimo <= n <= massimo or (intero and n != int(n)):
+        if not math.isfinite(n) or not minimo <= n <= massimo or (intero and not re.fullmatch(r"[+-]?\d+", valore)):
             if intero:
                 return m(lingua, "%s deve essere un numero intero tra %g e %g.", "%s must be a whole number between %g and %g.") \
                     % (nome_campo, minimo, massimo)
@@ -293,8 +301,9 @@ def valori(lingua="it"):
     out = []
     for nome, gruppo, tipo, opzioni, testi_it, testi_en in CAMPI:
         v = os.environ.get(nome, "")
-        if nome == "LLM_API" and not v:
-            v = os.environ.get("LLM_FORMAT", "")      # the old name of the same setting, still accepted
+        vecchio = nome == "LLM_API" and nome not in os.environ and bool(os.environ.get("LLM_FORMAT"))
+        if vecchio:
+            v = os.environ["LLM_FORMAT"]              # the old name of the same setting, still accepted
         nascosto = mascherato(v) if nome in URL else None
         nome_campo, aiuto = testi_en if lingua == "en" else testi_it
         out.append({"nome": nome, "gruppo": gruppo, "nome_gruppo": GRUPPI[gruppo][1 if lingua == "en" else 0],
@@ -302,7 +311,8 @@ def valori(lingua="it"):
                     "predefinito": PREDEFINITI.get(nome, ""), "mascherato": nascosto,
                     "predefinito_testo": PREDEFINITI_TESTO.get(nome, ("", ""))[1 if lingua == "en" else 0],
                     "valore": None if nome in SEGRETI or nascosto else v, "impostato": bool(v),
-                    "origine": "pagina" if nome in OVERRIDE else ("env" if nome in os.environ else "default")})
+                    "base": BASE.get(nome) is not None if nome in OVERRIDE else nome in os.environ,   # has a .env value
+                    "origine": "pagina" if nome in OVERRIDE else ("env" if nome in os.environ or vecchio else "default")})
     return out
 
 

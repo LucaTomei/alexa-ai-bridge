@@ -9,6 +9,8 @@ import threading
 
 LINGUE = ("it", "en")
 SCELTA = (os.environ.get("LANGUAGE") or "auto").strip().lower()
+if SCELTA not in LINGUE + ("auto",) and SCELTA[:2] in LINGUE and SCELTA[2:3] in ("-", "_"):
+    SCELTA = SCELTA[:2]          # it-IT, en_GB...: accepted as in 1.0
 if SCELTA not in LINGUE + ("auto",):
     raise SystemExit("LANGUAGE must be 'auto' (the language of each request), 'it' or 'en', not %r" % os.environ.get("LANGUAGE"))
 LINGUA = SCELTA if SCELTA in LINGUE else "it"      # when a request does not say (admin page, scripts)
@@ -157,6 +159,14 @@ PAROLE_ATTESA = {"allora", "e allora", "allora che mi dici", "hai finito", "sei 
                  "i'm here", "yes", "the answer", "give me the answer", "tell me the answer", "what's the answer"}
 SI = re.compile(r"^\s*(s[iì]'?|certo|confermo|conferma|ok|okay|va bene|procedi|vai|fallo|esatto|d'accordo|perfetto|"
                 r"yes|yeah|yep|sure|of course|confirm|go ahead|do it|correct|alright|all right)\b", re.I)
+_NEGA = re.compile(r"\b(?:no|non|nope|mai|not|never|don'?t|do not)\b", re.I)
+
+
+def e_un_si(testo):
+    """A short answer that agrees ("si'", "certo, chiudile", "yes, go ahead"), never a question or a request that only
+    starts with such a word ("si possono chiudere le tapparelle?", "sure, how is the weather"), nor a refusal."""
+    t = (testo or "").strip()
+    return bool(SI.match(t)) and not _NEGA.search(t) and not t.endswith("?") and len(re.findall(r"[^\W_]+", t)) <= 4
 NOTA_AZIONI = re.compile(r"\[(?:azioni eseguite|actions done):[^\]]*\]")
 
 

@@ -63,6 +63,7 @@ SI = L.SI        # a "yes" in Italian or English
 
 def azzera_azioni():
     _tl.azioni = []
+    _tl.entita_fatte = set()     # every entity acted on in this turn: the confirmation limit counts them all
 
 def azioni_fatte():
     return list(getattr(_tl, "azioni", []))
@@ -71,9 +72,10 @@ def imposta_simulazione(attiva):
     """Test chat of the admin page: every check runs, but no command is sent to Home Assistant."""
     _tl.simula = bool(attiva)
 
-def imposta_domanda(testo):
-    """Called before every model request: a confirmation counts only if the user's last sentence is a yes."""
-    _tl.consenso = bool(SI.match(testo or ""))
+def imposta_domanda(testo, chiesto=True):
+    """Called before every model request: a confirmation counts only if the user's last sentence is a short yes
+    and (chiesto) the assistant's previous turn was a question."""
+    _tl.consenso = bool(chiesto) and L.e_un_si(testo)
 
 def _req(method, path, body=None, timeout=10):
     req = urllib.request.Request(HA + "/api/" + path, None if body is None else json.dumps(body).encode(), method=method,
@@ -101,6 +103,23 @@ def riga(s):
             ex.append("%s=%s" % (k, v))
     st = s["state"] + ((" " + a["unit_of_measurement"]) if a.get("unit_of_measurement") else "")
     return "%s | %s | %s%s" % (s["entity_id"], nome(s), st, (" | " + ", ".join(e for e in ex if not e.startswith("unit_of"))) if ex else "")
+
+COPERTURE_VIETATE = {"garage", "gate", "door"}     # device_class of covers that open a way into the home
+
+
+def vietata(s, tutti=None):
+    """True if this entity can never be controlled: forbidden name or ID, a garage/gate/door cover, or a scene that
+    sets a forbidden entity (a scene could unlock a door). tutti: entity_id -> state, to check scene members."""
+    if VIETATO.search(s["entity_id"] + " " + nome(s)):
+        return True
+    a = s.get("attributes") or {}
+    if s["entity_id"].startswith("cover.") and str(a.get("device_class") or "").lower() in COPERTURE_VIETATE:
+        return True
+    if s["entity_id"].startswith("scene."):
+        membri = a.get("entity_id") if isinstance(a.get("entity_id"), list) else []
+        tutti = tutti or {}
+        return any(isinstance(e, str) and e != s["entity_id"] and vietata(tutti.get(e) or {"entity_id": e}, None) for e in membri)
+    return False
 
 def leggibile(s):
     return s["entity_id"].split(".")[0] in LEGGIBILI and s["state"] not in ("unavailable",)
@@ -138,7 +157,8 @@ def cerca(testo):
     hit = hit[:40]
     if not hit:
         return L.t("nessuna_entita") % testo
-    return "\n".join((L.t("non_comandabile") if VIETATO.search(s["entity_id"] + " " + nome(s)) else "") + riga(s) for s in hit)
+    tutti = {s["entity_id"]: s for s in stati()}
+    return "\n".join((L.t("non_comandabile") if vietata(s, tutti) else "") + riga(s) for s in hit)
 
 def esegui(dominio, servizio, entita, dati=None, confermato=False):
     if isinstance(entita, str):   # some models send one entity as a plain string
@@ -154,10 +174,11 @@ def esegui(dominio, servizio, entita, dati=None, confermato=False):
             return L.t("altro_dominio") % (e, dominio)
         if e not in S:
             return L.t("non_esiste") % e
-        if VIETATO.search(e + " " + nome(S[e])):
+        if vietata(S[e], S):
             return L.t("vietata") % (nome(S[e]), e)
     dati = {k: v for k, v in (dati if isinstance(dati, dict) else {}).items() if k in ("brightness_pct", "position", "temperature", "hvac_mode", "humidity", "color_temp_kelvin", "rgb_color")}
-    multi = len(entita) > MAX_SENZA_CONFERMA or any(e in GRUPPI for e in entita)
+    fatte = getattr(_tl, "entita_fatte", set())   # split calls in one turn count together
+    multi = max(len(entita), len(fatte | set(entita))) > MAX_SENZA_CONFERMA or any(e in GRUPPI for e in entita)
     if multi and not (confermato and getattr(_tl, "consenso", False)):
         return L.t("serve_conferma") % ", ".join(nome(S[e]) for e in entita)
     simulata = getattr(_tl, "simula", False)
@@ -165,6 +186,7 @@ def esegui(dominio, servizio, entita, dati=None, confermato=False):
         _req("POST", "services/%s/%s" % (dominio, servizio), dict(dati, entity_id=entita), timeout=15)
         _cache["t"] = 0
     log.info("azione HA%s: %s.%s %s %s", " (simulata)" if simulata else "", dominio, servizio, ",".join(entita), json.dumps(dati) if dati else "")
+    _tl.entita_fatte = fatte | set(entita)
     _tl.azioni = getattr(_tl, "azioni", []) + ["%s%s.%s %s%s" % ("[simulata] " if simulata else "", dominio, servizio, ",".join(entita), (" " + json.dumps(dati)) if dati else "")]
     return L.t("fatto_su") % (dominio, servizio, ", ".join(nome(S[e]) for e in entita))
 

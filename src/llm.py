@@ -16,7 +16,8 @@ for _v in ("LLM_BASE_URL", "LLM_MODEL"):
 BASE = os.environ["LLM_BASE_URL"].strip().rstrip("/")
 KEY = os.environ.get("LLM_API_KEY", "").strip()
 MODEL = os.environ["LLM_MODEL"].strip()
-API = (os.environ.get("LLM_API") or os.environ.get("LLM_FORMAT")
+# LLM_FORMAT is the old name; LLM_API set but empty (e.g. "automatic" saved from the admin page) means: guess from the URL
+API = ((os.environ.get("LLM_API") if "LLM_API" in os.environ else os.environ.get("LLM_FORMAT"))
        or ("anthropic" if "anthropic.com" in BASE else "openai")).strip().lower()
 if API not in ("anthropic", "openai"):
     raise SystemExit("LLM_API must be 'anthropic' or 'openai' (OpenAI-compatible), not %r" % API)

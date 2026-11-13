@@ -99,7 +99,7 @@ def test_system_tab(url):
 
 
 @pytest.mark.parametrize("scheda, testi", [
-    ("panoramica", ("Overview", "Up for 2 days", "Checks", "Since the last start")),
+    ("panoramica", ("Overview", "Up for 2 days", "Checks", "In the history")),
     ("casa", ("Never controllable (entity type)", "Forbidden by you", "Always ask for a yes")),
     ("impostazioni", ("Assistant language", "API key", "Admin page")),
     ("sistema", ("Download en-US", "Change the admin page password", "Network and publishing")),

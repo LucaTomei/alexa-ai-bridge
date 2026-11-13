@@ -90,7 +90,7 @@ def _modifica_storico(cambia):
         tmp = FILE_STORICO + ".tmp"
         fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(voci, f, ensure_ascii=False)
+            json.dump(voci, f)          # ASCII escapes: any text (even a broken surrogate) can be stored
         os.replace(tmp, FILE_STORICO)
         return voci
 
@@ -329,6 +329,7 @@ def _cronometra(f):
 @bp.post("/admin/api/prova/<any(modello,web,casa):cosa>")
 def prova(cosa):
     A = _a()
+    L.imposta(_lingua())        # the checks speak the language of the page
     if cosa == "modello":
         r = _cronometra(lambda: A.ask_llm([{"role": "user", "content": L.t("prova_modello")}], timeout=30)
                         or _m("(risposta vuota)", "(empty answer)"))
@@ -425,6 +426,8 @@ def esporta_impostazioni():
     valori = {}
     for c in impostazioni.CAMPI:
         v = os.environ.get(c[0], "")
+        if c[0] == "LLM_API" and "LLM_API" not in os.environ:
+            v = os.environ.get("LLM_FORMAT", "")       # the old name of the same setting
         if v and c[0] not in impostazioni.SEGRETI and not (c[0] in impostazioni.URL and impostazioni.mascherato(v)):
             valori[c[0]] = v
     corpo = json.dumps({"app": "alexa-ai-bridge", "versione": VERSIONE, "impostazioni": valori}, indent=2, ensure_ascii=False)
@@ -442,7 +445,7 @@ def _riavvia(server):
 
 TESTI_LUNGHI = ("SYSTEM_PROMPT", "ISTRUZIONI_TURNO")
 # changing where requests go means re-entering the secret sent there: a stolen session cannot redirect a stored key
-SEGRETO_DI = {"LLM_BASE_URL": "LLM_API_KEY", "HA_URL": "HA_TOKEN"}
+SEGRETO_DI = {"LLM_BASE_URL": "LLM_API_KEY", "HA_URL": "HA_TOKEN", "BRAVE_URL": "BRAVE_API_KEY", "TAVILY_URL": "TAVILY_API_KEY"}
 
 
 def _pulisci_valore(k, v):
@@ -453,7 +456,7 @@ def _pulisci_valore(k, v):
         raise ValueError(_m("Valore non valido per %s.", "Invalid value for %s.") % nome)
     v = str(v)
     if len(v) > 20000:
-        raise ValueError(_m("%s e' troppo lungo.", "%s is too long.") % nome)
+        raise ValueError(_m("%s è troppo lungo.", "%s is too long.") % nome)
     ammessi = "\n\t" if k in TESTI_LUNGHI else ""
     if any(ord(c) < 32 and c not in ammessi for c in v) or "\x7f" in v:
         raise ValueError(_m("%s contiene caratteri non ammessi.", "%s contains characters that are not allowed.") % nome)
@@ -476,7 +479,7 @@ def _pulisci_valore(k, v):
 def _salva(cambi):
     """Validate, test-load and store changes ({name: value, or None to go back to .env}). Returns (body, status)."""
     if not impostazioni.scrivibile():
-        return {"errore": _m("La cartella %s non e' scrivibile: monta il volume dei dati (vedi docs/admin.md).",
+        return {"errore": _m("La cartella %s non è scrivibile: monta il volume dei dati (vedi docs/admin.md).",
                              "The folder %s is not writable: mount the data volume (see docs/admin.md).") % impostazioni.DATA_DIR}, 409
     if not isinstance(cambi, dict):
         return {"errore": _m("Richiesta non valida.", "Invalid request.")}, 400
@@ -493,12 +496,15 @@ def _salva(cambi):
             except ValueError as e:
                 return {"errore": str(e)}, 400
         for url, segreto in SEGRETO_DI.items():
-            nuovo_url = nuovi.get(url, impostazioni.BASE.get(url) if url in impostazioni.OVERRIDE else os.environ.get(url, ""))
-            if url in cambi and (nuovo_url or "") != os.environ.get(url, "") and segreto not in cambi:
+            url_env = (impostazioni.BASE.get(url) if url in impostazioni.OVERRIDE else os.environ.get(url)) or ""
+            nuovo_url = nuovi.get(url, url_env) or ""
+            # typed again in this very save when the address changes, and a key from .env only ever goes to the .env address
+            if (url in cambi and nuovo_url != os.environ.get(url, "") and not isinstance(cambi.get(segreto), str)) \
+                    or (nuovo_url != url_env and segreto not in nuovi):
                 lingua = _lingua()
-                return {"errore": _m("Hai cambiato %s: inserisci di nuovo %s (anche vuoto, se non serve) nello stesso salvataggio.",
-                                     "You changed %s: type %s again (even empty, if not needed) in the same save.")
-                        % (impostazioni.etichetta(url, lingua), impostazioni.etichetta(segreto, lingua))}, 400
+                return {"errore": _m("%s è cambiato: scrivi di nuovo %s (anche vuoto, se non serve) e salva tutto insieme.",
+                                     "%s changed: type %s again (even empty, if not needed) and save both together.")
+                        % (impostazioni.etichetta_piena(url, lingua), impostazioni.etichetta_piena(segreto, lingua))}, 400
         # the new settings must start the service: same checks as at startup, in a separate process
         env = dict(impostazioni.ambiente_con(nuovi), DATA_DIR=os.path.join(impostazioni.DATA_DIR, "nessun-file"))  # not the old file
         try:
@@ -674,7 +680,7 @@ def cambia_password():
     with _lock_login:
         if not _password_giusta(attuale):
             _sbagliata(chi)
-            return _errore("La password attuale non e' giusta.", "The current password is wrong.", 401)
+            return _errore("La password attuale non è giusta.", "The current password is wrong.", 401)
     if not isinstance(nuova, str) or not 12 <= len(nuova) <= 200 or any(ord(c) < 32 for c in nuova):
         return _errore("La nuova password deve avere da 12 a 200 caratteri.", "The new password must be 12 to 200 characters long.")
     impostazioni.salva_password(nuova)
@@ -688,10 +694,12 @@ def ripristina_password():
     d = request.get_json(silent=True)
     attuale = d.get("attuale") if isinstance(d, dict) else None
     chi = _client()
+    if _bloccato(chi):
+        return _errore("Troppi tentativi: riprova tra 15 minuti.", "Too many attempts: try again in 15 minutes.", 429)
     with _lock_login:
         if not _password_giusta(attuale):
             _sbagliata(chi)
-            return _errore("La password attuale non e' giusta.", "The current password is wrong.", 401)
+            return _errore("La password attuale non è giusta.", "The current password is wrong.", 401)
     impostazioni.cancella_password()
     _nuova_sessione()
     log.warning("admin: password set back to ADMIN_PASSWORD from .env")
