@@ -41,7 +41,7 @@ In the [Alexa developer console](https://developer.amazon.com/alexa/console/ask)
 | Field | Value |
 |---|---|
 | Name | anything (e.g. *Cervellone*) |
-| Primary locale | Italian (IT), or English (US) for an English assistant |
+| Primary locale | Italian (IT), or English (US) for an English assistant (you can add the other language later) |
 | Type of experience | Other |
 | Model | **Custom** |
 | Hosting | **Provision your own** |
@@ -49,17 +49,32 @@ In the [Alexa developer console](https://developer.amazon.com/alexa/console/ask)
 
 Then:
 
-1. **Build → Interaction Model → JSON Editor**: select everything, paste the content of
+1. **Build → Interaction Model → JSON Editor** (left menu): select everything in the editor, paste the content of
    [`skill/interaction-model.it-IT.json`](../skill/interaction-model.it-IT.json) (Italian) or
    [`skill/interaction-model.en-US.json`](../skill/interaction-model.en-US.json) (English), click **Save**.
-2. Click **Build skill** and wait for *Build Successful* (a minute or two).
-3. Check **Intents**: you must see `AskIntent`, `AttesaIntent` and `FraseBreveIntent`. If you still see
-   `HelloWorldIntent`, the JSON was not saved: paste it again and **Save** before building.
-4. Copy the **Skill ID** (`amzn1.ask.skill.…`) from **Build → Endpoint** (or from the skill list,
-   *Copy Skill ID*). You need it in the next step.
+   Use the *Raw* button on GitHub to copy the file, or download it later from the admin page (**Sistema**).
+2. Click **Build skill** (top right) and wait for *Build Successful*, a minute or two. The **Build** tab then shows
+   the checklist below: the first three steps green, *Endpoint* still to do (step 4 of this guide).
+3. Check **Interaction Model → Intents**: you must see `AskIntent`, `AttesaIntent` and `FraseBreveIntent`. If you
+   still see `HelloWorldIntent`, the JSON was not saved: paste it again and **Save** before building.
+4. Check **Invocations → Skill Invocation Name**: it shows `cervellone` (or `big brain` for English). This is what
+   you say after *"Alexa, apri…"*.
+5. Copy the **Skill ID** (`amzn1.ask.skill.…`): in the skill list, *Copy Skill ID* under the skill's name (it is
+   also in the browser's address bar, after `/build/custom/`). You need it in the next step.
 
-> 💡 The invocation name is `cervellone`. To change it, edit `invocationName` in the JSON. Choose plain words in the
-> skill's language: a brand-like name that works when typed in the simulator may never be recognised by voice.
+![The Build tab: invocation name and intents done, the endpoint still to set](images/alexa-console-build.png)
+
+![Invocations → Skill Invocation Name](images/alexa-console-invocation.png)
+
+> 💡 To change the invocation name, edit `invocationName` in the JSON (or in this page) and build again. Choose plain
+> words in the skill's language: a brand-like name that works when typed in the simulator may never be recognised by
+> voice.
+
+**Both languages in one skill** (optional, any time later): **Language Settings** (left menu, at the bottom) → add
+**English (US)** → **Save**. Then switch the language menu at the top of the **Build** page to *English (US)*,
+paste [`skill/interaction-model.en-US.json`](../skill/interaction-model.en-US.json) in its JSON Editor, **Save** and
+**Build skill**. The endpoint and the Skill ID are shared: nothing else changes. Details in
+[alexa-skill.md](alexa-skill.md#one-skill-both-languages).
 
 ## 2. Configure and start the service
 
@@ -170,10 +185,13 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST -d '{}' https://alexa.example.c
 
 ## 4. Point the skill to your endpoint
 
-In the developer console, **Build → Endpoint**:
+In the developer console, **Build → Endpoint** (left menu):
 
-1. Service endpoint type: **HTTPS**.
-2. Default Region: `https://alexa.example.com/alexa` (your name, with `/alexa` at the end).
+![Build → Endpoint, HTTPS, Default Region](images/alexa-console-endpoint.png)
+
+1. Service endpoint type: **HTTPS** (not *AWS Lambda ARN*).
+2. Default Region: `https://alexa.example.com/alexa` (your name, with `/alexa` at the end). Leave North America,
+   Europe and Far East empty: the default region serves every country.
 3. SSL certificate type:
    - *"My development endpoint has a certificate from a trusted certificate authority"* when the certificate is
      issued for that exact name (Caddy, options A and B);
@@ -183,11 +201,13 @@ In the developer console, **Build → Endpoint**:
    The wrong choice fails silently: Alexa does not send the request at all, so nothing shows up anywhere.
    To see which one you have: `echo | openssl s_client -connect alexa.example.com:443 -servername alexa.example.com 2>/dev/null | openssl x509 -noout -ext subjectAltName`
    (a `*.` name means wildcard).
-4. **Save Endpoints**.
+4. **Save** (top right). The *Endpoint* step of the Build checklist turns green.
 
 ## 5. Test
 
-In the console, **Test** tab → set *Skill testing is enabled in* to **Development**. Type or say:
+In the console, **Test** tab → set *Skill testing is enabled in* to **Development**, choose the language next to
+the text box (*Italian (IT)* or *English (US)*) and tick **Skill I/O** to see what Alexa sends and receives. Type or
+say:
 
 ```
 apri cervellone
@@ -197,7 +217,11 @@ che tempo fa domani
 basta
 ```
 
-Then on the Echo: *"Alexa, apri cervellone"*. The skill is already available on every Echo of your account: no
+A working conversation looks like this, including a slow answer collected with *"allora"*:
+
+![The Test tab: "apri cervellone", a question, "Ci sto pensando", "allora", the answer](images/alexa-console-test.png)
+
+Then on the Echo: *"Alexa, apri cervellone"* (English: *"Alexa, open big brain"*). The skill is already available on every Echo of your account: no
 publishing or certification is needed.
 
 Follow the service while you test:
@@ -291,7 +315,7 @@ Running a build from source (`--build`) instead? Update with `git pull && docker
 | Symptom | Cause and fix |
 |---|---|
 | The container restarts in a loop | A required variable is missing: `docker logs alexa-ai-bridge` names it (`SKILL_ID`, `LLM_BASE_URL`, `LLM_MODEL`). |
-| Simulator: *"Non posso raggiungere la Skill richiesta"*, **JSON Input** filled | Alexa found the skill but your endpoint did not answer. Run the [outside checks](#check-from-outside); check the endpoint URL ends with `/alexa` and the certificate type of step 4 (**wildcard** behind Cloudflare). |
+| Simulator: *"Non posso raggiungere la Skill richiesta"* (*"There was a problem with the requested skill's response"*), **JSON Input** filled, **JSON Output** only `_DEFAULT_RESPONSE` ([screenshot](images/alexa-console-unreachable.png)) | Alexa found the skill but your endpoint did not answer. Run the [outside checks](#check-from-outside); check the endpoint URL ends with `/alexa` and the certificate type of step 4 (**wildcard** behind Cloudflare). |
 | Same, and the service log shows nothing | The request is blocked before your host: Cloudflare proxy / Bot Fight Mode (use a **DNS-only** record), a firewall, or a router without port forwarding. |
 | Log: `richiesta rifiutata: skill diversa` | `SKILL_ID` in `.env` is not the ID of this skill. Fix it and `docker compose up -d`. |
 | Log: `richiesta rifiutata: richiesta troppo vecchia` | The host's clock is wrong: enable time sync (`sudo timedatectl set-ntp true`). |
@@ -316,7 +340,7 @@ All variables go in `.env`. Only `SKILL_ID`, `LLM_BASE_URL` and `LLM_MODEL` are 
 | `SKILL_ID` | – | Only requests for this skill are accepted |
 | `LANGUAGE` | `auto` | Language of the assistant: `auto` (the language the Echo speaks), `it` or `en` |
 | `PUBLIC_HOST` | `alexa.example.com` | DNS name used by the bundled Caddy (`--profile caddy`) |
-| `BRIDGE_VERSION` | `latest` | Image version to run: `latest`, a major (`1`) or an exact version (`1.0.0`) |
+| `BRIDGE_VERSION` | `latest` (`.env.example` sets `1`) | Image version to run: `latest`, a major (`1`) or an exact version (`1.0.0`) |
 | `COMPOSE_PROFILES` | – | Optional containers started by `docker compose up`, e.g. `caddy,searxng` |
 | `LLM_API` | `anthropic` if the URL is api.anthropic.com, else `openai` | Wire format: `anthropic` or `openai` (OpenAI-compatible) |
 | `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | – | Endpoint, key (empty for local models) and model ([examples](providers.md)) |
@@ -328,16 +352,16 @@ All variables go in `.env`. Only `SKILL_ID`, `LLM_BASE_URL` and `LLM_MODEL` are 
 | `SEARXNG_URL`, `BRAVE_API_KEY`, `TAVILY_API_KEY` | – | Client-side search backends |
 | `SEARXNG_SECRET` | – | Secret of the bundled SearXNG container (`openssl rand -hex 32`) |
 | `BRAVE_URL`, `TAVILY_URL` | the official APIs | Alternative endpoints for Brave / Tavily |
-| `WEB_RESULTS`, `WEB_LANGUAGE`, `WEB_MAX` | `5`, `it`, `3` | Results per search, search language, native searches per question |
+| `WEB_RESULTS`, `WEB_LANGUAGE`, `WEB_MAX` | `5`, the conversation's language, `3` | Results per search, search language (`it`, `en`…), native searches per question |
 | `HOME_CITY`, `HOME_REGION`, `HOME_COUNTRY`, `HOME_TIMEZONE` | –, –, –, `Europe/Rome` | Local searches and "today" |
 | `HA_URL`, `HA_TOKEN`, `HA_TOOLS` | –, –, `1` | Home Assistant tools (off without a token, or with `HA_TOOLS=0`) |
 | `HTTP_USER_AGENT` (`HA_UA`) | `alexa-ai-bridge/1.0` | User agent for outgoing calls (`HA_UA` overrides it for Home Assistant) |
 | `HA_GRUPPI` | – | Comma-separated entities acting on several rooms (always confirmed) |
-| `HA_MAX_SENZA_CONFERMA` | `3` | More entities than this → confirmation |
+| `HA_MAX_SENZA_CONFERMA` | `3` | More entities than this in one answer → confirmation |
 | `HA_SUMMARY_EXTRA` | – | `entity_id=Label,…` extra lines in the home summary |
 | `HA_TEMP_PATTERN` | – | Regex of temperature sensors for the summary |
 | `HA_VIETATO` | – | Regex (on entity ID and name) of extra entities that can never be controlled, **added** to the built-in list |
-| `SYSTEM_PROMPT`, `ISTRUZIONI_TURNO` | Italian voice rules | Override the instructions |
+| `SYSTEM_PROMPT`, `ISTRUZIONI_TURNO` | built-in voice rules, in the language of the request | Override the instructions (then in one language only) |
 | `ADMIN_PASSWORD` | – | Turns the [admin page](admin.md) on (12 characters or more) |
 | `ADMIN_HISTORY` | `100` | Questions kept in the admin page history; `0` turns it off |
 | `BRIDGE_PORT` | `8090` | Port on the host, if 8090 is already in use (the URLs in these docs then use it instead of 8090) |

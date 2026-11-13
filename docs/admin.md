@@ -8,7 +8,7 @@ English: the **IT / EN** switch is at the top of every page (the first time, it 
 
 | Tab | What it does |
 |---|---|
-| **Panoramica** | Service, model, web search and Home Assistant at a glance; questions, average time, slow answers, errors and home actions since the last start; one-click checks of the model, the web search and Home Assistant. |
+| **Panoramica** | Service, model, web search and Home Assistant at a glance; questions, average time, slow answers, errors and home actions in the history; one-click checks of the model, the web search and Home Assistant. |
 | **Conversazioni** | The latest questions and answers with their time, the home actions they ran and any error. Searchable. Users are anonymised. |
 | **Chat di prova** | Talk to the assistant by text, with the same model, tools and rules as on the Echo. Home actions are **simulated** by default: every safety check runs, but nothing is sent to Home Assistant. |
 | **Casa** (*Home*) | Every Home Assistant entity the assistant could control, with what protects it: never controllable by type (locks, alarms, scripts), blocked by the built-in rules, or forbidden by you. One switch forbids an entity, another makes it always ask for a spoken *yes* (they edit `HA_VIETATO` and `HA_GRUPPI` for you). |
@@ -94,15 +94,23 @@ are replaced by a short anonymous code. *Svuota* deletes it. Without a writable 
 ## How saved settings work
 
 - Settings saved from the page are stored in `/data/settings.json`, in the `bridge_data` Docker volume, and take
-  precedence over `.env`. *"Torna al valore del .env"* removes the override.
+  precedence over `.env`. *"Torna al valore del .env"* (or *"Torna al predefinito"* when `.env` does not set it)
+  removes the override. Changes not saved yet stay in place when you switch tab or language.
+- Changing an address that receives a key (model URL, Home Assistant URL, Brave or Tavily endpoint) asks for that key
+  again in the same save, and a key from `.env` is only ever sent to the address in `.env`: a stolen session cannot
+  redirect a stored key.
 - Before saving, the new values are loaded in a separate process with the same checks as at startup: a wrong value
   (a model block without URL, invalid JSON, an invalid regular expression…) is refused and nothing changes.
 - After saving, the service restarts its worker in a few seconds. A slow answer still pending is lost.
-- `SKILL_ID` can be changed here; `ADMIN_PASSWORD` cannot (change it in `.env`).
+- `SKILL_ID` can be changed here. The admin password is changed in **Sistema** (it then replaces `ADMIN_PASSWORD`;
+  *"Torna alla password del .env"* goes back to it, after typing the current password).
 - Running the image without the compose file, Docker creates an anonymous volume for `/data`: settings saved from
   the page are lost when the container is recreated. Mount a named volume (`-v bridge_data:/data`) to keep them.
 - After a save the service restarts its worker; a test chat in progress has up to two minutes to finish. The
-  conversation history and the log start again empty.
+  conversation history is kept; the log starts again empty.
+- A backup (**Sistema → Esporta**) never holds keys or tokens. Importing it on another install leaves out the
+  addresses whose key is missing (model, Home Assistant, Brave, Tavily) and says which ones: set them again in
+  **Configurazione** together with their key.
 
 ## Settings
 

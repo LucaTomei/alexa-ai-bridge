@@ -1,6 +1,7 @@
 # The Alexa skill
 
-The skill comes in two languages; use the one that matches `LANGUAGE` in `.env`:
+The skill comes in two languages. With `LANGUAGE=auto` (the default) one skill can have both, see
+[below](#one-skill-both-languages); `LANGUAGE=it` or `en` answers in that language only.
 
 | `LANGUAGE` | Skill locale | Interaction model | Invocation |
 |---|---|---|---|
@@ -16,7 +17,8 @@ locale in the console and paste the same English model.
 With `LANGUAGE=auto` (the default) the service answers in the language of each request: Alexa tells it which locale
 the Echo speaks. To make one skill speak Italian and English:
 
-1. In the console, **Build → Languages** (*Language settings*) → add **English (US)** (and any other English locale).
+1. In the console, **Language Settings** (left menu of the **Build** tab, at the bottom) → add **English (US)** (and
+   any other English locale) → **Save**.
 2. Switch the language selector at the top of the console to English (US) → **Interaction Model → JSON Editor** →
    paste [`skill/interaction-model.en-US.json`](../skill/interaction-model.en-US.json) → **Save** → **Build skill**.
 3. The endpoint is shared by every language: nothing else to set.
@@ -86,6 +88,6 @@ was just turned on.
 
 1. Copy the interaction model to your locale and translate invocation name, carrier phrases, short phrases and
    the Attesa/Stop samples.
-2. Translate the spoken strings in `src/app.py` (`risposta(...)` calls, `AIUTO`, `PAROLE_ATTESA`) and the voice
-   rules (`SYSTEM_PROMPT`, `ISTRUZIONI_TURNO`, overridable from `.env`).
-3. Adjust the "yes" regular expression (`SI`) in `src/home_tools.py`.
+2. Everything the service says or tells the model is in [`src/lingua.py`](../src/lingua.py): add your language to
+   `LINGUE`, a column to `TESTI`, the words of `PAROLE_ATTESA`, `SI` (a *yes*) and `_NEGA` (a *no*), day and month
+   names, and map your locale in `da_locale`.

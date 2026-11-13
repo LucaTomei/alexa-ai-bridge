@@ -30,7 +30,8 @@ non-admin Home Assistant user so the token cannot change the configuration.
 
 Forbidden entities are recognised by domain (locks, alarms, scripts, automations) and by words in the entity ID or
 name. An entity with a meaningless name (*"relay 3"*) that opens a gate is not recognised: name it properly or add
-it to `HA_VIETATO`. Scenes run whatever they contain, so keep locks and alarms out of them
+it to `HA_VIETATO`. Covers marked as garage, gate or door are refused whatever their name, and so are scenes that
+include a forbidden entity; still, keep locks and alarms out of scenes
 ([details](home-assistant.md#rules-enforced-by-the-service-not-by-the-prompt)).
 
 ## Web content and model choice

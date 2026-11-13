@@ -16,21 +16,23 @@ Optional. Without `HA_TOKEN` the tools are simply not offered to the model.
    `switch`, `fan`, `humidifier`, `scene.turn_on`.
 2. **Forbidden entities** (regex on entity ID *and* friendly name): locks, alarms, scripts, automations,
    anything named like a door, gate or alarm in Italian or English (*porta, portone, cancello, allarme, door, gate,
-   garage door, siren…*), and technical services (containers, Zigbee, MQTT broker, NVR, backups…).
+   garage door, siren…*), covers whose device class is *garage*, *gate* or *door* whatever their name, scenes that
+   include a forbidden entity, and technical services (containers, Zigbee, MQTT broker, NVR, backups…).
    `HA_VIETATO` **adds** your own regex to this list, e.g. `HA_VIETATO=garage|irrigazione`; it can never remove
    a built-in rule. The check is on names: a switch that opens the gate but is called *"relay 3"* is not caught,
    so give such entities a descriptive name or list them in `HA_VIETATO`.
 3. **Explicit targets**: every entity must exist and belong to the requested domain; `all` is refused.
 4. **Allowed data keys only**: `brightness_pct`, `position`, `temperature`, `hvac_mode`, `humidity`,
    `color_temp_kelvin`, `rgb_color`. Anything else (e.g. an `entity_id` smuggled into `dati`) is dropped.
-5. **Spoken confirmation for multi-room actions**: more than `HA_MAX_SENZA_CONFERMA` entities, or any entity in
-   `HA_GRUPPI`, runs only if `confermato=true` **and the user's last sentence is a yes** (*sì, certo, va bene,
-   procedi…*). The model cannot confirm on its own.
+5. **Spoken confirmation for multi-room actions**: more than `HA_MAX_SENZA_CONFERMA` entities in one answer (split
+   calls count together), or any entity in `HA_GRUPPI`, runs only if `confermato=true` **and the user's last
+   sentence is a short yes** (*sì, certo, va bene, procedi…*, at most four words, no *no/non*) **answering a question
+   of the assistant**. The model cannot confirm on its own, and *"si possono chiudere le tapparelle?"* is not a yes.
 6. **Every executed action is logged** (`azione HA: …`) and recorded in the conversation memory.
 
-> ⚠️ **Scenes** run whatever they contain. `scene.turn_on` needs no confirmation, so a scene that unlocks a door or
-> changes several rooms bypasses rules 2 and 5. Keep locks and alarms out of scenes, or forbid those scenes with
-> `HA_VIETATO`.
+> ⚠️ **Scenes** run whatever they contain. A scene whose members include a forbidden entity is refused, but only if
+> Home Assistant lists its members (scenes made in the UI do). A scene that changes several rooms still needs no
+> confirmation: list it in `HA_GRUPPI` (or set *always ask* in the admin page's **Casa** tab).
 
 ## Dedicated Home Assistant user
 

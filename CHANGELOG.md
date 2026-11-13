@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.1.1
+
+**Interaction model: unchanged** (nothing to do in the Alexa console). No change needed in `.env`.
+
+Safety of home control:
+
+- A *yes* now counts only when it is a short answer (*sì, certo, va bene, procedi…*, up to four words, without
+  *no/non*) to a question of the assistant. Before, a request such as *"si possono chiudere tutte le tapparelle?"*
+  started with a word read as a *yes*, and a multi-room action could run without asking.
+- The confirmation limit (`HA_MAX_SENZA_CONFERMA`) counts every entity of an answer: splitting an action into
+  several smaller calls no longer avoids the question.
+- Covers whose device class is garage, gate or door are never controlled, whatever their name; scenes that include
+  a forbidden entity (a lock, an alarm…) are refused.
+
+Admin page:
+
+- A changed address now always needs its key again, Brave and Tavily endpoints included, and a key from `.env` is
+  only ever sent to the address in `.env`.
+- Unsaved settings are kept when switching tab or language; choosing *Other…* in the model menu drops the earlier
+  choice; the selected tab stays visible on phones; long default values no longer widen the page on phones.
+- Importing a backup on another install works: addresses without their key are left out and named.
+- Going back to the `.env` password is locked after too many wrong attempts, like the other password checks.
+- The checks on the overview run in the language of the page; clearer messages and contrast.
+
+Service:
+
+- Requests to `/alexa` larger than 512 KB, or without Amazon's signature headers, are refused before being read.
+- An error while saving the history can no longer leave an answer stuck on *"Ci sto pensando"*.
+- `LANGUAGE=it-IT` / `en-US` are accepted again; *automatic* API format overrides the old `LLM_FORMAT`; whole-number
+  settings refuse values such as `3.0`; `.env.example` leaves the search language empty (it follows the
+  conversation).
+- Docs: the setup guide shows the Alexa console screens (Build checklist, invocation name, endpoint, test, the
+  *"Non posso raggiungere la Skill richiesta"* case).
+
 ## 1.1.0
 
 **Interaction model: unchanged** (nothing to do in the Alexa console; to add English, see below).
