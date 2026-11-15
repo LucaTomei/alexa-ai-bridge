@@ -1,7 +1,7 @@
 """Test fixtures: a fake model endpoint (Anthropic and OpenAI-compatible), a fake Home Assistant and fake web
 search backends (SearXNG, Brave, Tavily), all in-process HTTP servers.
 Environment variables are set before the service module is imported."""
-import json, os, re, sys, tempfile, threading, time, http.server
+import atexit, json, os, re, shutil, sys, tempfile, threading, time, http.server
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
@@ -196,6 +196,7 @@ os.environ.update(
     SEARXNG_URL="http://127.0.0.1:%d" % WEB_PORT, BRAVE_URL="http://127.0.0.1:%d/brave" % WEB_PORT, BRAVE_API_KEY="brave-key",
     TAVILY_URL="http://127.0.0.1:%d/tavily" % WEB_PORT, TAVILY_API_KEY="tvly-key",
     ADMIN_PASSWORD="test-admin-password", DATA_DIR=tempfile.mkdtemp(prefix="aab-data-"))
+atexit.register(shutil.rmtree, os.environ["DATA_DIR"], True)     # nothing is left behind in /tmp after the run
 
 import app as APP  # noqa: E402  (after the environment is ready)
 import home_tools as HOME  # noqa: E402
