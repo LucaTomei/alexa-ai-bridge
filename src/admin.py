@@ -9,6 +9,7 @@ from flask import Blueprint, Response, abort, current_app, jsonify, request, sen
 from flask.sessions import SecureCookieSessionInterface
 import impostazioni
 import lingua as L
+import notifiche
 
 log = logging.getLogger("alexa-ai-bridge")
 PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
@@ -225,7 +226,10 @@ def _sbagliata(chi):
     """Records a wrong password and waits (inside the login lock: one wrong password per RITARDO from everyone)."""
     with _lock:
         _tentativi[chi].append(time.time())
+        bloccato = len(_tentativi[chi]) == 5
     log.warning("admin: wrong password (%s)", chi)
+    if bloccato:
+        notifiche.notifica("pannello", L.t("n_tentativi") % chi, True)
     time.sleep(RITARDO)
 
 
@@ -282,6 +286,7 @@ def login():
             return _errore("Password errata.", "Wrong password.", 401)
     _nuova_sessione()
     log.info("admin: login (%s)", chi)
+    notifiche.notifica("pannello", L.t("n_accesso") % chi)
     return jsonify(csrf=session["csrf"])
 
 
@@ -448,7 +453,9 @@ TESTI_LUNGHI = ("SYSTEM_PROMPT", "ISTRUZIONI_TURNO")
 # changing where requests go means re-entering the secret sent there: a stolen session cannot redirect a stored key
 SEGRETO_DI = {"LLM_BASE_URL": "LLM_API_KEY", "HA_URL": "HA_TOKEN", "BRAVE_URL": "BRAVE_API_KEY", "TAVILY_URL": "TAVILY_API_KEY"}
 # optional secrets sent to the same address: when they are set, they follow the same rule
-SEGRETI_OPZIONALI_DI = {"HA_URL": ("HA_AUTOMAZIONI_TOKEN",)}
+SEGRETI_OPZIONALI_DI = {"HA_URL": ("HA_AUTOMAZIONI_TOKEN",), "NOTIFY_TELEGRAM_URL": ("NOTIFY_TELEGRAM_TOKEN",),
+                        "NOTIFY_NTFY_URL": ("NOTIFY_NTFY_TOKEN",), "NOTIFY_GOTIFY_URL": ("NOTIFY_GOTIFY_TOKEN",),
+                        "NOTIFY_WEBHOOK_URL": ("NOTIFY_WEBHOOK_TOKEN",)}
 
 
 def _pulisci_valore(k, v):
@@ -521,6 +528,8 @@ def _salva(cambi):
             return {"errore": _m("Impostazioni non valide: ", "Invalid settings: ") + (righe[-1] if righe else "?")[:300]}, 400
         impostazioni.salva(nuovi)
     log.info("admin: settings saved (%s)", ", ".join(sorted(cambi)) or "none")
+    if notifiche.notifica("pannello", L.t("n_impostazioni") % (", ".join(sorted(cambi)) or "-")):
+        notifiche.attendi(4)                # sent before the restart
     return {"ok": True, "riavvio": _riavvia(request.environ.get("SERVER_SOFTWARE", ""))}, 200
 
 
@@ -664,6 +673,7 @@ def stato_automazione():
     except Exception as e:
         return _errore_ha(e)
     log.info("admin: automation.%s %s", servizio, v["entity_id"])
+    notifiche.notifica("automazioni", L.t("n_auto_pannello") % (v["nome"], L.t("auto_op_attiva" if d["attiva"] else "auto_op_disattiva")))
     return jsonify(ok=True)
 
 
@@ -678,7 +688,49 @@ def elimina_automazione():
     except Exception as e:
         return _errore_ha(e)
     log.info("admin: automation deleted %s (%s)", v["id"], v["nome"])
+    notifiche.notifica("automazioni", L.t("n_auto_pannello") % (v["nome"], L.t("auto_op_elimina")))
     return jsonify(ok=True)
+
+
+# ---------- notifications
+@bp.get("/admin/api/notifiche")
+def notifiche_stato():
+    N = notifiche
+    out = {"attive": N.ATTIVE, "eventi": [e for e in N.EVENTI if e in N.SCELTI], "tutti": list(N.EVENTI), "max_ora": N.MAX_ORA,
+           "canali": {c: {"configurato": ok, "dettaglio": N.dettagli()[c]} for c, ok in N.configurati().items()},
+           "ha_configurato": bool(N.HA_URL and N.HA_TOKEN), "ha_scelti": list(N.HA_SERVIZI), "servizi_ha": None,
+           "ultime": list(reversed(N.ULTIME)), "configurabile": impostazioni.scrivibile()}
+    if out["ha_configurato"]:
+        try:
+            out["servizi_ha"] = N.servizi_ha()
+        except Exception as e:
+            out["errore_ha"] = N._errore(e)
+    return jsonify(out)
+
+
+@bp.post("/admin/api/notifiche")
+def notifiche_salva():
+    d = request.get_json(silent=True)
+    if not isinstance(d, dict) or not isinstance(d.get("attive"), bool) or not isinstance(d.get("eventi"), list) \
+            or not isinstance(d.get("ha"), list) or isinstance(d.get("max_ora"), bool) or not isinstance(d.get("max_ora"), (int, str)):
+        return _errore("Richiesta non valida.", "Invalid request.")
+    eventi = [e for e in notifiche.EVENTI if e in d["eventi"]]
+    if len(eventi) != len(set(d["eventi"])) or not all(isinstance(s, str) and re.fullmatch(r"[a-z0-9_]{1,100}", s) for s in d["ha"]):
+        return _errore("Evento o servizio non valido.", "Invalid event or service.")
+    corpo, codice = _salva({"NOTIFY_ATTIVE": "1" if d["attive"] else "0", "NOTIFY_EVENTI": ",".join(eventi) or "none",
+                            "NOTIFY_HA": ",".join(dict.fromkeys(d["ha"])), "NOTIFY_MAX_ORA": str(d["max_ora"])})
+    return jsonify(corpo), codice
+
+
+@bp.post("/admin/api/notifiche/prova")
+def notifiche_prova():
+    L.imposta(_lingua())
+    if not any(notifiche.configurati().values()):
+        return _errore("Nessun canale configurato: impostalo nella Configurazione, gruppo Notifiche.",
+                       "No channel is configured: set one in Settings, Notifications group.", 409)
+    esiti = notifiche.prova()
+    log.info("admin: test notification (%s)", ", ".join("%s %s" % kv for kv in esiti.items()))
+    return jsonify(esiti=esiti, ok=all(v == "ok" for v in esiti.values()))
 
 
 # ---------- system
@@ -728,6 +780,7 @@ def esci_ovunque():
     current_app.secret_key = SEGRETO
     REVOCATE.clear()
     log.warning("admin: every session logged out")
+    notifiche.notifica("pannello", L.t("n_esci_ovunque"), True)
     return jsonify(ok=True)
 
 
@@ -774,6 +827,7 @@ def cambia_password():
     impostazioni.salva_password(nuova)
     _nuova_sessione()                    # this browser stays in, every other session is logged out
     log.warning("admin: password changed from the page")
+    notifiche.notifica("pannello", L.t("n_password"), True)
     return jsonify(csrf=session["csrf"])
 
 
@@ -791,6 +845,7 @@ def ripristina_password():
     impostazioni.cancella_password()
     _nuova_sessione()
     log.warning("admin: password set back to ADMIN_PASSWORD from .env")
+    notifiche.notifica("pannello", L.t("n_password"), True)
     return jsonify(csrf=session["csrf"])
 
 

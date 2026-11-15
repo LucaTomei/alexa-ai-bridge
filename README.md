@@ -15,6 +15,7 @@
   <a href="docs/setup.md">Setup guide</a> ·
   <a href="docs/home-assistant.md">Home Assistant</a> ·
   <a href="docs/admin.md">Admin page</a> ·
+  <a href="docs/notifications.md">Notifications</a> ·
   <a href="docs/security.md">Security</a> ·
   <a href="docs/lessons-learned.md">Lessons learned</a> ·
   <a href="CHANGELOG.md">Changelog</a>
@@ -69,6 +70,9 @@ These are real conversations in the Alexa developer console simulator, which sen
 - ⏰ **Automations by voice** (optional): *"every evening at sunset close the bedroom shutter"*: Alexa reads it
   back and creates the Home Assistant automation only after your *yes*, with the same safety rules; list, switch
   off or delete them by voice or from the admin page ([details](docs/home-assistant.md#automations-by-voice)).
+- 🔔 **Notifications** (optional): a message on your phone when an action runs after your *yes*, when the
+  model is refused a door, a lock or the alarm, when an automation is created, and more. Home Assistant app,
+  Telegram, ntfy, Gotify or any webhook, all set from the admin page ([details](docs/notifications.md)).
 - 🔒 **Secure by default**:
   - every request from Amazon is verified: signature, certificate chain, timestamp and skill ID;
   - locks, alarms, scripts and technical services can never be controlled;

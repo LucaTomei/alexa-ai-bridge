@@ -21,6 +21,7 @@ import lingua as L
 import llm
 import web_search as web
 import home_tools as casa
+import notifiche
 import admin
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -216,6 +217,7 @@ def calcola(lav):
         lav["errore"] = str(e)[:200]
     if lav["errore"]:
         log.warning("modello: %s (%.1f s)", lav["errore"], time.time() - t0)
+        notifiche.notifica("errori", L.t("n_errore") % lav["errore"][:150])
     lav["durata"] = time.time() - t0
     try:
         admin.registra(lav, lav["uid"], "alexa")   # before the answer is handed over: the history is never behind

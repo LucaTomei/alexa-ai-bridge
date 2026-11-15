@@ -76,6 +76,34 @@ CAMPI = [
      ("Token per le automazioni", "Home Assistant fa creare ed eliminare automazioni solo agli amministratori: token di un utente amministratore, usato solo per questo. Vuoto: il token sopra."),
      ("Token for automations", "Home Assistant lets only administrators create and delete automations: an administrator's token, used only for that. Empty: the token above.")),
     ("HA_AUTOMAZIONI_MAX", "casa", "number", None, ("Automazioni a voce al massimo", ""), ("Maximum automations by voice", "")),
+    ("NOTIFY_ATTIVE", "notifiche", "select", ["1", "0"],
+     ("Notifiche", "0 le sospende tutte senza cancellare i canali. Più comodo dalla scheda Notifiche."),
+     ("Notifications", "0 pauses them all without removing the channels. Easier from the Notifications tab.")),
+    ("NOTIFY_EVENTI", "notifiche", "text", None,
+     ("Eventi", "Separati da virgole: confermate, bloccate, automazioni, azioni, errori, pannello; none per nessuno. Più comodo dalla scheda Notifiche."),
+     ("Events", "Comma separated: confermate, bloccate, automazioni, azioni, errori, pannello; none for none. Easier from the Notifications tab.")),
+    ("NOTIFY_MAX_ORA", "notifiche", "number", None, ("Notifiche all'ora al massimo", "Oltre, le successive non partono (contro le raffiche)."),
+     ("Maximum notifications per hour", "Beyond this the next ones are not sent (against bursts).")),
+    ("NOTIFY_HA", "notifiche", "text", None,
+     ("App Home Assistant: servizi notify", "Es. mobile_app_iphone_di_luca, separati da virgole: usa il token di Home Assistant sopra. Più comodo dalla scheda Notifiche."),
+     ("Home Assistant app: notify services", "E.g. mobile_app_my_phone, comma separated: uses the Home Assistant token above. Easier from the Notifications tab.")),
+    ("NOTIFY_TELEGRAM_TOKEN", "notifiche", "secret", None, ("Telegram: token del bot", "Da @BotFather."), ("Telegram: bot token", "From @BotFather.")),
+    ("NOTIFY_TELEGRAM_CHAT", "notifiche", "text", None,
+     ("Telegram: chat ID", "La tua chat con il bot (scrivigli /start, poi leggi l'ID con @userinfobot) o un gruppo."),
+     ("Telegram: chat ID", "Your chat with the bot (send it /start, then get the ID from @userinfobot) or a group.")),
+    ("NOTIFY_NTFY_URL", "notifiche", "secret", None,
+     ("ntfy: indirizzo del topic", "Es. https://ntfy.sh/un-nome-difficile-da-indovinare: chi conosce il topic legge le notifiche."),
+     ("ntfy: topic address", "E.g. https://ntfy.sh/a-name-hard-to-guess: whoever knows the topic reads the notifications.")),
+    ("NOTIFY_NTFY_TOKEN", "notifiche", "secret", None, ("ntfy: token", "Solo per un server con accesso protetto."),
+     ("ntfy: token", "Only for a server with access control.")),
+    ("NOTIFY_GOTIFY_URL", "notifiche", "text", None, ("Gotify: indirizzo del server", "Es. https://gotify.example.com"),
+     ("Gotify: server address", "E.g. https://gotify.example.com")),
+    ("NOTIFY_GOTIFY_TOKEN", "notifiche", "secret", None, ("Gotify: token dell'applicazione", ""), ("Gotify: application token", "")),
+    ("NOTIFY_WEBHOOK_URL", "notifiche", "secret", None,
+     ("Webhook: indirizzo", "Riceve un POST JSON (title, text, content, message): va bene per Discord, Slack, n8n, Node-RED."),
+     ("Webhook: address", "Receives a JSON POST (title, text, content, message): works with Discord, Slack, n8n, Node-RED.")),
+    ("NOTIFY_WEBHOOK_TOKEN", "notifiche", "secret", None, ("Webhook: token", "Facoltativo, inviato come Authorization: Bearer."),
+     ("Webhook: token", "Optional, sent as Authorization: Bearer.")),
     ("ADMIN_HISTORY", "pannello", "number", None, ("Domande nello storico", "0 spegne lo storico."),
      ("Questions in the history", "0 turns the history off.")),
     ("SYSTEM_PROMPT", "avanzate", "textarea", None, ("Prompt di sistema", "Vuoto: le regole vocali incluse, nella lingua scelta."),
@@ -87,10 +115,11 @@ CAMPI = [
      ("User agent for Home Assistant", "Empty: the user agent above.")),
     ("BRAVE_URL", "avanzate", "text", None, ("Endpoint Brave", "Vuoto: l'API ufficiale."), ("Brave endpoint", "Empty: the official API.")),
     ("TAVILY_URL", "avanzate", "text", None, ("Endpoint Tavily", "Vuoto: l'API ufficiale."), ("Tavily endpoint", "Empty: the official API.")),
+    ("NOTIFY_TELEGRAM_URL", "avanzate", "text", None, ("Endpoint Telegram", "Vuoto: l'API ufficiale."), ("Telegram endpoint", "Empty: the official API.")),
 ]
 GRUPPI = {"alexa": ("Alexa", "Alexa"), "modello": ("Modello", "Model"), "tempi": ("Tempi", "Timing"),
           "web": ("Ricerca web", "Web search"), "luogo": ("Luogo", "Location"), "casa": ("Home Assistant", "Home Assistant"),
-          "pannello": ("Pannello", "Admin page"), "avanzate": ("Avanzate", "Advanced")}
+          "notifiche": ("Notifiche", "Notifications"), "pannello": ("Pannello", "Admin page"), "avanzate": ("Avanzate", "Advanced")}
 NOMI = {c[0] for c in CAMPI}
 TIPO = {c[0]: c[2] for c in CAMPI}
 OPZIONI = {c[0]: c[3] for c in CAMPI}
@@ -98,7 +127,8 @@ OPZIONI = {c[0]: c[3] for c in CAMPI}
 PREDEFINITI = {"LLM_MAX_TOKENS": "1024", "ATTESA_MAX": "6", "LLM_TIMEOUT_LUNGO": "120", "WEB_RESULTS": "5",
                "WEB_MAX": "3", "HOME_TIMEZONE": "Europe/Rome", "HA_MAX_SENZA_CONFERMA": "3", "HTTP_USER_AGENT": "alexa-ai-bridge/1.0",
                "LLM_EXTRA_JSON": "{}", "WEB_SEARCH": "auto", "HA_TOOLS": "1", "LANGUAGE": "auto", "ADMIN_HISTORY": "100",
-               "HA_AUTOMAZIONI": "0", "HA_AUTOMAZIONI_MAX": "20",
+               "HA_AUTOMAZIONI": "0", "HA_AUTOMAZIONI_MAX": "20", "NOTIFY_ATTIVE": "1", "NOTIFY_MAX_ORA": "30",
+               "NOTIFY_EVENTI": "confermate,bloccate,automazioni", "NOTIFY_TELEGRAM_URL": "https://api.telegram.org",
                "BRAVE_URL": "https://api.search.brave.com/res/v1/web/search", "TAVILY_URL": "https://api.tavily.com/search"}
 # what an empty setting means, when it is not a plain value (Italian, English)
 PREDEFINITI_TESTO = {
@@ -114,15 +144,31 @@ PREDEFINITI_TESTO = {
     "LLM_API_KEY": ("nessuna", "none"), "BRAVE_API_KEY": ("nessuna", "none"), "TAVILY_API_KEY": ("nessuna", "none"),
     "HA_TOKEN": ("nessuno: strumenti casa spenti", "none: home tools off"),
     "HA_AUTOMAZIONI_TOKEN": ("il token sopra", "the token above"),
+    "NOTIFY_HA": ("nessuno", "none"), "NOTIFY_TELEGRAM_TOKEN": ("nessuno", "none"), "NOTIFY_TELEGRAM_CHAT": ("nessuna", "none"),
+    "NOTIFY_NTFY_URL": ("nessuno", "none"), "NOTIFY_NTFY_TOKEN": ("nessuno", "none"), "NOTIFY_GOTIFY_URL": ("nessuno", "none"),
+    "NOTIFY_GOTIFY_TOKEN": ("nessuno", "none"), "NOTIFY_WEBHOOK_URL": ("nessuno", "none"), "NOTIFY_WEBHOOK_TOKEN": ("nessuno", "none"),
 }
 SEGRETI = {c[0] for c in CAMPI if c[2] == "secret"}
 
 # numbers: (minimum, maximum, integer only)
 LIMITI = {"LLM_MAX_TOKENS": (1, 200000, True), "ATTESA_MAX": (1, 7.5, False), "LLM_TIMEOUT_LUNGO": (5, 900, False),
           "WEB_RESULTS": (1, 20, True), "WEB_MAX": (1, 20, True), "HA_MAX_SENZA_CONFERMA": (0, 100, True),
-          "ADMIN_HISTORY": (0, 1000, True), "HA_AUTOMAZIONI_MAX": (1, 200, True)}
+          "ADMIN_HISTORY": (0, 1000, True), "HA_AUTOMAZIONI_MAX": (1, 200, True), "NOTIFY_MAX_ORA": (1, 1000, True)}
 # endpoints the service sends keys and tokens to: only http(s), never file:// or other schemes
-URL = ("LLM_BASE_URL", "HA_URL", "SEARXNG_URL", "BRAVE_URL", "TAVILY_URL")
+URL = ("LLM_BASE_URL", "HA_URL", "SEARXNG_URL", "BRAVE_URL", "TAVILY_URL", "NOTIFY_TELEGRAM_URL", "NOTIFY_NTFY_URL",
+       "NOTIFY_GOTIFY_URL", "NOTIFY_WEBHOOK_URL")
+# notifications: the events that can send one (the first three are the default)
+EVENTI_NOTIFICHE = ("confermate", "bloccate", "automazioni", "azioni", "errori", "pannello")
+
+
+def eventi_notifiche(valore):
+    """The chosen events: empty means the default, none (or nessuno) means no event."""
+    v = (valore or "").strip().lower()
+    if not v:
+        return set(EVENTI_NOTIFICHE[:3])
+    if v in ("none", "nessuno"):
+        return set()
+    return {x.strip() for x in v.split(",") if x.strip() in EVENTI_NOTIFICHE}
 
 
 def etichetta(nome, lingua="en"):
@@ -188,11 +234,19 @@ def errore_valore(nome, valore, lingua="en"):
         p = urlsplit(valore)
         if p.scheme not in ("http", "https") or not p.hostname:
             return m(lingua, "%s deve essere un indirizzo http:// o https://.", "%s must be an http:// or https:// address.") % nome_campo
+    if nome == "NOTIFY_EVENTI" and valore.lower() not in ("none", "nessuno"):
+        sbagliati = [x.strip() for x in valore.split(",") if x.strip() and x.strip().lower() not in EVENTI_NOTIFICHE]
+        if sbagliati:
+            return m(lingua, "%s: eventi sconosciuti (%s). Ammessi: %s.", "%s: unknown events (%s). Allowed: %s.") \
+                % (nome_campo, ", ".join(sbagliati), ", ".join(EVENTI_NOTIFICHE))
+    if nome == "NOTIFY_HA" and not re.fullmatch(r"\s*(?:notify\.)?[a-z0-9_]+\s*(?:,\s*(?:notify\.)?[a-z0-9_]+\s*)*,?\s*", valore):
+        return m(lingua, "%s: nomi di servizi notify separati da virgole, es. mobile_app_telefono.",
+                 "%s: names of notify services, comma separated, e.g. mobile_app_phone.") % nome_campo
     return None
 
 
 def controlla(env):
-    for nome in list(LIMITI) + list(URL):
+    for nome in list(LIMITI) + list(URL) + ["NOTIFY_EVENTI", "NOTIFY_HA"]:
         e = errore_valore(nome, env.get(nome))
         if e:
             return e

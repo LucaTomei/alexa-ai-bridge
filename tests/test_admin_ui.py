@@ -64,11 +64,13 @@ def test_conversations(url):
 def test_settings_without_secrets(url):
     dom = apri(url, "impostazioni")
     assert visibile(dom, "tab-impostazioni") and 'data-campo="LLM_MODEL"' in dom and 'data-campo="HA_VIETATO"' in dom
-    assert dom.count('class="gruppo"') == 8 and "Lingua dell'assistente" in dom
+    assert dom.count('class="gruppo"') == 9 and "Lingua dell'assistente" in dom and 'data-campo="NOTIFY_WEBHOOK_URL"' in dom
     assert "demo-secret-key" not in dom and "demo-secret-token" not in dom and "demo-password-123" not in dom
+    assert "demo-secret-telegram" not in dom
 
 
-@pytest.mark.parametrize("scheda", ["panoramica", "conversazioni", "chat", "casa", "automazioni", "impostazioni", "sistema", "registro"])
+@pytest.mark.parametrize("scheda", ["panoramica", "conversazioni", "chat", "casa", "automazioni", "notifiche", "impostazioni", "sistema",
+                                    "registro"])
 def test_phone_width_has_no_sideways_scroll(url, scheda):
     r = subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--no-sandbox", "--no-first-run", "--window-size=500,900",
                         "--virtual-time-budget=8000", "--dump-dom", "%s/demo-frame/360/%s" % (url, scheda)],
@@ -101,6 +103,15 @@ def test_automations_tab(url):
     assert "Irrigazione notte" not in dom and "demo-secret-token" not in dom
 
 
+def test_notifications_tab(url):
+    dom = apri(url, "notifiche")
+    assert visibile(dom, "tab-notifiche") and dom.count('class="scelta"') == 6 + 3       # six events, three notify services
+    for testo in ("Quando avvisarti", "Tentativi bloccati", "notify.mobile_app_tablet", "chat 123456", "Non configurato",
+                  "Invia una notifica di prova", "Telegram · HTTP 401", "Eseguito dopo il tuo sì"):
+        assert testo in dom, testo
+    assert "demo-secret-telegram" not in dom and "demo-secret-token" not in dom
+
+
 def test_system_tab(url):
     dom = apri(url, "sistema")
     assert visibile(dom, "tab-sistema") and "amzn1.ask.skill.demo" in dom and "https://alexa.example.org/alexa" in dom
@@ -112,6 +123,7 @@ def test_system_tab(url):
     ("panoramica", ("Overview", "Up for 2 days", "Checks", "In the history")),
     ("casa", ("Never controllable (entity type)", "Forbidden by you", "Always ask for a yes")),
     ("automazioni", ("Automations by voice are on", "No longer in Home Assistant", "never run", "Delete")),
+    ("notifiche", ("When to tell you", "Blocked attempts", "Home Assistant app", "Send a test notification")),
     ("impostazioni", ("Assistant language", "API key", "Admin page")),
     ("sistema", ("Download en-US", "Change the admin page password", "Network and publishing")),
 ])

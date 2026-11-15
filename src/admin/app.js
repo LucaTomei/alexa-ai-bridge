@@ -103,7 +103,7 @@ const TESTI = {
     "opt.LLM_API.": "Automatico (dall'URL)", "opt.LLM_API.anthropic": "Anthropic (Claude)", "opt.LLM_API.openai": "Compatibile OpenAI",
     "opt.WEB_SEARCH.auto": "Automatica", "opt.WEB_SEARCH.native": "Nativa di Claude", "opt.WEB_SEARCH.searxng": "SearXNG",
     "opt.WEB_SEARCH.brave": "Brave Search", "opt.WEB_SEARCH.tavily": "Tavily", "opt.WEB_SEARCH.off": "Spenta",
-    "opt.HA_TOOLS.1": "Attivi", "opt.HA_TOOLS.0": "Spenti",
+    "opt.HA_TOOLS.1": "Attivi", "opt.HA_TOOLS.0": "Spenti", "opt.NOTIFY_ATTIVE.1": "Attive", "opt.NOTIFY_ATTIVE.0": "Sospese",
     "sis.lingua_auto": "Automatica: italiano o inglese, come parla l'Echo",
     "tab.automazioni": "Automazioni",
     "sub.automazioni": "Le automazioni di Home Assistant create a voce: chiedi ad Alexa \"ogni sera al tramonto accendi la luce del salone\", lei te le rilegge e le crea solo dopo il tuo sì.",
@@ -125,6 +125,26 @@ const TESTI = {
     "auto.elimina": "Elimina", "auto.elimina_conferma": "Eliminare l'automazione \"%s\" da Home Assistant?", "auto.dimentica": "Togli dall'elenco",
     "auto.eliminata": "Automazione eliminata.", "auto.attivata": "Automazione attivata.", "auto.disattivata": "Automazione disattivata.",
     "opt.HA_AUTOMAZIONI.1": "Attive", "opt.HA_AUTOMAZIONI.0": "Spente",
+    "tab.notifiche": "Notifiche",
+    "sub.notifiche": "Un messaggio sul telefono quando succede qualcosa che vale la pena sapere: un'azione confermata a voce, un tentativo bloccato su porte o allarmi, un'automazione creata.",
+    "not.generale": "Notifiche", "not.attive": "Invia notifiche", "not.max": "Al massimo all'ora",
+    "not.max_desc": "Oltre questo numero le successive non partono; lo stesso messaggio non si ripete entro due minuti.",
+    "not.eventi": "Quando avvisarti",
+    "nev.confermate": "Azioni confermate a voce", "nevd.confermate": "Azioni su più stanze o su entità che chiedono sempre un sì, eseguite dopo il tuo sì.",
+    "nev.bloccate": "Tentativi bloccati", "nevd.bloccate": "Il modello ha chiesto qualcosa di vietato: aprire una serratura o una porta, l'antifurto, un'entità che hai vietato.",
+    "nev.automazioni": "Automazioni", "nevd.automazioni": "Create, attivate, disattivate o eliminate, a voce o da questa pagina.",
+    "nev.azioni": "Ogni azione sulla casa", "nevd.azioni": "Ogni comando inviato a Home Assistant, anche accendere una luce: possono essere tante.",
+    "nev.errori": "Errori", "nevd.errori": "Alexa non è riuscita a rispondere (modello irraggiungibile, chiave sbagliata…).",
+    "nev.pannello": "Pannello di gestione", "nevd.pannello": "Accessi, troppe password sbagliate, password cambiata, impostazioni salvate.",
+    "not.canali": "Canali", "not.canali_desc": "Ogni canale configurato riceve tutte le notifiche. Token e indirizzi si impostano nella Configurazione, gruppo Notifiche.",
+    "can.ha": "App Home Assistant", "can.telegram": "Telegram", "can.ntfy": "ntfy", "can.gotify": "Gotify", "can.webhook": "Webhook",
+    "not.configurato": "Configurato", "not.non_configurato": "Non configurato", "not.configura": "Configura",
+    "not.servizi": "Servizi notify di Home Assistant: scegli dove mandarle (l'app sul telefono si chiama mobile_app_…).",
+    "not.servizi_nessuno": "Home Assistant non ha servizi notify: installa l'app Home Assistant sul telefono e accedi.",
+    "not.servizi_errore": "Elenco dei servizi non disponibile (%s).", "not.ha_non_configurato": "Serve Home Assistant (URL e token) nella Configurazione.",
+    "not.prova": "Invia una notifica di prova", "not.prova_nessuno": "Configura prima almeno un canale.",
+    "not.ultime": "Ultime notifiche", "not.ultime_vuoto": "Ancora nessuna notifica da quando il servizio è partito.",
+    "nev.prova": "Prova",
   },
   en: {
     "login.sub": "Admin page", "login.password": "Password", "login.entra": "Log in",
@@ -223,7 +243,7 @@ const TESTI = {
     "opt.LLM_API.": "Automatic (from the URL)", "opt.LLM_API.anthropic": "Anthropic (Claude)", "opt.LLM_API.openai": "OpenAI-compatible",
     "opt.WEB_SEARCH.auto": "Automatic", "opt.WEB_SEARCH.native": "Claude's native search", "opt.WEB_SEARCH.searxng": "SearXNG",
     "opt.WEB_SEARCH.brave": "Brave Search", "opt.WEB_SEARCH.tavily": "Tavily", "opt.WEB_SEARCH.off": "Off",
-    "opt.HA_TOOLS.1": "On", "opt.HA_TOOLS.0": "Off",
+    "opt.HA_TOOLS.1": "On", "opt.HA_TOOLS.0": "Off", "opt.NOTIFY_ATTIVE.1": "On", "opt.NOTIFY_ATTIVE.0": "Paused",
     "sis.lingua_auto": "Automatic: Italian or English, as the Echo speaks",
     "tab.automazioni": "Automations",
     "sub.automazioni": "The Home Assistant automations created by voice: ask Alexa \"every evening at sunset turn on the living room light\", she reads it back and creates it only after your yes.",
@@ -245,6 +265,26 @@ const TESTI = {
     "auto.elimina": "Delete", "auto.elimina_conferma": "Delete the automation \"%s\" from Home Assistant?", "auto.dimentica": "Remove from the list",
     "auto.eliminata": "Automation deleted.", "auto.attivata": "Automation switched on.", "auto.disattivata": "Automation switched off.",
     "opt.HA_AUTOMAZIONI.1": "On", "opt.HA_AUTOMAZIONI.0": "Off",
+    "tab.notifiche": "Notifications",
+    "sub.notifiche": "A message on your phone when something worth knowing happens: an action confirmed by voice, a blocked attempt on doors or alarms, an automation created.",
+    "not.generale": "Notifications", "not.attive": "Send notifications", "not.max": "At most per hour",
+    "not.max_desc": "Beyond this number the next ones are not sent; the same message is not repeated within two minutes.",
+    "not.eventi": "When to tell you",
+    "nev.confermate": "Actions confirmed by voice", "nevd.confermate": "Actions on several rooms or on entities that always ask for a yes, run after your yes.",
+    "nev.bloccate": "Blocked attempts", "nevd.bloccate": "The model asked for something forbidden: opening a lock or a door, the alarm, an entity you forbade.",
+    "nev.automazioni": "Automations", "nevd.automazioni": "Created, enabled, disabled or deleted, by voice or from this page.",
+    "nev.azioni": "Every home action", "nevd.azioni": "Every command sent to Home Assistant, even turning on a light: they can be many.",
+    "nev.errori": "Errors", "nevd.errori": "Alexa could not answer (model unreachable, wrong key…).",
+    "nev.pannello": "Admin page", "nevd.pannello": "Logins, too many wrong passwords, password changed, settings saved.",
+    "not.canali": "Channels", "not.canali_desc": "Every configured channel gets every notification. Tokens and addresses are set in Settings, Notifications group.",
+    "can.ha": "Home Assistant app", "can.telegram": "Telegram", "can.ntfy": "ntfy", "can.gotify": "Gotify", "can.webhook": "Webhook",
+    "not.configurato": "Configured", "not.non_configurato": "Not configured", "not.configura": "Configure",
+    "not.servizi": "Home Assistant notify services: choose where to send them (the phone app is called mobile_app_…).",
+    "not.servizi_nessuno": "Home Assistant has no notify service: install the Home Assistant app on your phone and log in.",
+    "not.servizi_errore": "Service list not available (%s).", "not.ha_non_configurato": "Home Assistant (URL and token) is needed in Settings.",
+    "not.prova": "Send a test notification", "not.prova_nessuno": "Configure at least one channel first.",
+    "not.ultime": "Latest notifications", "not.ultime_vuoto": "No notification yet since the service started.",
+    "nev.prova": "Test",
   },
 };
 
@@ -278,6 +318,7 @@ function cambiaLingua(l) {
   if (tab === "impostazioni") caricaImpostazioni(true);
   if (tab === "casa") disegnaCasa();
   if (tab === "automazioni") disegnaAutomazioni();
+  if (tab === "notifiche") disegnaNotifiche();
   if (tab === "sistema") caricaSistema();
   if (tab === "chat" && !conversazione.length) messaggioVuoto(t("chat.vuoto"));
 }
@@ -381,6 +422,7 @@ function vaiA(tab) {
   if (tab === "impostazioni") caricaImpostazioni(true);
   if (tab === "casa" && !modificheCasa()) caricaCasa();
   if (tab === "automazioni") caricaAutomazioni();
+  if (tab === "notifiche" && !modificheNotifiche()) caricaNotifiche();
   if (tab === "sistema") caricaSistema();
   if (tab === "registro") { caricaRegistro(); timerRegistro = setInterval(() => { if ($("#auto-registro").checked) caricaRegistro(); }, 5000); }
   if (tab === "chat") {
@@ -690,6 +732,101 @@ function disegnaAutomazioni() {
         }),
         elimina));
   }));
+}
+
+// ---------- notifications
+let notif = null, notifScelte = null;
+
+function scelteDa(n) {
+  return { attive: n.attive, eventi: new Set(n.eventi), ha: new Set(n.ha_scelti), max_ora: String(n.max_ora) };
+}
+
+async function caricaNotifiche() {
+  try { notif = await api("GET", "notifiche"); } catch (e) { toast(e.message); return; }
+  notifScelte = scelteDa(notif);
+  disegnaNotifiche();
+}
+
+function modificheNotifiche() {
+  if (!notif || !notifScelte) return 0;
+  const p = scelteDa(notif), diversi = (a, b) => [...new Set([...a, ...b])].filter((x) => a.has(x) !== b.has(x)).length;
+  return (p.attive !== notifScelte.attive) + (p.max_ora !== notifScelte.max_ora) + diversi(p.eventi, notifScelte.eventi) + diversi(p.ha, notifScelte.ha);
+}
+
+function aggiornaBarraNotifiche() {
+  const n = modificheNotifiche();
+  $("#notif-savebar").hidden = n === 0;
+  $("#notif-savebar-testo").textContent = testoModifiche(n);
+}
+
+function casella(etichetta, descrizione, acceso, cambia, disabilitata) {
+  const i = el("input", { type: "checkbox", disabled: disabilitata || null, onchange: (e) => { cambia(e.target.checked); aggiornaBarraNotifiche(); } });
+  i.checked = acceso;
+  return el("label", { class: "scelta" }, i, el("div", {}, el("b", { text: etichetta }), descrizione ? el("span", { text: descrizione }) : null));
+}
+
+function disegnaNotifiche() {
+  const n = notif, sc = notifScelte;
+  if (!n || !sc) return;
+  const dis = !n.configurabile;
+  const attive = interruttore(t("not.attive"), sc.attive, (on) => { sc.attive = on; aggiornaBarraNotifiche(); });
+  if (dis) attive.querySelector("input").disabled = true;
+  const max = el("input", { type: "number", class: "numero", min: "1", max: "1000", step: "1", disabled: dis || null,
+    oninput: (e) => { sc.max_ora = e.target.value; aggiornaBarraNotifiche(); } });
+  max.value = sc.max_ora;
+  const esito = el("pre", { class: "esito", hidden: true });
+  const provaBtn = bottone(t("not.prova"), async (ev) => {
+    ev.target.disabled = true;
+    esito.hidden = false; esito.className = "esito"; esito.textContent = "…";
+    try {
+      const r = await api("POST", "notifiche/prova");
+      esito.className = "esito " + (r.ok ? "ok" : "bad");
+      esito.textContent = Object.entries(r.esiti).map(([c, v]) => (v === "ok" ? "✓ " : "✗ ") + t("can." + c) + (v === "ok" ? "" : ": " + v)).join("\n");
+    } catch (e) { esito.className = "esito bad"; esito.textContent = "✗ " + e.message; }
+    ev.target.disabled = false;
+    caricaNotifiche();
+  }, "primary");
+  const configurati = Object.values(n.canali).some((c) => c.configurato);
+  if (!configurati) provaBtn.disabled = true;
+
+  let servizi;
+  if (!n.ha_configurato) servizi = el("p", { class: "muted small", text: t("not.ha_non_configurato") });
+  else if (n.servizi_ha === null) servizi = el("p", { class: "muted small", text: t("not.servizi_errore", n.errore_ha || "?") });
+  else {
+    const nomi = [...new Set([...n.servizi_ha, ...sc.ha])].sort();
+    servizi = el("div", {}, el("p", { class: "muted small", text: nomi.length ? t("not.servizi") : t("not.servizi_nessuno") }),
+      el("div", { class: "scelte" }, nomi.map((s) => casella("notify." + s, null, sc.ha.has(s), (on) => { if (on) sc.ha.add(s); else sc.ha.delete(s); }, dis))));
+  }
+  const canale = (c) => {
+    const k = n.canali[c];
+    return el("div", { class: "canale" },
+      el("div", { class: "canale-info" }, el("b", { text: t("can." + c) }), k.dettaglio ? el("div", { text: k.dettaglio }) : null),
+      el("span", { class: "stato-testo " + (k.configurato ? "ok" : ""), text: k.configurato ? t("not.configurato") : t("not.non_configurato") }),
+      c === "ha" ? null : el("button", { class: "link", type: "button", text: t("not.configura"), onclick: () => vaiA("impostazioni") }));
+  };
+  const ultime = n.ultime.length ? n.ultime.map((u) => el("div", { class: "voce" },
+    el("div", { class: "voce-meta" }, el("time", { text: quando(u.t) }), el("span", { class: "chip", text: t("nev." + u.evento) })),
+    el("div", { class: "a", text: u.testo }),
+    el("div", { class: "azioni" }, Object.entries(u.esiti).map(([c, v]) => el("span", { class: "chip " + (v === "ok" ? "ok" : "bad"),
+      text: t("can." + c) + (v === "ok" ? "" : " · " + v) })))))
+    : [el("p", { class: "muted small", text: t("not.ultime_vuoto") })];
+
+  $("#notifiche").replaceChildren(
+    sezione(t("not.generale"), attive,
+      rigaSis(t("not.max"), max), el("p", { class: "muted small", text: t("not.max_desc") })),
+    sezione(t("not.eventi"), el("div", { class: "scelte" }, n.tutti.map((e) =>
+      casella(t("nev." + e), t("nevd." + e), sc.eventi.has(e), (on) => { if (on) sc.eventi.add(e); else sc.eventi.delete(e); }, dis)))),
+    sezione(t("not.canali"), el("p", { class: "muted small", text: t("not.canali_desc") }),
+      ...["ha", "telegram", "ntfy", "gotify", "webhook"].map(canale), servizi,
+      el("div", { class: "azioni-sis" }, provaBtn), configurati ? null : el("p", { class: "muted small", text: t("not.prova_nessuno") }), esito),
+    sezione(t("not.ultime"), el("div", { class: "lista" }, ...ultime)));
+  aggiornaBarraNotifiche();
+}
+
+async function salvaNotifiche() {
+  const sc = notifScelte;
+  await salvaERiavvia($("#notif-salva"), () => api("POST", "notifiche",
+    { attive: sc.attive, eventi: [...sc.eventi], ha: [...sc.ha], max_ora: sc.max_ora }), caricaNotifiche);
 }
 
 // ---------- settings
@@ -1061,12 +1198,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#casa-annulla").addEventListener("click", () => { casaGruppi = new Set(casa.gruppi || []); casaVietate = new Set(casa.vietate || []); disegnaCasa(); });
   $("#casa-salva").addEventListener("click", salvaCasa);
   $("#auto-filtro").addEventListener("input", disegnaAutomazioni);
+  $("#notif-salva").addEventListener("click", salvaNotifiche);
+  $("#notif-annulla").addEventListener("click", () => { notifScelte = scelteDa(notif); disegnaNotifiche(); });
   $("#auto-aggiorna").addEventListener("click", caricaAutomazioni);
   $("#salva").addEventListener("click", salva);
   $("#annulla").addEventListener("click", () => { modifiche = {}; disegnaImpostazioni(); });
   $("#livello").addEventListener("change", caricaRegistro);
   $("#importa-file").addEventListener("change", importa);
-  window.addEventListener("beforeunload", (e) => { if (Object.keys(modifiche).length || modificheCasa()) e.preventDefault(); });
+  window.addEventListener("beforeunload", (e) => { if (Object.keys(modifiche).length || modificheCasa() || modificheNotifiche()) e.preventDefault(); });
   try {
     const s = await api("GET", "sessione");
     if (s.autenticato) { csrf = s.csrf; avvia(); } else mostraLogin();

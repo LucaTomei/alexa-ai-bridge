@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.3.0
+
+**Interaction model: unchanged** (nothing to do in the Alexa console). No change needed in `.env`: nothing is sent
+until you configure a channel.
+
+- **Notifications** ([details](docs/notifications.md)): a message when an action runs after your *yes*, when the
+  model is refused a lock, a door, the alarm or a forbidden entity, when an automation is created, enabled, disabled
+  or deleted; optionally also for every home action, for errors and for the admin page (logins, too many wrong
+  passwords, password changed, settings saved).
+  - Channels: the Home Assistant app (notify services), Telegram, ntfy, Gotify and any webhook (Discord, Slack, n8n,
+    Node-RED…), even several at once.
+  - Sent in the background (Alexa is never slowed down), never for the simulated test chat, no repeats within two
+    minutes, at most `NOTIFY_MAX_ORA` per hour; a failing channel is logged without its address or token.
+- **New Notifications tab** in the admin page: switch them on or pause them, pick the events, tick the Home
+  Assistant notify services it finds, see each channel, send a test notification and read the latest ones with
+  their result. Tokens and addresses are in **Configurazione**, new group **Notifiche**.
+- New settings: `NOTIFY_ATTIVE`, `NOTIFY_EVENTI`, `NOTIFY_MAX_ORA`, `NOTIFY_HA`, `NOTIFY_TELEGRAM_TOKEN`,
+  `NOTIFY_TELEGRAM_CHAT`, `NOTIFY_NTFY_URL`, `NOTIFY_NTFY_TOKEN`, `NOTIFY_GOTIFY_URL`, `NOTIFY_GOTIFY_TOKEN`,
+  `NOTIFY_WEBHOOK_URL`, `NOTIFY_WEBHOOK_TOKEN` (and `NOTIFY_TELEGRAM_URL` among the advanced ones).
+
 ## 1.2.0
 
 **Interaction model: changed** (new opening words for automations: *crea, ogni, tutti i giorni, programma, appena,

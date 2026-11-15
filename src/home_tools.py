@@ -4,6 +4,7 @@ Never: locks, doors/gates, alarms, scripts, automations, technical services. Act
 the user's spoken "yes" (checked by the service, not by the model). Tool descriptions are Italian (it-IT skill)."""
 import json, os, re, threading, time, urllib.error, urllib.request, logging
 import lingua as L
+import notifiche
 
 HA = os.environ.get("HA_URL", "").rstrip("/")
 TOKEN = os.environ.get("HA_TOKEN", "")
@@ -169,11 +170,26 @@ def cerca(testo):
     tutti = {s["entity_id"]: s for s in stati()}
     return "\n".join((L.t("non_comandabile") if vietata(s, tutti) else "") + riga(s) for s in hit)
 
+DOMINI_SENSIBILI = ("lock", "alarm_control_panel", "script", "automation", "button", "siren")
+
+
+def avvisa(evento, testo, urgente=False):
+    """A notification about what the assistant did or was refused: never for the test chat (simulated)."""
+    if not getattr(_tl, "simula", False):
+        notifiche.notifica(evento, testo, urgente)
+
+
+def _bloccata(descrizione):
+    avvisa("bloccate", L.t("n_bloccata") % descrizione, True)
+
+
 def esegui(dominio, servizio, entita, dati=None, confermato=False):
     if isinstance(entita, str):   # some models send one entity as a plain string
         entita = [x.strip() for x in entita.split(",")]
     entita = [e.strip() for e in (entita or []) if isinstance(e, str) and e.strip()]
     if dominio not in COMANDI or servizio not in COMANDI[dominio]:
+        if dominio in DOMINI_SENSIBILI or any(VIETATO.search(e) for e in entita):     # a lock, the alarm...: worth knowing
+            _bloccata("%s.%s %s" % (dominio, servizio, ", ".join(entita)))
         return L.t("non_permessa") % (dominio, servizio, ", ".join("%s(%s)" % (d, "/".join(sorted(v))) for d, v in COMANDI.items()))
     if not entita or "all" in entita:
         return L.t("niente_all")
@@ -184,6 +200,7 @@ def esegui(dominio, servizio, entita, dati=None, confermato=False):
         if e not in S:
             return L.t("non_esiste") % e
         if vietata(S[e], S):
+            _bloccata("%s.%s %s (%s)" % (dominio, servizio, nome(S[e]), e))
             return L.t("vietata") % (nome(S[e]), e)
     dati = {k: v for k, v in (dati if isinstance(dati, dict) else {}).items() if k in DATI_AMMESSI}
     fatte = getattr(_tl, "entita_fatte", set())   # split calls in one turn count together
@@ -197,6 +214,8 @@ def esegui(dominio, servizio, entita, dati=None, confermato=False):
     log.info("azione HA%s: %s.%s %s %s", " (simulata)" if simulata else "", dominio, servizio, ",".join(entita), json.dumps(dati) if dati else "")
     _tl.entita_fatte = fatte | set(entita)
     _tl.azioni = getattr(_tl, "azioni", []) + ["%s%s.%s %s%s" % ("[simulata] " if simulata else "", dominio, servizio, ",".join(entita), (" " + json.dumps(dati)) if dati else "")]
+    avvisa(("confermate", "azioni") if multi else ("azioni",),
+           L.t("n_confermata" if multi else "n_azione") % ("%s.%s" % (dominio, servizio), ", ".join(nome(S[e]) for e in entita)))
     return L.t("fatto_su") % (dominio, servizio, ", ".join(nome(S[e]) for e in entita))
 
 # ---------- automations created by voice
@@ -390,6 +409,7 @@ def _azione(a, S):
         if e not in S:
             raise _NonValida(L.t("non_esiste") % e)
         if vietata(S[e], S):
+            _bloccata(L.t("n_in_automazione") % ("%s.%s" % (dominio, servizio), "%s (%s)" % (nome(S[e]), e)))
             raise _NonValida(L.t("vietata") % (nome(S[e]), e))
     dati = {k: v for k, v in (a.get("dati") if isinstance(a.get("dati"), dict) else {}).items() if k in DATI_AMMESSI}
     passo = {"action": "%s.%s" % (dominio, servizio), "target": {"entity_id": entita}}
@@ -455,6 +475,7 @@ def crea_automazione(nome_a, quando, azioni, giorni=None, confermato=False):
         _cache["t"] = 0
         _registro_cambia(lambda d: d.update({aid: {"nome": nome_a, "riassunto": riassunto, "creata": time.time()}}))
     log.info("automazione HA%s creata: %s (%s) %s", " (simulata)" if simulata else "", aid, nome_a, riassunto)
+    avvisa("automazioni", L.t("n_auto_creata") % (nome_a, riassunto))
     _tl.azioni = getattr(_tl, "azioni", []) + ["%sautomation.create %s (%s)" % ("[simulata] " if simulata else "", aid, nome_a)]
     return L.t("auto_creata") % (nome_a, riassunto)
 
@@ -563,6 +584,7 @@ def gestisci_automazione(chi, operazione, confermato=False):
         return _errore_http(e)
     log.info("automazione HA%s: %s", " (simulata)" if simulata else "", fatto)
     _tl.azioni = getattr(_tl, "azioni", []) + [pre + fatto]
+    avvisa("automazioni", L.t("n_auto_op") % (v["nome"], L.t("auto_op_" + operazione)))
     return L.t("auto_fatto") % (L.t("auto_op_" + operazione), v["nome"])
 
 

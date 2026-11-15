@@ -9,7 +9,8 @@ os.environ.update(SKILL_ID="amzn1.ask.skill.demo", LLM_BASE_URL="https://api.ant
                   LLM_MODEL="claude-haiku-5-5", HOME_CITY="Roma", HA_URL="https://homeassistant.local:8123",
                   HA_TOKEN="demo-secret-token", ADMIN_PASSWORD="demo-password-123", DATA_DIR=sys.argv[2], APP_VERSION="1.0.0",
                   PUBLIC_HOST="alexa.example.org", HA_GRUPPI="cover.tutte", HA_VIETATO=r"^switch\.irrigazione(?:\s|$)",
-                  HA_AUTOMAZIONI="1")
+                  HA_AUTOMAZIONI="1", NOTIFY_HA="mobile_app_telefono", NOTIFY_TELEGRAM_TOKEN="demo-secret-telegram",
+                  NOTIFY_TELEGRAM_CHAT="123456")
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
 import app as A  # noqa: E402
 import admin  # noqa: E402
@@ -71,6 +72,13 @@ home_tools._registro_cambia(lambda d: d.update({
     "aab_1731400000000": {"nome": "Clima la sera", "creata": ora - 5 * 86400,
                           "riassunto": "quando Clima salone diventa off: climate.turn_on Clima salone"}}))
 home_tools.permessi_automazioni = lambda: True
+import notifiche  # noqa: E402
+notifiche.servizi_ha = lambda: ["mobile_app_telefono", "mobile_app_tablet", "persistent_notification"]
+notifiche.ULTIME.extend([
+    {"t": ora - 1795, "evento": "confermate", "testo": "Eseguito dopo il tuo sì: cover.close_cover su Tutte le tapparelle.",
+     "esiti": {"ha": "ok", "telegram": "ok"}},
+    {"t": ora - 900, "evento": "bloccate", "testo": "Bloccato: il modello ha chiesto lock.unlock lock.porta, non è permesso.",
+     "esiti": {"ha": "ok", "telegram": "HTTP 401"}}])
 home_tools.stati = lambda: _stati
 A.llm.modelli = lambda timeout=8: [{"id": "claude-haiku-5-5", "nome": "Claude Haiku 5.5"},
                                    {"id": "claude-sonnet-5-5", "nome": "Claude Sonnet 5.5"}]

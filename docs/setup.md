@@ -368,6 +368,12 @@ All variables go in `.env`. Only `SKILL_ID`, `LLM_BASE_URL` and `LLM_MODEL` are 
 | `HA_AUTOMAZIONI` | `0` | `1` lets the assistant create, enable, disable and delete Home Assistant automations by voice ([details](home-assistant.md#automations-by-voice)) |
 | `HA_AUTOMAZIONI_TOKEN` | `HA_TOKEN` | Token of a Home Assistant **administrator**, used only to create and delete automations |
 | `HA_AUTOMAZIONI_MAX` | `20` | Maximum number of automations created by voice |
+| `NOTIFY_ATTIVE`, `NOTIFY_EVENTI`, `NOTIFY_MAX_ORA` | `1`, `confermate,bloccate,automazioni`, `30` | [Notifications](notifications.md): on/paused, which events, at most per hour |
+| `NOTIFY_HA` | – | Home Assistant notify services (the phone app: `mobile_app_…`), comma separated |
+| `NOTIFY_TELEGRAM_TOKEN`, `NOTIFY_TELEGRAM_CHAT` (`NOTIFY_TELEGRAM_URL`) | – | Telegram bot token and chat ID (API endpoint, default the official one) |
+| `NOTIFY_NTFY_URL`, `NOTIFY_NTFY_TOKEN` | – | ntfy topic address and optional token |
+| `NOTIFY_GOTIFY_URL`, `NOTIFY_GOTIFY_TOKEN` | – | Gotify server and application token |
+| `NOTIFY_WEBHOOK_URL`, `NOTIFY_WEBHOOK_TOKEN` | – | Webhook receiving a JSON POST, optional Bearer token |
 | `SYSTEM_PROMPT`, `ISTRUZIONI_TURNO` | built-in voice rules, in the language of the request | Override the instructions (then in one language only) |
 | `ADMIN_PASSWORD` | – | Turns the [admin page](admin.md) on (12 characters or more) |
 | `ADMIN_HISTORY` | `100` | Questions kept in the admin page history; `0` turns it off |

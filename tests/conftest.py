@@ -41,7 +41,7 @@ class FakeWeb:
         self.reset()
 
     def reset(self):
-        self.calls = []
+        self.calls, self.headers, self.fail = [], [], set()
 
 
 class FakeHA:
@@ -79,7 +79,11 @@ def _server(get=None, post=None, delete=None):
             self._send(*get(self))
 
         def do_POST(self):
-            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])) or b"{}")
+            raw = self.rfile.read(int(self.headers["Content-Length"]))
+            try:
+                body = json.loads(raw or b"{}")
+            except ValueError:
+                body = raw.decode("utf-8")          # ntfy sends plain text
             self._send(*post(self, body))
 
         def do_DELETE(self):
@@ -119,6 +123,9 @@ def _ha_get(h):
         aid = h.path[len(CONFIG):]
         return err or ((200, HA.automations[aid]) if aid in HA.automations else (404, {"message": "Resource not found"}))
     err = _ha_auth(h)
+    if not err and h.path == "/api/services":
+        return 200, [{"domain": "light", "services": {"turn_on": {}}},
+                     {"domain": "notify", "services": {"mobile_app_telefono": {}, "persistent_notification": {}}}]
     return err or (200, {"message": "API running."} if h.path == "/api/" else HA.states)
 
 
@@ -170,7 +177,19 @@ def _web_get(h):
     return 404, {}
 
 
+NOTIFICHE = ("/telegram/", "/ntfy/", "/gotify/", "/hook")
+
+
 def _web_post(h, body):
+    if h.path.startswith(NOTIFICHE):          # notification channels: record, or fail on request
+        WEB.calls.append((h.path, body)); WEB.headers.append(dict(h.headers))
+        if any(h.path.startswith(f) for f in WEB.fail):
+            return 500, {"error": "down"}
+        if h.path.startswith("/telegram/") and h.path != "/telegram/bottg-token/sendMessage":
+            return 401, {"ok": False}
+        if h.path.startswith("/gotify/") and h.headers.get("X-Gotify-Key") != "gotify-token":
+            return 401, {}
+        return 200, {"ok": True}
     WEB.calls.append((h.path, body))
     if h.path == "/tavily" and h.headers.get("Authorization") == "Bearer tvly-key":
         return 200, {"answer": "Risposta Tavily", "results": [{"title": "Orari", "content": "Aperto fino alle 20", "url": "https://shop.example"}]}
@@ -202,9 +221,13 @@ import app as APP  # noqa: E402  (after the environment is ready)
 import home_tools as HOME  # noqa: E402
 import llm as LLM_MOD  # noqa: E402
 import web_search as WEB_MOD  # noqa: E402,F401  (used by the tests through conftest)
+import notifiche as NOTIF  # noqa: E402
 import admin as ADMIN  # noqa: E402,F401
 import impostazioni as IMPOSTAZIONI  # noqa: E402,F401
 WEB_DEFAULT = APP.WEB
+NOTIFICHE_PREDEFINITE = {k: getattr(NOTIF, k) for k in ("ATTIVE", "SCELTI", "MAX_ORA", "HA_SERVIZI", "TELEGRAM_TOKEN", "TELEGRAM_CHAT",
+                                                        "TELEGRAM_URL", "NTFY_URL", "NTFY_TOKEN", "GOTIFY_URL", "GOTIFY_TOKEN",
+                                                        "WEBHOOK_URL", "WEBHOOK_TOKEN")}
 
 
 @pytest.fixture(autouse=True)
@@ -219,6 +242,9 @@ def clean():
     except FileNotFoundError:
         pass
     ADMIN.svuota(); ADMIN._tentativi.clear(); ADMIN.RITARDO = 0
+    NOTIF.attendi(5); NOTIF.ULTIME.clear(); NOTIF._stato["recenti"].clear(); NOTIF._stato["inviate"].clear()
+    for k, v in NOTIFICHE_PREDEFINITE.items():
+        setattr(NOTIF, k, v)
     yield
     # background answers of this test must end here: a late one would take the scripted answers of the next test
     for t in threading.enumerate():

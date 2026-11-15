@@ -142,6 +142,22 @@ TESTI = {
                        "not run it: only after the user has said yes, call esegui_azione again with confermato=true."),
     "fatto_su": ("Fatto: %s.%s su %s.", "Done: %s.%s on %s."),
     "strumento_ignoto": ("Strumento sconosciuto.", "Unknown tool."),
+    # ---- notifications (sent to the phone, Telegram...)
+    "n_prova": ("Notifica di prova: questo canale funziona.", "Test notification: this channel works."),
+    "n_bloccata": ("Bloccato: il modello ha chiesto %s, non è permesso.", "Blocked: the model asked for %s, which is not allowed."),
+    "n_in_automazione": ("%s su %s dentro un'automazione", "%s on %s inside an automation"),
+    "n_confermata": ("Eseguito dopo il tuo sì: %s su %s.", "Done after your yes: %s on %s."),
+    "n_azione": ("Eseguito: %s su %s.", "Done: %s on %s."),
+    "n_auto_creata": ("Automazione creata a voce: '%s' (%s).", "Automation created by voice: '%s' (%s)."),
+    "n_auto_op": ("Automazione '%s' %s.", "Automation '%s' %s."),
+    "n_auto_pannello": ("Automazione '%s' %s dal pannello.", "Automation '%s' %s from the admin page."),
+    "n_errore": ("Alexa non è riuscita a rispondere: %s", "Alexa could not answer: %s"),
+    "n_accesso": ("Accesso al pannello di gestione da %s.", "Login to the admin page from %s."),
+    "n_tentativi": ("Troppe password sbagliate per il pannello da %s: bloccato per 15 minuti.",
+                    "Too many wrong passwords for the admin page from %s: blocked for 15 minutes."),
+    "n_password": ("La password del pannello è stata cambiata.", "The admin page password was changed."),
+    "n_impostazioni": ("Impostazioni salvate dal pannello: %s.", "Settings saved from the admin page: %s."),
+    "n_esci_ovunque": ("Tutte le sessioni del pannello sono state chiuse.", "Every admin page session was logged out."),
     # ---- automations created by voice
     "usa_automazioni": (" Puoi anche creare automazioni di Home Assistant con crea_automazione: trova prima gli entity_id con "
                         "cerca_in_casa, poi chiama crea_automazione senza confermato, leggi all'utente il riepilogo che ricevi e "
