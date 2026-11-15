@@ -307,7 +307,8 @@ def stato():
         versione=VERSIONE, avvio=AVVIO, ora=time.time(), lingua=L.LINGUA,
         modello={"api": A.llm.API, "url": impostazioni.mascherato(A.llm.BASE) or A.llm.BASE, "nome": A.llm.MODEL, "chiave": bool(A.llm.KEY)},
         web={"backend": A.WEB, "attiva": A.web_attivo()},
-        casa={"configurata": bool(A.casa.HA and A.casa.TOKEN), "attiva": A.casa_attiva(), "url": impostazioni.mascherato(A.casa.HA) or A.casa.HA},
+        casa={"configurata": bool(A.casa.HA and A.casa.TOKEN), "attiva": A.casa_attiva(), "url": impostazioni.mascherato(A.casa.HA) or A.casa.HA,
+              "automazioni": A.casa.automazioni_attive()},
         adattamenti={k: v for k, v in A.llm.STATO.items()},
         attesa=A.ATTESA, in_sospeso=len(A._lavori),
         statistiche={"domande": len(voci), "errori": sum(1 for v in voci if v.get("errore")),
@@ -446,6 +447,8 @@ def _riavvia(server):
 TESTI_LUNGHI = ("SYSTEM_PROMPT", "ISTRUZIONI_TURNO")
 # changing where requests go means re-entering the secret sent there: a stolen session cannot redirect a stored key
 SEGRETO_DI = {"LLM_BASE_URL": "LLM_API_KEY", "HA_URL": "HA_TOKEN", "BRAVE_URL": "BRAVE_API_KEY", "TAVILY_URL": "TAVILY_API_KEY"}
+# optional secrets sent to the same address: when they are set, they follow the same rule
+SEGRETI_OPZIONALI_DI = {"HA_URL": ("HA_AUTOMAZIONI_TOKEN",)}
 
 
 def _pulisci_valore(k, v):
@@ -495,7 +498,9 @@ def _salva(cambi):
                 nuovi[k] = _pulisci_valore(k, v)
             except ValueError as e:
                 return {"errore": str(e)}, 400
-        for url, segreto in SEGRETO_DI.items():
+        coppie = [(u, k) for u, k in SEGRETO_DI.items()] + \
+            [(u, k) for u, ks in SEGRETI_OPZIONALI_DI.items() for k in ks if os.environ.get(k) or nuovi.get(k)]
+        for url, segreto in coppie:
             url_env = (impostazioni.BASE.get(url) if url in impostazioni.OVERRIDE else os.environ.get(url)) or ""
             nuovo_url = nuovi.get(url, url_env) or ""
             # typed again in this very save when the address changes, and a key from .env only ever goes to the .env address
@@ -591,6 +596,89 @@ def salva_casa():
     corpo, codice = _salva({"HA_GRUPPI": ",".join(dict.fromkeys(gruppi)),
                             "HA_VIETATO": _componi_vietato(os.environ.get("HA_VIETATO", ""), list(dict.fromkeys(vietate)))})
     return jsonify(corpo), codice
+
+
+# ---------- automations created by voice
+@bp.get("/admin/api/automazioni")
+def automazioni():
+    C = _a().casa
+    out = {"configurata": bool(C.HA and C.TOKEN), "attiva": C.automazioni_attive(), "abilitata": C.AUTOMAZIONI,
+           "strumenti": C.ATTIVO, "max": C.MAX_AUTOMAZIONI, "token_dedicato": C.TOKEN_AUTOMAZIONI != C.TOKEN,
+           "voci": [], "permessi": None, "configurabile": impostazioni.scrivibile()}
+    if not out["configurata"]:
+        return jsonify(out)
+    try:
+        C._cache["t"] = 0
+        out["voci"] = C.elenco_automazioni()
+    except Exception as e:
+        out["errore"] = str(e)[:300]
+        return jsonify(out)
+    try:
+        out["permessi"] = C.permessi_automazioni()
+    except Exception:
+        out["permessi"] = None              # Home Assistant did not say: the page shows nothing about it
+    return jsonify(out)
+
+
+def _automazione_richiesta():
+    """The automation created by voice that the request names, or an error response."""
+    C = _a().casa
+    if not (C.HA and C.TOKEN):
+        return None, _errore("Home Assistant non configurato.", "Home Assistant is not configured.", 409)
+    d = request.get_json(silent=True)
+    aid = d.get("id") if isinstance(d, dict) else None
+    if not isinstance(aid, str) or not aid.startswith(C.PREFISSO) or not re.fullmatch(r"[A-Za-z0-9_]{1,64}", aid):
+        return None, _errore("Automazione non valida.", "Invalid automation.")
+    C.imposta_simulazione(False)
+    L.imposta(_lingua())
+    try:
+        C._cache["t"] = 0
+        v = next((x for x in C.elenco_automazioni() if x["id"] == aid), None)
+    except Exception as e:
+        return None, _errore_ha(e)
+    if not v:
+        return None, _errore("Non è tra le automazioni create a voce.", "It is not one of the automations created by voice.", 404)
+    return (d, v), None
+
+
+def _errore_ha(e):
+    if getattr(e, "code", None) in (401, 403):
+        return _errore("Home Assistant ha rifiutato: serve il token di un amministratore (Token per le automazioni).",
+                       "Home Assistant refused: an administrator's token is needed (Token for automations).", 502)
+    return jsonify(errore=_m("Home Assistant non risponde: %s", "Home Assistant does not answer: %s") % str(e)[:200]), 502
+
+
+@bp.post("/admin/api/automazioni/stato")
+def stato_automazione():
+    trovata, errore = _automazione_richiesta()
+    if errore:
+        return errore
+    d, v = trovata
+    if not isinstance(d.get("attiva"), bool):
+        return _errore("Richiesta non valida.", "Invalid request.")
+    C = _a().casa
+    try:
+        servizio = C.imposta_automazione(v, d["attiva"])
+    except C._NonValida as e:
+        return jsonify(errore=str(e)), 409
+    except Exception as e:
+        return _errore_ha(e)
+    log.info("admin: automation.%s %s", servizio, v["entity_id"])
+    return jsonify(ok=True)
+
+
+@bp.post("/admin/api/automazioni/elimina")
+def elimina_automazione():
+    trovata, errore = _automazione_richiesta()
+    if errore:
+        return errore
+    _, v = trovata
+    try:
+        _a().casa.elimina_automazione(v)
+    except Exception as e:
+        return _errore_ha(e)
+    log.info("admin: automation deleted %s (%s)", v["id"], v["nome"])
+    return jsonify(ok=True)
 
 
 # ---------- system

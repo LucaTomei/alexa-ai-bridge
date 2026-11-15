@@ -12,6 +12,7 @@ English: the **IT / EN** switch is at the top of every page (the first time, it 
 | **Conversazioni** | The latest questions and answers with their time, the home actions they ran and any error. Searchable. Users are anonymised. |
 | **Chat di prova** | Talk to the assistant by text, with the same model, tools and rules as on the Echo. Home actions are **simulated** by default: every safety check runs, but nothing is sent to Home Assistant. |
 | **Casa** (*Home*) | Every Home Assistant entity the assistant could control, with what protects it: never controllable by type (locks, alarms, scripts), blocked by the built-in rules, or forbidden by you. One switch forbids an entity, another makes it always ask for a spoken *yes* (they edit `HA_VIETATO` and `HA_GRUPPI` for you). |
+| **Automazioni** (*Automations*) | The Home Assistant automations created by voice: switch the feature on or off, see whether the token can write automations, and for each one its summary, last run, an on/off switch and *delete*. Automations made by hand in Home Assistant are never shown ([details](home-assistant.md#automations-by-voice)). |
 | **Configurazione** (*Settings*) | Every setting with its explanation, including the assistant's language. Saving checks the new values, then restarts the service in a few seconds. Keys and tokens are never shown, only whether they are set. |
 | **Sistema** (*System*) | Skill ID and the endpoint to paste in the Alexa console, download of the interaction model in both languages, version and update check, restart, answers still waiting, the admin password, *log out everywhere*, settings backup (export and import), and the network settings that live in `.env`. |
 | **Registro** (*Log*) | The latest log lines, with a filter for warnings and errors. |
@@ -97,8 +98,8 @@ are replaced by a short anonymous code. *Svuota* deletes it. Without a writable 
   precedence over `.env`. *"Torna al valore del .env"* (or *"Torna al predefinito"* when `.env` does not set it)
   removes the override. Changes not saved yet stay in place when you switch tab or language.
 - Changing an address that receives a key (model URL, Home Assistant URL, Brave or Tavily endpoint) asks for that key
-  again in the same save, and a key from `.env` is only ever sent to the address in `.env`: a stolen session cannot
-  redirect a stored key.
+  again in the same save (for Home Assistant, the token for automations too, when one is set), and a key from `.env`
+  is only ever sent to the address in `.env`: a stolen session cannot redirect a stored key.
 - Before saving, the new values are loaded in a separate process with the same checks as at startup: a wrong value
   (a model block without URL, invalid JSON, an invalid regular expression…) is refused and nothing changes.
 - After saving, the service restarts its worker in a few seconds. A slow answer still pending is lost.

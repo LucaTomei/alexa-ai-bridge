@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.2.0
+
+**Interaction model: changed** (new opening words for automations: *crea, ogni, tutti i giorni, programma, appena,
+se, al tramonto, elimina…* in Italian, *delete, remove, schedule, whenever, every day…* in English). Paste the new
+`skill/interaction-model.*.json` in the Alexa console (or download them from the admin page, **Sistema**), then
+**Save** and **Build**. No change needed in `.env`: the new feature is off until you switch it on.
+
+- **Automations by voice** (optional, off by default): *"ogni sera al tramonto chiudi la tapparella della camera"*,
+  *"quando la temperatura della camera scende sotto 18 accendi il clima"*, *"il sabato alle 9 accendi la luce dello
+  studio"*. Alexa reads the automation back and creates it in Home Assistant only after your *yes*; you can also
+  list them, switch them off and on, and delete them by voice ([details](docs/home-assistant.md#automations-by-voice)).
+  - Times, sunrise and sunset with an offset, state changes (with *for N minutes*) and numeric thresholds, on chosen
+    weekdays; up to five actions.
+  - The actions follow exactly the rules of home control: allowed services only, existing entities, never locks,
+    doors, alarms, scripts, automations, technical services or the entities you forbade.
+  - The *yes* must answer the summary that was read to you, in a later turn: the model cannot change the automation
+    after asking, nor propose and confirm it in one go. Deleting works the same way.
+  - The assistant only ever sees and changes the automations it created (id `aab_…`, alias `Alexa: …`); the ones you
+    made by hand are invisible to it. At most `HA_AUTOMAZIONI_MAX` (20).
+- **New Automations tab** in the admin page: switch the feature on or off, see whether the token has the rights it
+  needs, and every automation created by voice with its summary and last run, an on/off switch and *delete*.
+- New settings, also editable from the page: `HA_AUTOMAZIONI`, `HA_AUTOMAZIONI_TOKEN` (Home Assistant lets only
+  administrators write automations: an admin's token used only for that, so the everyday one stays non-admin) and
+  `HA_AUTOMAZIONI_MAX`. Changing the Home Assistant URL asks for the automation token again too.
+- `scripts/e2e.py`: with automations on, it checks the token's rights and that an automation asked by voice is
+  read back and **not** created after *"no"* (nothing is ever created in your home).
+
 ## 1.1.1
 
 **Interaction model: unchanged** (nothing to do in the Alexa console). No change needed in `.env`.

@@ -263,6 +263,10 @@ Full guide in [home-assistant.md](home-assistant.md). In short:
 Locks, alarms, scripts and automations can never be controlled, whatever the model asks; neither can entities
 whose ID or name says door, gate or alarm (Italian or English words). Add your own with `HA_VIETATO`.
 
+Optionally, the assistant can also **create automations by voice** (*"ogni sera al tramonto accendi la luce del
+salone"*): switch them on in the admin page (**Automazioni** tab) or with `HA_AUTOMAZIONI=1`. See
+[home-assistant.md](home-assistant.md#automations-by-voice).
+
 ## 8. End-to-end check
 
 [`scripts/e2e.py`](../scripts/e2e.py) runs a scripted conversation inside the running container, against your real
@@ -361,6 +365,9 @@ All variables go in `.env`. Only `SKILL_ID`, `LLM_BASE_URL` and `LLM_MODEL` are 
 | `HA_SUMMARY_EXTRA` | – | `entity_id=Label,…` extra lines in the home summary |
 | `HA_TEMP_PATTERN` | – | Regex of temperature sensors for the summary |
 | `HA_VIETATO` | – | Regex (on entity ID and name) of extra entities that can never be controlled, **added** to the built-in list |
+| `HA_AUTOMAZIONI` | `0` | `1` lets the assistant create, enable, disable and delete Home Assistant automations by voice ([details](home-assistant.md#automations-by-voice)) |
+| `HA_AUTOMAZIONI_TOKEN` | `HA_TOKEN` | Token of a Home Assistant **administrator**, used only to create and delete automations |
+| `HA_AUTOMAZIONI_MAX` | `20` | Maximum number of automations created by voice |
 | `SYSTEM_PROMPT`, `ISTRUZIONI_TURNO` | built-in voice rules, in the language of the request | Override the instructions (then in one language only) |
 | `ADMIN_PASSWORD` | – | Turns the [admin page](admin.md) on (12 characters or more) |
 | `ADMIN_HISTORY` | `100` | Questions kept in the admin page history; `0` turns it off |

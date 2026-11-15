@@ -1,7 +1,7 @@
 """Test fixtures: a fake model endpoint (Anthropic and OpenAI-compatible), a fake Home Assistant and fake web
 search backends (SearXNG, Brave, Tavily), all in-process HTTP servers.
 Environment variables are set before the service module is imported."""
-import json, os, sys, tempfile, threading, time, http.server
+import json, os, re, sys, tempfile, threading, time, http.server
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
@@ -50,6 +50,7 @@ class FakeHA:
 
     def reset(self):
         self.calls, self.blocked_agents = [], ["Python-urllib"]
+        self.automations = {}          # config id -> config, written through /api/config/automation/config/<id>
         self.states = [
             {"entity_id": "person.alice", "state": "home", "attributes": {"friendly_name": "Alice"}},
             {"entity_id": "light.living_room", "state": "on", "attributes": {"friendly_name": "Luce salone", "brightness": 128}},
@@ -67,7 +68,7 @@ class FakeHA:
 LLM, HA, WEB = FakeLLM(), FakeHA(), FakeWeb()
 
 
-def _server(get=None, post=None):
+def _server(get=None, post=None, delete=None):
     class H(http.server.BaseHTTPRequestHandler):
         def _send(self, code, obj):
             d = json.dumps(obj).encode()
@@ -80,6 +81,9 @@ def _server(get=None, post=None):
         def do_POST(self):
             body = json.loads(self.rfile.read(int(self.headers["Content-Length"])) or b"{}")
             self._send(*post(self, body))
+
+        def do_DELETE(self):
+            self._send(*delete(self))
 
         def log_message(self, *a):
             pass
@@ -96,12 +100,53 @@ def _ha_auth(h):
         return 401, {"message": "unauthorized"}
 
 
+CONFIG = "/api/config/automation/config/"
+
+
+def _ha_admin(h):
+    """Home Assistant lets only administrators read and write automations: here, the token ha-admin-token."""
+    if any(h.headers.get("User-Agent", "").startswith(b) for b in HA.blocked_agents):
+        return 403, {"message": "blocked"}
+    if h.headers.get("Authorization") == "Bearer ha-token":
+        return 401, {"message": "Unauthorized"}
+    if h.headers.get("Authorization") != "Bearer ha-admin-token":
+        return 401, {"message": "unauthorized"}
+
+
 def _ha_get(h):
+    if h.path.startswith(CONFIG):
+        err = _ha_admin(h)
+        aid = h.path[len(CONFIG):]
+        return err or ((200, HA.automations[aid]) if aid in HA.automations else (404, {"message": "Resource not found"}))
     err = _ha_auth(h)
     return err or (200, {"message": "API running."} if h.path == "/api/" else HA.states)
 
 
+def _ha_delete(h):
+    err = _ha_admin(h) if h.path.startswith(CONFIG) else (404, {})
+    if err:
+        return err
+    aid = h.path[len(CONFIG):]
+    HA.calls.append((h.path, "DELETE"))
+    if aid not in HA.automations:
+        return 400, {"message": "Resource not found"}
+    del HA.automations[aid]
+    HA.states = [s for s in HA.states if s.get("attributes", {}).get("id") != aid]
+    return 200, {"result": "ok"}
+
+
 def _ha_post(h, body):
+    if h.path.startswith(CONFIG):          # create or update an automation, then reload: a new automation.* entity
+        err = _ha_admin(h)
+        if err:
+            return err
+        aid = h.path[len(CONFIG):]
+        HA.calls.append((h.path, body))
+        HA.automations[aid] = body
+        HA.states = [s for s in HA.states if s.get("attributes", {}).get("id") != aid] + [
+            {"entity_id": "automation." + re.sub(r"[^a-z0-9]+", "_", body["alias"].lower()).strip("_"), "state": "on",
+             "attributes": {"id": aid, "friendly_name": body["alias"], "last_triggered": None}}]
+        return 200, {"result": "ok"}
     err = _ha_auth(h)
     if err:
         return err
@@ -142,11 +187,11 @@ def _llm_get(h):
 
 LLM_PORT = _server(get=_llm_get, post=lambda h, b: LLM.handle(b, h.path, h.headers))
 WEB_PORT = _server(get=_web_get, post=_web_post)
-HA_PORT = _server(get=_ha_get, post=_ha_post)
+HA_PORT = _server(get=_ha_get, post=_ha_post, delete=_ha_delete)
 os.environ.update(
     LLM_BASE_URL="http://127.0.0.1:%d/v1" % LLM_PORT, LLM_API_KEY="test-key", LLM_MODEL="model-test", LLM_API="anthropic",
     SKILL_ID="amzn1.ask.skill.test", ATTESA_MAX="1.0", HA_URL="http://127.0.0.1:%d" % HA_PORT, HA_TOKEN="ha-token",
-    HA_GRUPPI="cover.all_covers", HA_SUMMARY_EXTRA="sensor.power=Consumo ora,lock.front_door=Porta di casa",
+    HA_GRUPPI="cover.all_covers", HA_AUTOMAZIONI_TOKEN="ha-admin-token", HA_SUMMARY_EXTRA="sensor.power=Consumo ora,lock.front_door=Porta di casa",
     HOME_CITY="Testville", HOME_COUNTRY="IT",
     SEARXNG_URL="http://127.0.0.1:%d" % WEB_PORT, BRAVE_URL="http://127.0.0.1:%d/brave" % WEB_PORT, BRAVE_API_KEY="brave-key",
     TAVILY_URL="http://127.0.0.1:%d/tavily" % WEB_PORT, TAVILY_API_KEY="tvly-key",
@@ -166,7 +211,12 @@ def clean():
     LLM.reset(); HA.reset(); WEB.reset()
     APP._lavori.clear(); APP.WEB = WEB_DEFAULT
     LLM_MOD.API = "anthropic"; LLM_MOD.STATO.update(web_nativo=True, strumenti=True, max_completion=False, thinking=True)
-    HOME.ATTIVO = True; HOME._cache["t"] = 0; HOME.imposta_simulazione(False)
+    HOME.ATTIVO = True; HOME._cache["t"] = 0; HOME.imposta_simulazione(False); HOME.AUTOMAZIONI = False
+    HOME.TOKEN_AUTOMAZIONI = "ha-admin-token"; HOME.MAX_AUTOMAZIONI = 20; HOME._proposte.clear()
+    try:
+        os.unlink(HOME.FILE_AUTOMAZIONI)
+    except FileNotFoundError:
+        pass
     ADMIN.svuota(); ADMIN._tentativi.clear(); ADMIN.RITARDO = 0
     yield
     # background answers of this test must end here: a late one would take the scripted answers of the next test

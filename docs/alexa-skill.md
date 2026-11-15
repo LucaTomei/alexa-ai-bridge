@@ -36,7 +36,7 @@ from the repository), paste it in the JSON Editor of each language, **Save** and
 
 | Intent | Samples | What the service does |
 |---|---|---|
-| `AskIntent` | `{query}` after one of **154 carrier phrases** | sends the question to the model |
+| `AskIntent` | `{query}` after one of **169 carrier phrases** (186 in English) | sends the question to the model |
 | `FraseBreveIntent` | `{frase}`, a custom type with **71 short phrases** | sends the phrase to the model, with the conversation |
 | `AttesaIntent` | *allora, hai finito, sei pronto, quindi…* | delivers a pending slow answer |
 | `AMAZON.YesIntent` | built-in | delivers a pending answer, otherwise sends *"sì"* to the model (confirmations) |
@@ -50,11 +50,12 @@ from the repository), paste it in the JSON Editor of each language, **Save** and
 just `{query}`**. There must be at least one word before it, and the user's sentence must start with one of those
 words. Alexa then removes that word from the slot value.
 
-The skill therefore lists 154 openings that cover how people actually start sentences in Italian:
+The skill therefore lists 169 openings that cover how people actually start sentences in Italian:
 
 - questions: *che, chi, come, cosa, perché, quanto, quando, dove, quale, a che ora, c'è, è…*
 - requests: *dimmi, spiegami, raccontami, cerca, consigliami, vorrei, dammi, puoi, per favore…*
 - commands: *accendi, spegni, apri, chiudi, alza, abbassa, metti, imposta, attiva, regola, ferma…*
+- automations: *crea, ogni, tutti i giorni, programma, appena, se, al tramonto, elimina, cancella…*
 - follow-ups: *e, e se, ma, anche, allora dimmi…*
 - articles and time words: *il, la, un, una, oggi, domani, stasera, ieri…*
 

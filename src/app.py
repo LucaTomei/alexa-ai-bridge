@@ -3,7 +3,7 @@
 Verifies every request from Amazon (signature, certificate chain, timestamp, skill ID), asks the model
 (Anthropic Messages API or any OpenAI-compatible endpoint, see llm.py) and speaks the answer.
 See docs/ for the full design. User-facing strings are Italian: the skill is it-IT."""
-import os, re, json, time, base64, logging, posixpath, threading, urllib.request, warnings
+import os, re, json, time, base64, hashlib, logging, posixpath, threading, urllib.request, warnings
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from urllib.parse import urlsplit
@@ -135,7 +135,7 @@ def con_istruzioni(history):
     if h and h[-1]["role"] == "user":
         dove = (L.t("casa_a") % web.HOME_CITY) if web.HOME_CITY else ""
         extra = (L.t("oggi") % adesso()) + dove + (L.t("usa_web") if web_attivo() else "") + \
-            (L.t("usa_casa") if casa_attiva() else "") + "]"
+            (L.t("usa_casa") if casa_attiva() else "") + (L.t("usa_automazioni") if casa_attiva() and casa.automazioni_attive() else "") + "]"
         h[-1]["content"] = istruzioni_turno() + "\n" + extra + "\n\n" + h[-1]["content"]
     return h
 
@@ -148,7 +148,8 @@ def ask_llm(history, timeout=60):
     ultima = history[-1]["content"] if history and history[-1]["role"] == "user" else ""
     prima = history[-2]["content"] if len(history) > 1 and history[-2]["role"] == "assistant" else ""
     chiesto = isinstance(prima, str) and L.NOTA_AZIONI.sub("", prima).strip().endswith("?")   # "Vuoi che le chiuda tutte?"
-    casa.imposta_domanda(ultima if isinstance(ultima, str) else "", chiesto)
+    turno = hashlib.sha256(json.dumps(history, sort_keys=True, default=str).encode()).hexdigest()   # same for a retry
+    casa.imposta_domanda(ultima if isinstance(ultima, str) else "", chiesto, turno)
     strumenti = ([web.strumento()] if WEB not in (None, "native") else []) + (casa.strumenti() if casa.ATTIVO else [])
     return llm.chiedi(sistema(), con_istruzioni(history), strumenti, esegui_strumento,
                       nativo=web.NATIVO if WEB == "native" else None, timeout=timeout)

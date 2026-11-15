@@ -20,7 +20,7 @@ skill is reopened within 15 minutes.
 
 **Cause:** `AMAZON.SearchQuery` slots only match after a fixed word; a sample cannot be `{query}` alone.
 
-**Fix:** 154 carrier phrases covering questions, requests, commands, follow-ups, articles and time words.
+**Fix:** 169 carrier phrases covering questions, requests, commands, follow-ups, articles and time words.
 
 ## 3. One-word follow-ups
 

@@ -203,7 +203,22 @@
             "mettiamo {query}",
             "facciamo {query}",
             "proviamo {query}",
-            "prova a {query}"
+            "prova a {query}",
+            "crea {query}",
+            "creami {query}",
+            "ogni {query}",
+            "tutti i giorni {query}",
+            "tutte le sere {query}",
+            "tutte le mattine {query}",
+            "programma {query}",
+            "aggiungi {query}",
+            "elimina {query}",
+            "cancella {query}",
+            "rimuovi {query}",
+            "appena {query}",
+            "se {query}",
+            "al tramonto {query}",
+            "all'alba {query}"
           ]
         },
         {

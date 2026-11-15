@@ -105,6 +105,26 @@ const TESTI = {
     "opt.WEB_SEARCH.brave": "Brave Search", "opt.WEB_SEARCH.tavily": "Tavily", "opt.WEB_SEARCH.off": "Spenta",
     "opt.HA_TOOLS.1": "Attivi", "opt.HA_TOOLS.0": "Spenti",
     "sis.lingua_auto": "Automatica: italiano o inglese, come parla l'Echo",
+    "tab.automazioni": "Automazioni",
+    "sub.automazioni": "Le automazioni di Home Assistant create a voce: chiedi ad Alexa \"ogni sera al tramonto accendi la luce del salone\", lei te le rilegge e le crea solo dopo il tuo sì.",
+    "auto.cerca": "Cerca per nome o descrizione",
+    "auto.titolo_on": "Automazioni a voce attive", "auto.titolo_off": "Automazioni a voce spente",
+    "auto.desc_on": "L'assistente può creare automazioni (a un orario, all'alba o al tramonto, quando cambia uno stato o un sensore supera una soglia) e attivarle, disattivarle o eliminarle. Le azioni seguono le regole della scheda Casa; creare ed eliminare chiedono sempre un sì a voce; vede e cambia solo quelle create da lui.",
+    "auto.desc_off": "Accendile per chiedere ad Alexa di creare automazioni di Home Assistant. Serve il token di un utente amministratore (Configurazione → Token per le automazioni): Home Assistant fa scrivere automazioni solo agli amministratori.",
+    "auto.attiva": "Attiva", "auto.disattiva": "Disattiva",
+    "auto.senza_strumenti": "Gli strumenti casa sono spenti (Configurazione → Strumenti casa): finché restano spenti l'assistente non vede né crea automazioni.",
+    "auto.no_permessi": "Il token usato non è di un amministratore: Home Assistant rifiuterà di creare ed eliminare automazioni. Imposta Token per le automazioni nella Configurazione.",
+    "auto.permessi_ok": "Il token può creare ed eliminare automazioni.",
+    "auto.limite": "Al massimo %s automazioni create a voce (%s ora).",
+    "auto.nessuna": "Ancora nessuna automazione creata a voce. Prova: \"Alexa, apri cervellone\", poi \"ogni giorno alle sette accendi la luce della cucina\".",
+    "auto.nessuna_filtro": "Nessuna automazione corrisponde.",
+    "auto.non_configurata": "Home Assistant non è configurato: imposta URL e token nella Configurazione.",
+    "auto.errore": "Home Assistant non risponde: %s",
+    "auto.accesa": "Attiva", "auto.spenta": "Disattivata", "auto.sparita": "Non più in Home Assistant",
+    "auto.ultima": "ultima esecuzione %s", "auto.mai": "mai eseguita", "auto.creata": "creata %s",
+    "auto.elimina": "Elimina", "auto.elimina_conferma": "Eliminare l'automazione \"%s\" da Home Assistant?", "auto.dimentica": "Togli dall'elenco",
+    "auto.eliminata": "Automazione eliminata.", "auto.attivata": "Automazione attivata.", "auto.disattivata": "Automazione disattivata.",
+    "opt.HA_AUTOMAZIONI.1": "Attive", "opt.HA_AUTOMAZIONI.0": "Spente",
   },
   en: {
     "login.sub": "Admin page", "login.password": "Password", "login.entra": "Log in",
@@ -205,6 +225,26 @@ const TESTI = {
     "opt.WEB_SEARCH.brave": "Brave Search", "opt.WEB_SEARCH.tavily": "Tavily", "opt.WEB_SEARCH.off": "Off",
     "opt.HA_TOOLS.1": "On", "opt.HA_TOOLS.0": "Off",
     "sis.lingua_auto": "Automatic: Italian or English, as the Echo speaks",
+    "tab.automazioni": "Automations",
+    "sub.automazioni": "The Home Assistant automations created by voice: ask Alexa \"every evening at sunset turn on the living room light\", she reads it back and creates it only after your yes.",
+    "auto.cerca": "Search by name or description",
+    "auto.titolo_on": "Automations by voice are on", "auto.titolo_off": "Automations by voice are off",
+    "auto.desc_on": "The assistant can create automations (at a time, at sunrise or sunset, when a state changes or a sensor crosses a threshold) and enable, disable or delete them. Their actions follow the rules of the Home tab; creating and deleting always need a spoken yes; it only sees and changes the ones it created.",
+    "auto.desc_off": "Switch them on to ask Alexa to create Home Assistant automations. An administrator's token is needed (Settings → Token for automations): Home Assistant lets only administrators write automations.",
+    "auto.attiva": "Switch on", "auto.disattiva": "Switch off",
+    "auto.senza_strumenti": "Home tools are off (Settings → Home tools): while they stay off the assistant neither sees nor creates automations.",
+    "auto.no_permessi": "The token in use is not an administrator's: Home Assistant will refuse to create and delete automations. Set Token for automations in Settings.",
+    "auto.permessi_ok": "The token can create and delete automations.",
+    "auto.limite": "At most %s automations created by voice (%s now).",
+    "auto.nessuna": "No automation created by voice yet. Try: \"Alexa, open big brain\", then \"every day at seven turn on the kitchen light\".",
+    "auto.nessuna_filtro": "No automation matches.",
+    "auto.non_configurata": "Home Assistant is not configured: set the URL and token in Settings.",
+    "auto.errore": "Home Assistant does not answer: %s",
+    "auto.accesa": "On", "auto.spenta": "Off", "auto.sparita": "No longer in Home Assistant",
+    "auto.ultima": "last run %s", "auto.mai": "never run", "auto.creata": "created %s",
+    "auto.elimina": "Delete", "auto.elimina_conferma": "Delete the automation \"%s\" from Home Assistant?", "auto.dimentica": "Remove from the list",
+    "auto.eliminata": "Automation deleted.", "auto.attivata": "Automation switched on.", "auto.disattivata": "Automation switched off.",
+    "opt.HA_AUTOMAZIONI.1": "On", "opt.HA_AUTOMAZIONI.0": "Off",
   },
 };
 
@@ -237,6 +277,7 @@ function cambiaLingua(l) {
   if (tab === "conversazioni") disegnaStorico();
   if (tab === "impostazioni") caricaImpostazioni(true);
   if (tab === "casa") disegnaCasa();
+  if (tab === "automazioni") disegnaAutomazioni();
   if (tab === "sistema") caricaSistema();
   if (tab === "chat" && !conversazione.length) messaggioVuoto(t("chat.vuoto"));
 }
@@ -339,6 +380,7 @@ function vaiA(tab) {
   if (tab === "conversazioni") caricaStorico();
   if (tab === "impostazioni") caricaImpostazioni(true);
   if (tab === "casa" && !modificheCasa()) caricaCasa();
+  if (tab === "automazioni") caricaAutomazioni();
   if (tab === "sistema") caricaSistema();
   if (tab === "registro") { caricaRegistro(); timerRegistro = setInterval(() => { if ($("#auto-registro").checked) caricaRegistro(); }, 5000); }
   if (tab === "chat") {
@@ -571,6 +613,83 @@ function disegnaCasa() {
 
 async function salvaCasa() {
   await salvaERiavvia($("#casa-salva"), () => api("POST", "casa", { gruppi: [...casaGruppi], vietate: [...casaVietate] }), caricaCasa);
+}
+
+// ---------- automations created by voice
+let automazioni = null;
+
+async function caricaAutomazioni() {
+  try { automazioni = await api("GET", "automazioni"); } catch (e) { toast(e.message); return; }
+  disegnaAutomazioni();
+}
+
+function quandoIso(v) {
+  const ms = Date.parse(v);
+  return Number.isNaN(ms) ? String(v) : quando(ms / 1000);
+}
+
+function statoAutomazioni(a) {
+  const box = $("#auto-stato");
+  if (!a.configurata) { box.replaceChildren(); return; }
+  const bott = el("button", { class: "btn small " + (a.abilitata ? "" : "primary"), type: "button",
+    text: a.abilitata ? t("auto.disattiva") : t("auto.attiva"), disabled: !a.configurabile || null,
+    onclick: async (ev) => {
+      await salvaERiavvia(ev.target, () => api("POST", "impostazioni", { valori: { HA_AUTOMAZIONI: a.abilitata ? "0" : "1" } }),
+        caricaAutomazioni);
+      disegnaAutomazioni();        // the button gets its own label back, also when saving failed
+    } });
+  const note = [];
+  if (a.abilitata && !a.strumenti) note.push(el("div", { class: "notice" }, t("auto.senza_strumenti")));
+  if (a.permessi === false) note.push(el("div", { class: "notice" }, t("auto.no_permessi")));
+  box.replaceChildren(
+    el("div", { class: "notice " + (a.attiva ? "ok" : "info") },
+      el("div", { class: "auto-testa" },
+        el("div", {}, el("strong", { text: a.attiva ? t("auto.titolo_on") : t("auto.titolo_off") }),
+          el("p", { text: a.abilitata ? t("auto.desc_on") : t("auto.desc_off") })),
+        bott)),
+    ...note,
+    el("p", { class: "muted small", text: t("auto.limite", a.max, a.voci.length) + (a.permessi === true ? " " + t("auto.permessi_ok") : "") }));
+}
+
+function disegnaAutomazioni() {
+  const box = $("#automazioni"), a = automazioni;
+  if (!a) return;
+  statoAutomazioni(a);
+  if (!a.configurata) { box.replaceChildren(el("p", { class: "vuoto", text: t("auto.non_configurata") })); return; }
+  if (a.errore) { box.replaceChildren(el("p", { class: "vuoto", text: t("auto.errore", a.errore) })); return; }
+  const testo = $("#auto-filtro").value.trim().toLowerCase();
+  const voci = a.voci.filter((v) => !testo || (v.nome + " " + v.riassunto + " " + (v.entity_id || "")).toLowerCase().includes(testo));
+  if (!voci.length) {
+    box.replaceChildren(el("p", { class: "vuoto", text: a.voci.length ? t("auto.nessuna_filtro") : t("auto.nessuna") }));
+    return;
+  }
+  box.replaceChildren(...voci.map((v) => {
+    const sparita = v.stato === null, accesa = v.stato === "on";
+    const meta = [v.entity_id ? el("code", { text: v.entity_id }) : el("code", { text: v.id }),
+      " · " + (v.ultima ? t("auto.ultima", quandoIso(v.ultima)) : t("auto.mai")),
+      v.creata ? " · " + t("auto.creata", quando(v.creata)) : ""];
+    const elimina = el("button", { class: "btn small danger", type: "button", text: sparita ? t("auto.dimentica") : t("auto.elimina"),
+      onclick: async (ev) => {
+        if (!sparita && !confirm(t("auto.elimina_conferma", v.nome))) return;
+        ev.target.disabled = true;
+        try { await api("POST", "automazioni/elimina", { id: v.id }); toast(t("auto.eliminata")); } catch (e) { toast(e.message, 6000); }
+        caricaAutomazioni();
+      } });
+    return el("div", { class: "entita" + (accesa ? "" : " bloccata") },
+      el("div", { class: "entita-info" },
+        el("div", { class: "entita-nome", text: v.nome }),
+        v.riassunto ? el("div", { class: "entita-descr", text: v.riassunto }) : null,
+        el("div", { class: "entita-id" }, ...meta)),
+      el("div", { class: "entita-azioni" },
+        sparita ? el("span", { class: "stato-testo bad", text: t("auto.sparita") }) : interruttore(accesa ? t("auto.accesa") : t("auto.spenta"), accesa, async (on) => {
+          try {
+            await api("POST", "automazioni/stato", { id: v.id, attiva: on });
+            toast(on ? t("auto.attivata") : t("auto.disattivata"));
+          } catch (e) { toast(e.message, 6000); }
+          caricaAutomazioni();
+        }),
+        elimina));
+  }));
 }
 
 // ---------- settings
@@ -941,6 +1060,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#casa-aggiorna").addEventListener("click", caricaCasa);
   $("#casa-annulla").addEventListener("click", () => { casaGruppi = new Set(casa.gruppi || []); casaVietate = new Set(casa.vietate || []); disegnaCasa(); });
   $("#casa-salva").addEventListener("click", salvaCasa);
+  $("#auto-filtro").addEventListener("input", disegnaAutomazioni);
+  $("#auto-aggiorna").addEventListener("click", caricaAutomazioni);
   $("#salva").addEventListener("click", salva);
   $("#annulla").addEventListener("click", () => { modifiche = {}; disegnaImpostazioni(); });
   $("#livello").addEventListener("change", caricaRegistro);

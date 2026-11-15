@@ -18,7 +18,8 @@ The service is four Python files and three dependencies (Flask, gunicorn, crypto
 - [`src/llm.py`](../src/llm.py) – the two wire formats (Anthropic Messages, OpenAI-compatible Chat Completions),
   the tool loop and graceful degradation.
 - [`src/web_search.py`](../src/web_search.py) – native search for Claude, SearXNG / Brave / Tavily for every model.
-- [`src/home_tools.py`](../src/home_tools.py) – the three Home Assistant tools and every safety rule.
+- [`src/home_tools.py`](../src/home_tools.py) – the Home Assistant tools (and the optional automations by voice) with every
+  safety rule.
 
 ## A request, end to end
 

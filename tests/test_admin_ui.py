@@ -68,7 +68,7 @@ def test_settings_without_secrets(url):
     assert "demo-secret-key" not in dom and "demo-secret-token" not in dom and "demo-password-123" not in dom
 
 
-@pytest.mark.parametrize("scheda", ["panoramica", "conversazioni", "chat", "casa", "impostazioni", "sistema", "registro"])
+@pytest.mark.parametrize("scheda", ["panoramica", "conversazioni", "chat", "casa", "automazioni", "impostazioni", "sistema", "registro"])
 def test_phone_width_has_no_sideways_scroll(url, scheda):
     r = subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--no-sandbox", "--no-first-run", "--window-size=500,900",
                         "--virtual-time-budget=8000", "--dump-dom", "%s/demo-frame/360/%s" % (url, scheda)],
@@ -85,10 +85,20 @@ def test_chat_and_log(url):
 
 def test_home_tab(url):
     dom = apri(url, "casa")
-    assert visibile(dom, "tab-casa") and len(re.findall(r'class="entita(?: bloccata)?"', dom)) == 10
+    assert visibile(dom, "tab-casa") and len(re.findall(r'class="entita(?: bloccata)?"', dom)) == 13   # automations included
     for testo in ("Mai comandabile (tipo di entità)", "Bloccata dalle regole di sicurezza incluse", "Vietata da te", "Comandabile",
                   "Chiedi sempre un sì", "light.studio"):
         assert testo in dom, testo
+
+
+def test_automations_tab(url):
+    dom = apri(url, "automazioni")
+    assert visibile(dom, "tab-automazioni") and len(re.findall(r'class="entita(?: bloccata)?"', dom)) == 3
+    for testo in ("Automazioni a voce attive", "Luce cucina al mattino", "alle 07:05, solo lun, mer, ven", "Disattivata",
+                  "Non più in Home Assistant", "Togli dall'elenco", "Il token può creare ed eliminare automazioni",
+                  "automation.alexa_tapparelle_al_tramonto", "mai eseguita"):
+        assert testo in dom, testo
+    assert "Irrigazione notte" not in dom and "demo-secret-token" not in dom
 
 
 def test_system_tab(url):
@@ -101,6 +111,7 @@ def test_system_tab(url):
 @pytest.mark.parametrize("scheda, testi", [
     ("panoramica", ("Overview", "Up for 2 days", "Checks", "In the history")),
     ("casa", ("Never controllable (entity type)", "Forbidden by you", "Always ask for a yes")),
+    ("automazioni", ("Automations by voice are on", "No longer in Home Assistant", "never run", "Delete")),
     ("impostazioni", ("Assistant language", "API key", "Admin page")),
     ("sistema", ("Download en-US", "Change the admin page password", "Network and publishing")),
 ])

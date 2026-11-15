@@ -69,6 +69,13 @@ CAMPI = [
     ("HA_VIETATO", "casa", "text", None,
      ("Altre entità vietate (regex)", "Si aggiunge alla lista di sicurezza incorporata. Più comodo dalla scheda Casa."),
      ("Other forbidden entities (regex)", "Added to the built-in safety list. Easier from the Home tab.")),
+    ("HA_AUTOMAZIONI", "casa", "select", ["0", "1"],
+     ("Automazioni a voce", "1: l'assistente può creare, attivare, disattivare ed eliminare automazioni di Home Assistant, sempre con un sì a voce. Più comodo dalla scheda Automazioni."),
+     ("Automations by voice", "1: the assistant can create, enable, disable and delete Home Assistant automations, always after a spoken yes. Easier from the Automations tab.")),
+    ("HA_AUTOMAZIONI_TOKEN", "casa", "secret", None,
+     ("Token per le automazioni", "Home Assistant fa creare ed eliminare automazioni solo agli amministratori: token di un utente amministratore, usato solo per questo. Vuoto: il token sopra."),
+     ("Token for automations", "Home Assistant lets only administrators create and delete automations: an administrator's token, used only for that. Empty: the token above.")),
+    ("HA_AUTOMAZIONI_MAX", "casa", "number", None, ("Automazioni a voce al massimo", ""), ("Maximum automations by voice", "")),
     ("ADMIN_HISTORY", "pannello", "number", None, ("Domande nello storico", "0 spegne lo storico."),
      ("Questions in the history", "0 turns the history off.")),
     ("SYSTEM_PROMPT", "avanzate", "textarea", None, ("Prompt di sistema", "Vuoto: le regole vocali incluse, nella lingua scelta."),
@@ -91,6 +98,7 @@ OPZIONI = {c[0]: c[3] for c in CAMPI}
 PREDEFINITI = {"LLM_MAX_TOKENS": "1024", "ATTESA_MAX": "6", "LLM_TIMEOUT_LUNGO": "120", "WEB_RESULTS": "5",
                "WEB_MAX": "3", "HOME_TIMEZONE": "Europe/Rome", "HA_MAX_SENZA_CONFERMA": "3", "HTTP_USER_AGENT": "alexa-ai-bridge/1.0",
                "LLM_EXTRA_JSON": "{}", "WEB_SEARCH": "auto", "HA_TOOLS": "1", "LANGUAGE": "auto", "ADMIN_HISTORY": "100",
+               "HA_AUTOMAZIONI": "0", "HA_AUTOMAZIONI_MAX": "20",
                "BRAVE_URL": "https://api.search.brave.com/res/v1/web/search", "TAVILY_URL": "https://api.tavily.com/search"}
 # what an empty setting means, when it is not a plain value (Italian, English)
 PREDEFINITI_TESTO = {
@@ -105,13 +113,14 @@ PREDEFINITI_TESTO = {
     "HOME_COUNTRY": ("nessuno", "none"), "HA_URL": ("nessuno: strumenti casa spenti", "none: home tools off"),
     "LLM_API_KEY": ("nessuna", "none"), "BRAVE_API_KEY": ("nessuna", "none"), "TAVILY_API_KEY": ("nessuna", "none"),
     "HA_TOKEN": ("nessuno: strumenti casa spenti", "none: home tools off"),
+    "HA_AUTOMAZIONI_TOKEN": ("il token sopra", "the token above"),
 }
 SEGRETI = {c[0] for c in CAMPI if c[2] == "secret"}
 
 # numbers: (minimum, maximum, integer only)
 LIMITI = {"LLM_MAX_TOKENS": (1, 200000, True), "ATTESA_MAX": (1, 7.5, False), "LLM_TIMEOUT_LUNGO": (5, 900, False),
           "WEB_RESULTS": (1, 20, True), "WEB_MAX": (1, 20, True), "HA_MAX_SENZA_CONFERMA": (0, 100, True),
-          "ADMIN_HISTORY": (0, 1000, True)}
+          "ADMIN_HISTORY": (0, 1000, True), "HA_AUTOMAZIONI_MAX": (1, 200, True)}
 # endpoints the service sends keys and tokens to: only http(s), never file:// or other schemes
 URL = ("LLM_BASE_URL", "HA_URL", "SEARXNG_URL", "BRAVE_URL", "TAVILY_URL")
 

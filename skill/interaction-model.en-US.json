@@ -225,7 +225,18 @@
             "choose {query}",
             "pick {query}",
             "cook {query}",
-            "play {query}"
+            "play {query}",
+            "delete {query}",
+            "remove {query}",
+            "schedule {query}",
+            "add {query}",
+            "enable {query}",
+            "disable {query}",
+            "whenever {query}",
+            "as soon as {query}",
+            "every day {query}",
+            "every evening {query}",
+            "every morning {query}"
           ]
         },
         {

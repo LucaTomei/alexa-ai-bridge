@@ -34,6 +34,71 @@ Optional. Without `HA_TOKEN` the tools are simply not offered to the model.
 > Home Assistant lists its members (scenes made in the UI do). A scene that changes several rooms still needs no
 > confirmation: list it in `HA_GRUPPI` (or set *always ask* in the admin page's **Casa** tab).
 
+## Automations by voice
+
+Optional, **off by default**. With it on, you can ask for automations the way you would describe them:
+
+> 🗣️ *"Ogni sera al tramonto chiudi la tapparella della camera."*<br>
+> 🔊 *"Creo un'automazione che al tramonto chiude la tapparella della camera, tutti i giorni. Va bene?"*<br>
+> 🗣️ *"Sì."* — 🔊 *"Fatto, l'ho creata."*<br>
+> 🗣️ *"Quali automazioni hai creato?"* · *"Disattiva quella della camera."* · *"Eliminala."* (asks first)
+
+Three more tools are offered to the model:
+
+| Tool | What it does |
+|---|---|
+| `crea_automazione(nome, quando, giorni, azioni, confermato)` | creates an automation, after the summary was read to you and you said *yes* |
+| `elenca_automazioni` | lists the automations created by voice, with state, last run and summary |
+| `gestisci_automazione(automazione, operazione, confermato)` | enables, disables or deletes one of them (deleting asks first) |
+
+What can start an automation (`quando`):
+
+| `tipo` | Example | In Home Assistant |
+|---|---|---|
+| `orario` | *"ogni giorno alle 7"*, *"il sabato alle 9"* (`giorni`) | time trigger, optional weekday condition |
+| `sole` | *"al tramonto"*, *"mezz'ora prima dell'alba"* | sun trigger with offset (up to 3 hours) |
+| `stato` | *"quando la porta di casa si apre"*, *"quando esco"*, *"se la lavatrice resta spenta per 5 minuti"* | state trigger (`to`, `from`, `for`) |
+| `soglia` | *"quando la temperatura della camera scende sotto 18"* | numeric state trigger (`above`, `below`) |
+
+Up to five actions, each **checked exactly like `esegui_azione`**: allowed services only, explicit entities that
+exist, no forbidden entity (locks, doors, alarms, scripts, automations, technical services, `HA_VIETATO`, the
+entities forbidden from the **Casa** tab), allowed data keys only. Any entity can be the *trigger* (reading the
+front door is fine), never the *action*.
+
+Rules enforced by the service:
+
+1. **Always a spoken yes.** The first call only returns a summary, which the model reads to you. The automation is
+   created only when the same call comes back with `confermato=true` **after your short yes** to that question, and
+   only if it is **exactly** the automation summarised, in an earlier turn of the conversation (a proposal is valid
+   for 15 minutes): the model cannot change it after asking, nor propose and confirm it in one go. Deleting works
+   the same way.
+2. **Only its own automations.** Each one gets an id starting with `aab_`, an alias starting with `Alexa: ` and a
+   description saying it was created by voice. The assistant lists, enables, disables and deletes only those;
+   the automations you made by hand are invisible to it.
+3. **A limit**: at most `HA_AUTOMAZIONI_MAX` (20) automations by voice; names must be unique.
+4. The test chat of the admin page only **simulates** them, like the other home actions.
+5. Every one is logged and recorded in the conversation history.
+
+### Switching it on
+
+Home Assistant lets only **administrators** create and delete automations (its configuration API). Keep the
+everyday token non-admin and give the service a second one, used only for that:
+
+1. In Home Assistant create a second user, *Alexa AI automations*, **administrator**, and a long-lived token for it
+   (or use your own admin token).
+2. Admin page → **Configurazione** → *Home Assistant* → **Token per le automazioni** (or `HA_AUTOMAZIONI_TOKEN` in
+   `.env`).
+3. **Automazioni** tab → **Attiva** (or `HA_AUTOMAZIONI=1`). The tab says whether the token has the rights it needs,
+   lists the automations created by voice and lets you switch them on and off or delete them.
+
+The automations are written to `automations.yaml` by Home Assistant itself: your `configuration.yaml` needs the
+default `automation: !include automations.yaml` line (it is there unless you removed it). They show up in
+*Settings → Automations* like any other, and keep working if the bridge is down.
+
+> ⚠️ An automation runs later, on its own, with nobody there to say *no*. It is checked once, when it is created:
+> if you later rename a device so that it would be forbidden, the automation keeps controlling it. Review the
+> **Automazioni** tab from time to time.
+
 ## Dedicated Home Assistant user
 
 1. *Settings → People → Users → Add user*: name *Alexa AI*, **not administrator**, **not** "local access only"

@@ -66,6 +66,9 @@ These are real conversations in the Alexa developer console simulator, which sen
   - every other model can use your own free **SearXNG** (one command, included), **Brave** or **Tavily**.
 - 🏠 **Home Assistant tools**: *"how's the house?"*, *"turn on the storage-room light"*, *"turn it off"*,
   *"close every shutter"* (asks first), *"open the front door"* (always refused).
+- ⏰ **Automations by voice** (optional): *"every evening at sunset close the bedroom shutter"*: Alexa reads it
+  back and creates the Home Assistant automation only after your *yes*, with the same safety rules; list, switch
+  off or delete them by voice or from the admin page ([details](docs/home-assistant.md#automations-by-voice)).
 - 🔒 **Secure by default**:
   - every request from Amazon is verified: signature, certificate chain, timestamp and skill ID;
   - locks, alarms, scripts and technical services can never be controlled;
@@ -114,12 +117,13 @@ flowchart LR
 ```
 
 1. Alexa turns your speech into an intent. Alexa only captures free text in an `AMAZON.SearchQuery` slot when the
-   sentence starts with one of the skill's ~150 *carrier phrases* (*che*, *come*, *accendi*, …). A custom slot
+   sentence starts with one of the skill's ~170 *carrier phrases* (*che*, *come*, *accendi*, …). A custom slot
    handles short phrases (*spegnila*, *di più*, *a metà*).
 2. The service:
    - verifies the request;
    - adds the voice instructions and today's date;
-   - calls the model with up to four tools: web search plus three for the home.
+   - calls the model with up to four tools: web search plus three for the home (three more to create and manage
+     automations, when they are on).
 3. If the model answers within `ATTESA_MAX` seconds, Alexa speaks the answer straight away. Otherwise the service
    keeps it for 15 minutes and delivers it on *"allora?"* (*so?*), on *"sì"*, or when you reopen the skill.
 

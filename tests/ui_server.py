@@ -8,7 +8,8 @@ import os, sys, time
 os.environ.update(SKILL_ID="amzn1.ask.skill.demo", LLM_BASE_URL="https://api.anthropic.com/v1", LLM_API_KEY="demo-secret-key",
                   LLM_MODEL="claude-haiku-5-5", HOME_CITY="Roma", HA_URL="https://homeassistant.local:8123",
                   HA_TOKEN="demo-secret-token", ADMIN_PASSWORD="demo-password-123", DATA_DIR=sys.argv[2], APP_VERSION="1.0.0",
-                  PUBLIC_HOST="alexa.example.org", HA_GRUPPI="cover.tutte", HA_VIETATO=r"^switch\.irrigazione(?:\s|$)")
+                  PUBLIC_HOST="alexa.example.org", HA_GRUPPI="cover.tutte", HA_VIETATO=r"^switch\.irrigazione(?:\s|$)",
+                  HA_AUTOMAZIONI="1")
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
 import app as A  # noqa: E402
 import admin  # noqa: E402
@@ -58,6 +59,18 @@ _stati = [{"entity_id": e, "state": st, "attributes": {"friendly_name": n}} for 
     ("cover.camera", "open", "Tapparella camera"), ("climate.salone", "heat", "Clima salone"), ("switch.irrigazione", "off", "Irrigazione"),
     ("switch.cancello", "off", "Cancello"), ("lock.porta", "locked", "Porta di casa"), ("scene.notte", "scening", "Scena notte"),
     ("script.allarme", "off", "Attiva allarme")]]
+_stati += [{"entity_id": e, "state": st, "attributes": {"friendly_name": n, "id": i, "last_triggered": u}} for e, st, n, i, u in [
+    ("automation.alexa_luce_cucina_al_mattino", "on", "Alexa: Luce cucina al mattino", "aab_1731600000000", "2026-11-15T06:05:00+00:00"),
+    ("automation.alexa_tapparelle_al_tramonto", "off", "Alexa: Tapparelle al tramonto", "aab_1731500000000", None),
+    ("automation.irrigazione_notte", "on", "Irrigazione notte", "1690000000000", None)]]      # made by hand: never shown
+home_tools._registro_cambia(lambda d: d.update({
+    "aab_1731600000000": {"nome": "Luce cucina al mattino", "creata": ora - 86400,
+                          "riassunto": "alle 07:05, solo lun, mer, ven: light.turn_on Luce studio {\"brightness_pct\": 40}"},
+    "aab_1731500000000": {"nome": "Tapparelle al tramonto", "creata": ora - 3 * 86400,
+                          "riassunto": "30 minuti prima del tramonto: cover.close_cover Tapparella camera"},
+    "aab_1731400000000": {"nome": "Clima la sera", "creata": ora - 5 * 86400,
+                          "riassunto": "quando Clima salone diventa off: climate.turn_on Clima salone"}}))
+home_tools.permessi_automazioni = lambda: True
 home_tools.stati = lambda: _stati
 A.llm.modelli = lambda timeout=8: [{"id": "claude-haiku-5-5", "nome": "Claude Haiku 5.5"},
                                    {"id": "claude-sonnet-5-5", "nome": "Claude Sonnet 5.5"}]

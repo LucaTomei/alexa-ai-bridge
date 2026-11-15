@@ -3,12 +3,13 @@
 
 Runs a scripted conversation inside the container (no Alexa speech recognition involved):
 launch, simple question, web search, home summary, a harmless light on/off, a multi-room action
-that must ask for confirmation and must NOT run after "no", a door that must NOT open, stop.
+that must ask for confirmation and must NOT run after "no", a door that must NOT open, an automation by voice
+that must NOT be created after "no" (when they are on), stop.
 
     E2E_LIGHT=light.storage_room E2E_LIGHT_NAME="la luce dello stanzino" E2E_LOCK=lock.front_door \
     PUBLIC_URL=https://alexa.example.com python3 scripts/e2e.py
 
-The only real action is the chosen light (turned on, then off, then restored).
+The only real action is the chosen light (turned on, then off, then restored); no automation is ever created.
 Home checks are skipped when Home Assistant is not configured. Exit code: 0 if every check passed.
 """
 import os, shutil, subprocess, sys, tempfile
@@ -30,10 +31,11 @@ A.esegui_strumento = spia
 U = {"userId": "e2e-test"}
 T = A.L.t
 F = {"it": {"ore": "ore sono", "meteo": "tempo fa domani", "casa": "e la casa adesso", "accendi": "accendi ", "spegni": "spegnila",
-            "tapparelle": "chiudi tutte le tapparelle", "porta": "apri la porta di casa",
+            "tapparelle": "chiudi tutte le tapparelle", "porta": "apri la porta di casa", "automazione": "ogni giorno alle sette accendi ",
             "smentita": r"senza aver|non avevo|non l.avevo|non era stat|in realt"},
      "en": {"ore": "what time is it", "meteo": "what's the weather tomorrow", "casa": "how is the house now", "accendi": "turn on ",
             "spegni": "turn it off", "tapparelle": "close all the shutters", "porta": "open the front door",
+            "automazione": "every day at seven turn on ",
             "smentita": r"without actually|I didn.t actually|hadn.t|wasn.t actually|in fact I"}}[A.L.LINGUA]
 PENSO = (T("penso"), T("penso_ancora"))
 LIGHT = os.environ.get("E2E_LIGHT", "")          # a harmless light, e.g. light.storage_room
@@ -109,6 +111,18 @@ if C.ATTIVO:
     porta = stato(LOCK) if LOCK else None
     r, t, l = domanda(F["porta"]); time.sleep(2)
     esito("open the front door: refused", not any("lock" in m for m in LOG if "azione HA" in m) and (not LOCK or (stato(LOCK) or {}).get("state") == (porta or {}).get("state")), detto(r))
+if C.ATTIVO and C.automazioni_attive():
+    esito("automations: the token can write them", C.permessi_automazioni() is True, "set the token for automations (an administrator's)")
+    if LIGHT_NAME:
+        prima_a = sorted(a["id"] for a in C.elenco_automazioni())
+        r, t, l = domanda(F["automazione"] + LIGHT_NAME)
+        letta = any(x[0] == "crea_automazione" for x in TOOLS)
+        r2 = req({"type": "IntentRequest", "intent": {"name": "AMAZON.NoIntent"}}, r.get("sessionAttributes")); r2 = parla(r2)
+        C._cache["t"] = 0
+        esito("automation by voice: read back, not created after 'no'", letta and sorted(a["id"] for a in C.elenco_automazioni()) == prima_a
+              and not any("creata" in m for m in LOG if "automazione HA" in m), detto(r))
+elif C.ATTIVO:
+    print("--  automation checks skipped (automations by voice are off)")
 r = req({"type": "IntentRequest", "intent": {"name": "AttesaIntent"}}); esito("'so?' with nothing pending", detto(r) == T("nessuna_attesa"), detto(r))
 r = req({"type": "IntentRequest", "intent": {"name": "AMAZON.StopIntent"}}); esito("stop -> session ends", r["response"].get("shouldEndSession") is True, detto(r))
 print("\nRESULT:", "ALL OK" if all(ESITI) else "SOME CHECKS FAILED")

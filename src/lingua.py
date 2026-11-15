@@ -142,6 +142,96 @@ TESTI = {
                        "not run it: only after the user has said yes, call esegui_azione again with confermato=true."),
     "fatto_su": ("Fatto: %s.%s su %s.", "Done: %s.%s on %s."),
     "strumento_ignoto": ("Strumento sconosciuto.", "Unknown tool."),
+    # ---- automations created by voice
+    "usa_automazioni": (" Puoi anche creare automazioni di Home Assistant con crea_automazione: trova prima gli entity_id con "
+                        "cerca_in_casa, poi chiama crea_automazione senza confermato, leggi all'utente il riepilogo che ricevi e "
+                        "chiedigli se va bene; solo dopo il suo si' richiamala identica con confermato=true. Con elenca_automazioni "
+                        "e gestisci_automazione vedi, attivi, disattivi ed elimini quelle create a voce.",
+                        " You can also create Home Assistant automations with crea_automazione: first find the entity_ids with "
+                        "cerca_in_casa, then call crea_automazione without confermato, read the summary you get back to the user "
+                        "and ask whether it is right; only after their yes call it again, unchanged, with confermato=true. With "
+                        "elenca_automazioni and gestisci_automazione you list, enable, disable and delete the ones made by voice."),
+    "crea_auto_desc": ("Crea un'automazione di Home Assistant che parte da sola: a un orario, all'alba o al tramonto, quando "
+                       "un'entita' cambia stato o quando un sensore supera una soglia. Le azioni seguono le regole di esegui_azione "
+                       "(stessi domini e servizi, entity_id esatti, mai serrature, porte o antifurto). Serve sempre la conferma "
+                       "a voce: la prima chiamata restituisce il riepilogo da leggere all'utente.",
+                       "Create a Home Assistant automation that runs by itself: at a time, at sunrise or sunset, when an entity "
+                       "changes state or when a sensor crosses a threshold. The actions follow the rules of esegui_azione (same "
+                       "domains and services, exact entity_ids, never locks, doors or the alarm). A spoken confirmation is always "
+                       "needed: the first call returns the summary to read to the user."),
+    "auto_nome_desc": ("nome breve, es. 'luce cucina al mattino'", "short name, e.g. 'kitchen light in the morning'"),
+    "auto_quando_desc": ("tipo=orario con ora HH:MM; tipo=sole con evento alba|tramonto e scarto_minuti (negativo = prima); "
+                         "tipo=stato con entita e a (e/o da), per_minuti opzionale; tipo=soglia con entita e sopra e/o sotto",
+                         "tipo=orario with ora HH:MM; tipo=sole with evento alba (sunrise) | tramonto (sunset) and scarto_minuti "
+                         "(negative = before); tipo=stato with entita and a (to) and/or da (from), optional per_minuti; "
+                         "tipo=soglia with entita and sopra (above) and/or sotto (below)"),
+    "auto_giorni_desc": ("solo in questi giorni (vuoto: tutti)", "only on these days (empty: every day)"),
+    "elenca_auto_desc": ("Elenca le automazioni create a voce, con stato e riepilogo.",
+                         "List the automations created by voice, with their state and summary."),
+    "gestisci_auto_desc": ("Attiva, disattiva o elimina un'automazione creata a voce (mai quelle fatte a mano in Home Assistant). "
+                           "Per eliminare serve confermato=true dopo il si' dell'utente.",
+                           "Enable, disable or delete an automation created by voice (never the ones made by hand in Home "
+                           "Assistant). Deleting needs confermato=true after the user's yes."),
+    "auto_chi_desc": ("entity_id o nome dell'automazione", "entity_id or name of the automation"),
+    "auto_spente": ("Le automazioni a voce sono spente: si attivano dal pannello di gestione.",
+                    "Automations by voice are off: they are switched on from the admin page."),
+    "auto_ora": ("Ora non valida: usa HH:MM, per esempio 07:30.", "Invalid time: use HH:MM, for example 07:30."),
+    "auto_sole": ("Per tipo=sole indica evento alba o tramonto.", "For tipo=sole give evento alba (sunrise) or tramonto (sunset)."),
+    "auto_scarto": ("scarto_minuti deve essere un numero intero tra -180 e 180.", "scarto_minuti must be a whole number between -180 and 180."),
+    "auto_stato": ("Per tipo=stato indica lo stato di arrivo (a) e/o di partenza (da).",
+                   "For tipo=stato give the state to reach (a) and/or the state to leave (da)."),
+    "auto_soglia": ("Per tipo=soglia indica sopra e/o sotto come numeri (sopra minore di sotto).",
+                    "For tipo=soglia give sopra (above) and/or sotto (below) as numbers (above lower than below)."),
+    "auto_per": ("per_minuti deve essere un numero intero tra 1 e 1440.", "per_minuti must be a whole number between 1 and 1440."),
+    "auto_tipo": ("quando.tipo deve essere orario, sole, stato o soglia.", "quando.tipo must be orario, sole, stato or soglia."),
+    "auto_giorni": ("giorni: usa mon, tue, wed, thu, fri, sat, sun.", "giorni: use mon, tue, wed, thu, fri, sat, sun."),
+    "auto_azioni": ("Indica da 1 a %s azioni.", "Give 1 to %s actions."),
+    "auto_esiste": ("Esiste gia' un'automazione chiamata '%s': scegli un altro nome o eliminala prima.",
+                    "An automation called '%s' already exists: pick another name or delete it first."),
+    "auto_troppe": ("Ci sono gia' %s automazioni create a voce, il massimo: eliminane una prima.",
+                    "There are already %s automations created by voice, the maximum: delete one first."),
+    "auto_conferma": ("SERVE CONFERMA. Automazione '%s': %s. Leggi questo riepilogo all'utente con parole semplici, chiedi se "
+                      "va bene e non crearla: solo dopo il suo si' richiama crea_automazione con gli stessi dati e confermato=true.",
+                      "CONFIRMATION NEEDED. Automation '%s': %s. Read this summary to the user in simple words, ask whether it is "
+                      "right and do not create it: only after their yes call crea_automazione again with the same data and "
+                      "confermato=true."),
+    "auto_conferma_elimina": ("SERVE CONFERMA: chiedi all'utente se vuole davvero eliminare l'automazione '%s'; solo dopo il suo "
+                              "si' richiama gestisci_automazione con confermato=true.",
+                              "CONFIRMATION NEEDED: ask the user whether they really want to delete the automation '%s'; only "
+                              "after their yes call gestisci_automazione again with confermato=true."),
+    "auto_creata": ("Fatto: automazione '%s' creata e attiva (%s).", "Done: automation '%s' created and on (%s)."),
+    "auto_permessi": ("Home Assistant ha rifiutato: per creare o eliminare automazioni serve il token di un amministratore "
+                      "(Token per le automazioni nel pannello).",
+                      "Home Assistant refused: creating or deleting automations needs an administrator's token "
+                      "(Token for automations on the admin page)."),
+    "auto_descrizione": ("Creata a voce con Alexa AI Bridge. ", "Created by voice with Alexa AI Bridge. "),
+    "auto_nessuna": ("Nessuna automazione creata a voce.", "No automation created by voice."),
+    "auto_non_trovata": ("non trovata in Home Assistant", "not found in Home Assistant"),
+    "auto_non_trovata_ha": ("L'automazione '%s' non c'e' piu' in Home Assistant.", "The automation '%s' is no longer in Home Assistant."),
+    "auto_ultima": ("ultima esecuzione %s", "last run %s"),
+    "auto_operazione": ("operazione deve essere attiva, disattiva o elimina.", "operazione must be attiva, disattiva or elimina."),
+    "auto_sconosciuta": ("'%s' non e' tra le automazioni create a voce: usa elenca_automazioni. Quelle fatte a mano in Home "
+                         "Assistant non si possono cambiare da qui.",
+                         "'%s' is not one of the automations created by voice: use elenca_automazioni. The ones made by hand in "
+                         "Home Assistant cannot be changed from here."),
+    "auto_fatto": ("Fatto: automazione %s (%s).", "Done: automation %s (%s)."),
+    "auto_op_attiva": ("attivata", "enabled"), "auto_op_disattiva": ("disattivata", "disabled"), "auto_op_elimina": ("eliminata", "deleted"),
+    "auto_d_orario": ("alle %s", "at %s"),
+    "auto_d_sunrise": ("all'alba", "at sunrise"), "auto_d_sunset": ("al tramonto", "at sunset"),
+    "auto_d_prima_sunrise": ("%s minuti prima dell'alba", "%s minutes before sunrise"),
+    "auto_d_prima_sunset": ("%s minuti prima del tramonto", "%s minutes before sunset"),
+    "auto_d_dopo_sunrise": ("%s minuti dopo l'alba", "%s minutes after sunrise"),
+    "auto_d_dopo_sunset": ("%s minuti dopo il tramonto", "%s minutes after sunset"),
+    "auto_d_a": ("quando %s diventa %s", "when %s becomes %s"),
+    "auto_d_da": ("quando %s smette di essere %s", "when %s stops being %s"),
+    "auto_d_da_a": ("quando %s passa da %s a %s", "when %s goes from %s to %s"),
+    "auto_d_sopra": ("quando %s sale sopra %s", "when %s rises above %s"),
+    "auto_d_sotto": ("quando %s scende sotto %s", "when %s drops below %s"),
+    "auto_d_tra": ("quando %s e' tra %s e %s", "when %s is between %s and %s"),
+    "auto_d_per": (" per %s minuti", " for %s minutes"),
+    "auto_d_giorni": (", solo %s", ", only on %s"),
+    "auto_g_mon": ("lun", "Mon"), "auto_g_tue": ("mar", "Tue"), "auto_g_wed": ("mer", "Wed"), "auto_g_thu": ("gio", "Thu"),
+    "auto_g_fri": ("ven", "Fri"), "auto_g_sat": ("sab", "Sat"), "auto_g_sun": ("dom", "Sun"),
     "errore_ha": ("Errore nel contattare Home Assistant: %s", "Could not reach Home Assistant: %s"),
 }
 

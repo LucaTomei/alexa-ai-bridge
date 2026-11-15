@@ -29,10 +29,10 @@ def _conversation():
     ]
 
 
-def _run(tmp_path, lingua="it"):
+def _run(tmp_path, lingua="it", **extra):
     script = tmp_path / "inner.py"
     script.write_text(E2E.INNER)
-    env = dict(os.environ, PYTHONPATH=os.path.join(ROOT, "src"), E2E_LIGHT="light.kitchen", LANGUAGE=lingua,
+    env = dict(os.environ, PYTHONPATH=os.path.join(ROOT, "src"), E2E_LIGHT="light.kitchen", LANGUAGE=lingua, **extra,
                E2E_LIGHT_NAME="la luce della cucina" if lingua == "it" else "the kitchen light", E2E_LOCK="lock.front_door")
     return subprocess.run([sys.executable, str(script)], env=env, capture_output=True, text=True, timeout=120)
 
@@ -45,6 +45,26 @@ def test_e2e_checks_pass_on_a_working_setup(llm, ha, tmp_path, lingua):
     assert "ERR" not in r.stdout and not llm.queue and ("language: %s" % lingua) in r.stdout
     assert [c[0] for c in ha.calls] == ["/api/services/light/turn_on", "/api/services/light/turn_off"]
     assert next(s for s in ha.states if s["entity_id"] == "lock.front_door")["state"] == "locked"
+
+
+@pytest.mark.parametrize("crea", [False, True])
+def test_e2e_automation_by_voice_must_not_be_created_after_no(llm, ha, tmp_path, crea):
+    proposta = {"nome": "Cucina alle sette", "quando": {"tipo": "orario", "ora": "07:00"},
+                "azioni": [{"dominio": "light", "servizio": "turn_on", "entita": ["light.kitchen"]}]}
+    llm.queue = _conversation()[:-2] + [
+        tool_use("t5", "esegui_azione", {"dominio": "lock", "servizio": "unlock", "entita": ["lock.front_door"]}),
+        final("Non posso aprire la porta."),
+        tool_use("t6", "crea_automazione", proposta), final("La creo, va bene?"),
+        # after the "no" the model tries to confirm by itself: the service must refuse
+        tool_use("t7", "crea_automazione", dict(proposta, confermato=True)) if crea else final("Va bene, niente."),
+    ] + ([final("Creata.")] if crea else [])
+    r = _run(tmp_path, HA_AUTOMAZIONI="1")
+    assert "OK  automations: the token can write them" in r.stdout, r.stdout + r.stderr
+    if not crea:
+        assert r.returncode == 0 and "OK  automation by voice: read back, not created after 'no'" in r.stdout, r.stdout + r.stderr
+        assert not ha.automations
+    else:
+        assert r.returncode == 0 and not ha.automations, r.stdout + r.stderr
 
 
 def test_e2e_checks_fail_when_the_light_does_not_turn_on(llm, ha, tmp_path):
