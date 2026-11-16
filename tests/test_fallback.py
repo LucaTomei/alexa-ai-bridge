@@ -1,7 +1,7 @@
 """Fallback models: a main model that is unreachable, logged out, out of credit or over its limit is paused and the
 next one answers; it comes back after the pause; never a second model after a home action; notifications on every
 change; the background check; the Models tab of the admin page."""
-import os, subprocess, sys, time
+import os, subprocess, sys, threading, time
 import pytest
 import conftest
 from conftest import tool_use, oa_final
@@ -22,6 +22,14 @@ def avvisi(monkeypatch):
     out = []
     monkeypatch.setattr(NOTIF, "notifica", lambda evento, testo, urgente=False: out.append((evento, testo, urgente)) or True)
     return out
+
+
+def finite():
+    """Wait for the background answers: what is checked next is set before the answer, but a slow runner may still
+    be computing it when Alexa already said "Ci sto pensando"."""
+    for t in threading.enumerate():
+        if getattr(t, "_target", None) is APP.calcola:
+            t.join(10)
 
 
 def percorsi(llm):
@@ -144,6 +152,7 @@ def test_each_model_learns_what_its_endpoint_accepts(alexa, llm):
     llm.fail = {"/v1/": (500, {})}
     llm.require_max_completion = True
     alexa.ask("ciao")
+    finite()
     assert f.stato["max_completion"] is True and LLM.STATO["max_completion"] is False
 
 
@@ -180,6 +189,7 @@ def test_background_check_does_not_clear_a_model_out_of_credit(alexa, llm, avvis
     riserva(2)
     llm.fail = {"/v1/messages": (429, {"error": {"message": "quota exceeded"}})}
     alexa.ask("ciao")
+    finite()
     LLM.controlla_tutti()                                     # its /models list works, but it still has no credit
     assert LLM.salute(1)["giu"] and len(avvisi) == 1
 
@@ -335,4 +345,71 @@ def test_which_bad_requests_pause_a_model(alexa, llm, avvisi, corpo, pausa):
     riserva(2)
     llm.fail = {"/v1/": (400, corpo)}
     alexa.ask("ciao")
+    finite()
     assert LLM.salute(1)["giu"] is pausa
+
+
+@pytest.mark.parametrize("env,errore", [
+    ({"LLM_2_BASE_URL": "http://x/v1"}, "LLM_2_MODEL is not set"),
+    ({"LLM_2_MODEL": "m"}, "LLM_2_BASE_URL is not set"),
+    ({"LLM_2_BASE_URL": "http://x/v1", "LLM_2_MODEL": "m", "LLM_2_API": "gemini"}, "LLM_2_API must be"),
+    ({"LLM_2_BASE_URL": "http://x/v1", "LLM_2_MODEL": "m", "LLM_2_EXTRA_JSON": "{"}, "LLM_2_EXTRA_JSON must be"),
+])
+def test_fallback_settings_in_process(monkeypatch, env, errore):
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+    with pytest.raises(SystemExit, match=errore):
+        LLM._riserva(2)
+
+
+def test_fallback_settings_parsed(monkeypatch):
+    assert LLM._riserva(3) is None
+    for k, v in {"LLM_3_BASE_URL": "https://api.anthropic.com/v1/", "LLM_3_MODEL": "claude", "LLM_3_ATTIVO": "off",
+                 "LLM_3_EXTRA_JSON": '{"x": 1}', "LLM_3_API_KEY": " k "}.items():
+        monkeypatch.setenv(k, v)
+    f = LLM._riserva(3)
+    assert (f.n, f.base, f.api, f.model, f.key, f.extra, f.attivo, f.host) == (3, "https://api.anthropic.com/v1", "anthropic", "claude",
+                                                                                "k", {"x": 1}, False, "api.anthropic.com")
+
+
+def test_check_of_endpoints_without_a_list_or_with_a_broken_one(monkeypatch, avvisi):
+    f = riserva(2)
+
+    def errore(e):
+        def m(timeout=8, f=None):
+            raise e
+        return m
+    monkeypatch.setattr(LLM, "modelli", errore(LLM.ErroreModello("HTTP 404: no", 404)))
+    assert LLM.controlla(f) == (None, "HTTP 404: no")
+    LLM.controlla_tutti()                                 # nothing can be said: nothing changes
+    assert not LLM.salute(1)["giu"] and avvisi == []
+    monkeypatch.setattr(LLM, "modelli", errore(ValueError("not json")))
+    assert LLM.controlla(f) == (False, "invalid answer")
+    monkeypatch.setattr(LLM, "modelli", errore(TimeoutError("slow")))
+    assert LLM.controlla(f) == (False, "timeout")
+
+
+def test_the_background_check_thread(monkeypatch):
+    giri = []
+
+    def sonno(s):
+        giri.append(s)
+        if len(giri) > 2:
+            raise SystemExit                              # ends the thread after two rounds
+    monkeypatch.setattr(LLM.time, "sleep", sonno)
+    monkeypatch.setattr(LLM, "controlla_tutti", lambda: (_ for _ in ()).throw(RuntimeError("boom")))
+    monkeypatch.setattr(LLM, "CONTROLLO", 7)
+    with pytest.raises(SystemExit):
+        LLM._controllore()                                # an error in a round never stops the next one
+    assert giri == [420, 420, 420]
+    partiti = []
+    monkeypatch.setattr(LLM.threading, "Thread", lambda **k: type("T", (), {"start": lambda self: partiti.append(k["name"])})())
+    LLM.avvia_controllo()
+    monkeypatch.setattr(LLM, "CONTROLLO", 0)
+    LLM.avvia_controllo()
+    assert partiti == ["controllo-modelli"]
+
+
+def test_answer_shapes_in_the_log():
+    assert LLM._riassunto([1]) == "list"
+    assert LLM._riassunto({"x": 1, "y": 2}) == "unexpected fields: x,y"

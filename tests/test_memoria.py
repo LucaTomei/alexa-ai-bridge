@@ -15,8 +15,8 @@ def istruzioni(llm):
 
 def aspetta():
     for t in threading.enumerate():
-        if getattr(t, "_target", None) is APP.calcola:
-            t.join(5)
+        if getattr(t, "_target", None) is APP.calcola or t.name == "memoria":
+            t.join(10)
 
 
 def test_saved_by_voice_and_used_in_the_next_conversation(alexa, llm):
@@ -325,3 +325,42 @@ def test_learning_failures_never_pause_a_model(alexa, llm, monkeypatch):
     finally:
         llm.handle = orig
     assert len(chiamate) >= 2 and not conftest.LLM_MOD.salute(1)["giu"] and avvisi == []
+
+
+def test_edge_cases_of_the_memory(monkeypatch):
+    with open(M.FILE, "w") as f:
+        f.write("[1, 2]")                                   # valid JSON, not a memory
+    assert M.leggi() == M._vuota() and M._stato["rotto"]
+    M.aggiungi("primo fatto importante")
+    assert os.path.exists(M.FILE + ".broken") and [f["testo"] for f in M.fatti()] == ["primo fatto importante"]
+    os.unlink(M.FILE + ".broken")
+    vecchio = M.fatti()[0]["id"]
+    assert M.aggiungi("primo fatto importante", sostituisce=vecchio)[0] == "nuovo"   # replaced by itself: kept once
+    M.aggiungi("secondo fatto")
+    secondo = [f["id"] for f in M.fatti() if f["testo"] == "secondo fatto"][0]
+    assert M.aggiungi("primo fatto importante", sostituisce=secondo)[0] == "gia" and len(M.fatti()) == 1
+    assert M.modifica("nessuno", "x") is False and M.modifica(M.fatti()[0]["id"], "il pin è 1234") is False
+    assert M.esegui("sconosciuto", {}) == "Strumento sconosciuto." and M.esegui("chi_parla", {"nome": "Anna"}) == "Niente del genere in memoria."
+    M.imposta_prova(True)
+    try:
+        assert M.esegui("ricorda", {"fatto": "x y z"}) == "Prova automatica: niente salvato."
+    finally:
+        M.imposta_prova(False)
+    assert M._json_lista("[non json") == [] and M._json_lista("niente") == [] and M._json_lista('{"a": [1]}') == [1]
+    assert M.impara("sì", "ok", None) == []
+    monkeypatch.setattr(conftest.IMPOSTAZIONI, "scrivibile", lambda: False)
+    assert M._scrivi(M._vuota()) is False
+
+
+def test_memory_tab_without_a_writable_folder(client, monkeypatch):
+    monkeypatch.setattr(conftest.IMPOSTAZIONI, "scrivibile", lambda: False)
+    for percorso, corpo in (("memoria/fatto", {"testo": "x"}), ("memoria/elimina", {"id": "a"}), ("memoria/svuota", {"cosa": "tutto"}),
+                            ("memoria/voce", {"id": "a", "nome": "b"})):
+        assert post(client, percorso, corpo).status_code == 409
+    monkeypatch.undo()
+    assert post(client, "memoria/voce", {"id": 1}).status_code == 404 and post(client, "memoria/elimina", []).status_code == 400
+
+
+def test_a_learning_error_never_breaks_anything(monkeypatch):
+    monkeypatch.setattr(M, "registra_scambio", lambda *a: 1 / 0)
+    APP.impara("una domanda abbastanza lunga da imparare", "risposta")     # logged, never raised

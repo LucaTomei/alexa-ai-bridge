@@ -30,6 +30,9 @@ Fallback models:
 
 Admin page: a change typed in a fallback model that is not configured yet keeps its group open.
 
+Tests: the signed Alexa requests of the tests take their time when they are sent (on a slow machine the whole run
+lasts more than the 150 seconds Alexa allows, and the check failed); more tests for the new code (coverage 97%).
+
 ## 1.4.0
 
 **Interaction model: changed** (new intents for the memory: *ricordati, ti ricordi, dimentica, mi chiamo* in Italian,

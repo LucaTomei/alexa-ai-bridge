@@ -8,7 +8,13 @@ from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.x509.verification import Store
 import conftest
 APP = conftest.APP
-NOW = dt.datetime.now(dt.timezone.utc)
+NOW = dt.datetime.now(dt.timezone.utc)       # for the certificates (valid for days)
+
+
+def adesso():
+    """The time of a request: taken when it is sent, never at import (the service refuses requests older than 150 s,
+    and a full test run on a slow machine lasts longer than that)."""
+    return dt.datetime.now(dt.timezone.utc)
 URL = "https://s3.amazonaws.com/echo.api/echo-api-cert.pem"
 
 
@@ -54,7 +60,7 @@ def post(client, key, body, url=URL, sign=True):
 
 def launch(app_id="amzn1.ask.skill.test", ts=None):
     return {"version": "1.0", "session": {"application": {"applicationId": app_id}, "user": {"userId": "u"}, "attributes": {}},
-            "request": {"type": "LaunchRequest", "timestamp": (ts or NOW).strftime("%Y-%m-%dT%H:%M:%SZ")}}
+            "request": {"type": "LaunchRequest", "timestamp": (ts or adesso()).strftime("%Y-%m-%dT%H:%M:%SZ")}}
 
 
 def test_valid_request_is_answered(client, pki):
@@ -66,7 +72,7 @@ def test_valid_request_is_answered(client, pki):
 def test_bad_requests_are_rejected(client, pki, case):
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048) if case == "wrong_key" else pki[2]
     body = launch(app_id="amzn1.ask.skill.other" if case == "other_skill" else "amzn1.ask.skill.test",
-                  ts=NOW - dt.timedelta(minutes=5) if case == "old_timestamp" else None)
+                  ts=adesso() - dt.timedelta(minutes=5) if case == "old_timestamp" else None)
     url = {"foreign_host": "https://evil.example/echo.api/c.pem", "path_traversal": "https://s3.amazonaws.com/echo.api/../evil/c.pem"}.get(case, URL)
     assert post(client, key, body, url=url, sign=case != "unsigned").status_code == 400
 

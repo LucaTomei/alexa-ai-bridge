@@ -261,7 +261,7 @@ def clean():
     yield
     # background answers of this test must end here: a late one would take the scripted answers of the next test
     for t in threading.enumerate():
-        if getattr(t, "_target", None) is APP.calcola:
+        if getattr(t, "_target", None) is APP.calcola or t.name == "memoria":   # the test chat learns in the background too
             t.join(timeout=10)
 
 

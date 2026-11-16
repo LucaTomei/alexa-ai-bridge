@@ -409,7 +409,7 @@ def chat():
     registra(lav, "admin-chat", "chat")
     if lav["risposta"]:                    # like Alexa: the memory learns from the test chat too, in the background
         lingua = L.attuale()
-        threading.Thread(target=lambda: (L.imposta(lingua), A.impara(testo, lav["risposta"])), daemon=True).start()
+        threading.Thread(target=lambda: (L.imposta(lingua), A.impara(testo, lav["risposta"])), daemon=True, name="memoria").start()
     nota = ("\n[%s: %s]" % (L.t("azioni"), "; ".join(lav["azioni"]))) if lav["azioni"] else ""
     return jsonify(risposta=lav["risposta"], errore=lav["errore"], durata=round(lav["durata"], 1), azioni=lav["azioni"],
                    lenta=lav["durata"] > A.ATTESA,
