@@ -236,10 +236,7 @@
             "as soon as {query}",
             "every day {query}",
             "every evening {query}",
-            "every morning {query}",
-            "i'm {query}",
-            "i am {query}",
-            "this is {query}"
+            "every morning {query}"
           ]
         },
         {

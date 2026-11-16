@@ -309,3 +309,30 @@ def test_saving_a_fallback_model_from_the_page(client, tmp_path, monkeypatch):
     campi = {c["nome"]: c for c in client.get("/admin/api/impostazioni").json["campi"]}
     assert campi["LLM_2_BASE_URL"]["nome_gruppo"] == "Modello 2 (di riserva)" and campi["LLM_5_API_KEY"]["tipo"] == "secret"
     assert campi["LLM_PAUSA"]["predefinito"] == "300"
+
+
+def test_the_check_button_does_not_change_the_model_in_use(llm, avvisi):
+    f = riserva(2)
+    LLM.ULTIMO.update(n=1, t=time.time())
+    assert LLM.chiedi("s", [{"role": "user", "content": "x"}], [], None, timeout=10, solo=f).startswith("R1")
+    assert LLM.ULTIMO["n"] == 1
+    llm.fail = {"/v2/": (401, {"error": {"message": "not logged in"}})}
+    with pytest.raises(LLM.ErroreModello):
+        LLM.chiedi("s", [{"role": "user", "content": "x"}], [], None, timeout=10, solo=f)
+    assert avvisi == [("modelli", "Modello non raggiungibile: riserva-2 (127.0.0.1:%d) (HTTP 401: not logged in)." % conftest.LLM_PORT, True)]
+
+
+@pytest.mark.parametrize("corpo,pausa", [
+    ({"error": {"message": "tool_use ids were found without tool_result blocks: toolu_1 not found"}}, False),
+    ({"error": {"message": "author field is invalid"}}, False),
+    ({"error": {"message": "temperature is disabled for this model"}}, False),
+    ({"error": {"message": "Your credit balance is too low"}}, True),
+    ({"error": {"message": "auth_unavailable: no auth available"}}, True),
+    ({"error": {"message": "The model gpt-9 does not exist"}}, True),
+    ({"error": {"message": "invalid api key"}}, True),
+])
+def test_which_bad_requests_pause_a_model(alexa, llm, avvisi, corpo, pausa):
+    riserva(2)
+    llm.fail = {"/v1/": (400, corpo)}
+    alexa.ask("ciao")
+    assert LLM.salute(1)["giu"] is pausa

@@ -182,7 +182,7 @@ const TESTI = {
     "mem.elimina_conferma": "Dimenticare \"%s\"?", "mem.svuota": "Dimentica tutto", "mem.svuota_conferma": "Dimenticare tutto quello che l'assistente sa?",
     "mem.fonte.voce": "a voce", "mem.fonte.auto": "imparato", "mem.fonte.pannello": "da qui",
     "mem.voci": "Voci riconosciute",
-    "mem.voci_desc": "Se nell'app Alexa ognuno ha il suo profilo vocale e nella console Alexa la skill ha attiva Skill Personalization (Build → Permissions), l'assistente sa chi sta parlando: chi dice \"sono Anna\" viene ricordato.",
+    "mem.voci_desc": "Se nell'app Alexa ognuno ha il suo profilo vocale e nella console Alexa la skill ha attiva Skill Personalization (Build → Permissions), l'assistente sa chi sta parlando: chi dice \"mi chiamo Anna\" viene ricordato.",
     "mem.voci_nessuna": "Nessuna voce riconosciuta finora.", "mem.voce_dimentica": "Dimentica",
     "mem.scambi": "Conversazioni recenti", "mem.scambi_desc": "Le ultime domande e risposte che l'assistente rilegge.",
     "mem.scambi_nessuno": "Nessuna conversazione salvata.", "mem.scambi_svuota": "Cancella",
@@ -364,7 +364,7 @@ const TESTI = {
     "mem.elimina_conferma": "Forget \"%s\"?", "mem.svuota": "Forget everything", "mem.svuota_conferma": "Forget everything the assistant knows?",
     "mem.fonte.voce": "by voice", "mem.fonte.auto": "learned", "mem.fonte.pannello": "from here",
     "mem.voci": "Recognised voices",
-    "mem.voci_desc": "If everyone has a voice profile in the Alexa app and the skill has Skill Personalization on in the Alexa console (Build → Permissions), the assistant knows who is speaking: whoever says \"I'm Anna\" is remembered.",
+    "mem.voci_desc": "If everyone has a voice profile in the Alexa app and the skill has Skill Personalization on in the Alexa console (Build → Permissions), the assistant knows who is speaking: whoever says \"my name is Anna\" is remembered.",
     "mem.voci_nessuna": "No voice recognised so far.", "mem.voce_dimentica": "Forget",
     "mem.scambi": "Recent conversations", "mem.scambi_desc": "The last questions and answers the assistant reads again.",
     "mem.scambi_nessuno": "No conversation saved.", "mem.scambi_svuota": "Clear",
@@ -1252,7 +1252,9 @@ function segnaModifica(nome, valore) {
   const iniziale = nascosto ? undefined : c.valore;
   if (valore === undefined || (valore === iniziale && !nascosto)) delete modifiche[nome];
   else modifiche[nome] = valore;
-  document.querySelector('[data-campo="' + nome + '"]')?.classList.toggle("modificato", nome in modifiche);
+  const riga = document.querySelector('[data-campo="' + nome + '"]');
+  riga?.classList.toggle("modificato", nome in modifiche);
+  if (nome in modifiche) riga?.closest("fieldset")?.classList.remove("chiuso");    // an unsaved change is never hidden
   const n = Object.keys(modifiche).length;
   $("#savebar").hidden = n === 0;
   $("#savebar-testo").textContent = testoModifiche(n);

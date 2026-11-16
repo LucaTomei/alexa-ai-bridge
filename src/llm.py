@@ -307,9 +307,10 @@ def modelli(timeout=8, f=None):
 # ---------- fallback between models
 PASSABILI = (ErroreModello, Rifiutata, OSError, http.client.HTTPException, json.JSONDecodeError)
 # a 400 that says the account cannot answer (no credit, logged out, unknown model): the model is paused too
-_NON_PUO = re.compile(r"credit|balance|quota|billing|exhaust|insufficient|rate.?limit|unauthori[sz]ed|forbidden|api.?key|"
-                      r"\bauth|log.?in|not.?found|does not exist|unknown model|model_not_found|unsupported model|invalid model|"
-                      r"permission|suspended|disabled", re.I)
+_NON_PUO = re.compile(r"credit|balance|quota|billing|exhaust|insufficient|rate.?limit|unauthori[sz]ed|forbidden|"
+                      r"invalid.{0,10}api.?key|api.?key.{0,20}(?:invalid|missing|expired)|\bauth(?:_|entica|ori[sz]ation\b|\b)|"
+                      r"\blog(?:ged)?.?(?:in|out)\b|model.{0,30}(?:not.?found|does not exist|not available|unsupported)|"
+                      r"(?:unknown|unsupported|invalid) model|model_not_found|permission.?denied|account.{0,30}(?:suspended|disabled)", re.I)
 
 
 def motivo(e):
@@ -346,7 +347,7 @@ def _segna_giu(f, e, controllo=False):
     return not prima
 
 
-def _segna_su(f, controllo=False):
+def _segna_su(f, controllo=False, in_uso=True):
     """This model answered; True if it was paused (it is back)."""
     with _lock:
         s = salute(f.n)
@@ -354,15 +355,18 @@ def _segna_su(f, controllo=False):
         if tornato or not s["giu"]:
             s.update(giu=False, fino=0.0, controllo=False)
         s["t_ok"] = time.time()
-        if not controllo:
+        if not controllo and in_uso:
             ULTIMO.update(n=f.n, t=time.time())
     if tornato:
         log.info("model %d %s answers again", f.n, f.nome)
     return tornato
 
 
-def _avvisa_caduti(caduti, chi):
-    if caduti:
+def _avvisa_caduti(caduti, chi, solo=False):
+    if caduti and solo:                   # the check of one model from the admin page
+        for f, m in caduti:
+            notifiche.notifica("modelli", L.t("n_modello_irraggiungibile") % (f.nome, m), True)
+    elif caduti:
         elenco = ", ".join("%s: %s" % (f.nome, m) for f, m in caduti)
         notifiche.notifica("modelli", (L.t("n_modello_giu") % (elenco, chi.nome)) if chi else (L.t("n_modelli_giu") % elenco), True)
 
@@ -376,13 +380,15 @@ def _domanda(f, system, messaggi, strumenti, esegui, nativo, scadenza, riprova=T
     return _openai(f, system, messaggi, strumenti, esegui, scadenza, riprova)
 
 
-def chiedi(system, messaggi, strumenti, esegui, nativo=None, timeout=60, irreversibile=None, per_api=None, solo=None):
+def chiedi(system, messaggi, strumenti, esegui, nativo=None, timeout=60, irreversibile=None, per_api=None, solo=None,
+           silenzioso=False):
     """One answer from the model. messaggi: [{"role": "user"|"assistant", "content": str}];
     strumenti: [{"name", "description", "parameters"}]; esegui(name, args) -> str runs a tool;
     nativo: the Anthropic server-side web search tool, if wanted; per_api: {"anthropic"|"openai": (strumenti, nativo)}
     for fallback models of another format. The models are tried in order (the paused ones last); the next one is
     tried only if irreversibile() is false: nothing that must not happen twice (a home action) was done.
-    solo: ask only this model (the checks of the admin page)."""
+    solo: ask only this model (the checks of the admin page). silenzioso: a background request (the memory learning):
+    it follows the same order but never pauses a model, changes the one in use or sends a notification."""
     scadenza = time.time() + timeout
     elenco = [solo] if solo else fornitori()
     ora = time.time()
@@ -398,7 +404,9 @@ def chiedi(system, messaggi, strumenti, esegui, nativo=None, timeout=60, irrever
             t = _domanda(f, system, messaggi, strumenti, esegui, nativo, time.time() + limite, not altri, per_api)
         except PASSABILI as e:
             errore = e
-            if isinstance(e, Rifiutata) and not _NON_PUO.search(str(e)):
+            if silenzioso:
+                log.info("background request: model %d %s: %s", f.n, f.nome, motivo(e))
+            elif isinstance(e, Rifiutata) and not _NON_PUO.search(str(e)):
                 log.warning("model %d %s refused the request: %s", f.n, f.nome, str(e)[:200])
             elif _segna_giu(f, e):
                 caduti.append((f, motivo(e)))
@@ -406,13 +414,13 @@ def chiedi(system, messaggi, strumenti, esegui, nativo=None, timeout=60, irrever
                 log.warning("model %d failed after a home action: not asking another model (it could repeat it)", f.n)
                 break
             continue
-        if _segna_su(f):
+        if not silenzioso and _segna_su(f, in_uso=not solo):
             notifiche.notifica("modelli", L.t("n_modello_su") % f.nome)
-        if f.n != 1 or caduti:
+        if (f.n != 1 or caduti) and not silenzioso:
             log.info("answered by model %d %s", f.n, f.nome)
-        _avvisa_caduti(caduti, f)
+        _avvisa_caduti(caduti, f, bool(solo))
         return senza_pensieri(t).strip()
-    _avvisa_caduti(caduti, None)
+    _avvisa_caduti(caduti, None, bool(solo))
     raise errore if errore else ErroreModello("no model available", 0)
 
 

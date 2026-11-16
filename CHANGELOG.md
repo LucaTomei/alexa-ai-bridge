@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.4.1
+
+**Interaction model: changed** (the openings *io sono* and *I'm, I am, this is* added in 1.4.0 are removed: Alexa
+dropped them, so *"io sono stanco"* reached the model as *"stanco"*; say *"mi chiamo Anna"* / *"my name is Anna"* to
+introduce yourself). Paste the new `skill/interaction-model.*.json` in the Alexa console, then **Save** and **Build**.
+No change needed in `.env`.
+
+Memory:
+
+- A password, PIN or code said aloud is no longer kept among the earlier exchanges (it was refused as a fact, but the
+  sentence itself was saved and read again with the next questions).
+- More secrets are recognised: door, gate and alarm codes, safe combinations, Wi-Fi keys, any code with digits.
+- A correction (*"Luca non prende più il caffè"*) is saved instead of being taken for the fact it corrects.
+- *"Dimentica…"* forgets the one fact that matches best, never every fact about a person.
+- A damaged `memory.json` is kept aside as `memory.json.broken` instead of being overwritten, and wrong values in it
+  never stop an answer.
+- Facts are learned only from what you say, never from the assistant's answer (which may quote web pages), and are
+  given to the model as information, not instructions.
+- A question starting with *"ricordati…"* / *"remember…"* is answered when it is a question.
+
+Fallback models:
+
+- The background learning request of the memory never pauses a model, changes the one in use or sends a notification.
+- The **Check** button of the Models tab no longer shows the model it checked as the one answering; when it fails, the
+  notification names that model.
+- Only errors that are about the account (credit, quota, login, key, unknown model) pause a model on a bad request;
+  ordinary bad requests (a malformed message) no longer do.
+
+Admin page: a change typed in a fallback model that is not configured yet keeps its group open.
+
 ## 1.4.0
 
 **Interaction model: changed** (new intents for the memory: *ricordati, ti ricordi, dimentica, mi chiamo* in Italian,

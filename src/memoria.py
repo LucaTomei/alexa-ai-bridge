@@ -32,11 +32,15 @@ SCAMBI_TENUTI = 20                    # exchanges kept for MEMORIA_RECENTI (at m
 LUNGHEZZA = 300                       # characters of a fact
 NOMI_STRUMENTI = ("ricorda", "dimentica", "chi_parla")
 # never kept, whoever asks: secrets would end up in every request to the model
-SEGRETO = re.compile(r"passw|\bpin\b|\biban\b|carta di credito|credit card|\bcvv\b|\btoken\b|api.?key|chiave api|"
-                     r"codice (?:d'accesso|di accesso|segreto|dell'allarme|del l?allarme|fiscale|pin)|security code|"
-                     r"access code|alarm code|social security", re.I)
+SEGRETO = re.compile(r"passw|parola d'ordine|\bpin\b|\biban\b|carta di credito|credit card|\bcvv\b|\btoken\b|api.?key|"
+                     r"chiave api|codice fiscale|social security|combinazion|combination|"
+                     r"\b(?:codice|code|codes|chiave|key)\b[^.;]*\d{3,}|\d{3,}[^.;]*\b(?:codice|code|chiave|key)\b|"
+                     r"wi-?fi[^.;]*\b(?:chiave|key|password|codice|code)\b|\b(?:chiave|key|password|codice|code)\b[^.;]*wi-?fi|"
+                     r"codice (?:d'accesso|di accesso|segreto|dell'allarme|del l?allarme|pin)|security code|access code|"
+                     r"alarm code|passcode|\bpuk\b|\bseed\b", re.I)
 _lock = threading.Lock()
 _tl = threading.local()
+_stato = {"rotto": False}            # memory.json could not be read: it is put aside before the next write
 
 
 # ---------- the file
@@ -44,24 +48,50 @@ def _vuota():
     return {"fatti": [], "voci": {}, "scambi": []}
 
 
+def _testo(v):
+    return v if isinstance(v, str) else ""
+
+
+def _numero(v):
+    return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else 0.0
+
+
 def leggi():
+    """The memory, always well formed: a hand-edited or damaged file never breaks an answer."""
     try:
         with open(FILE, encoding="utf-8") as f:
             d = json.load(f)
-    except (OSError, ValueError):
+    except FileNotFoundError:
+        return _vuota()
+    except (OSError, ValueError) as e:
+        if not _stato["rotto"]:
+            log.warning("memory: %s cannot be read (%s): it will be kept aside as memory.json.broken", FILE, type(e).__name__)
+        _stato["rotto"] = True
         return _vuota()
     if not isinstance(d, dict):
+        _stato["rotto"] = True
         return _vuota()
+    lista = lambda k: d.get(k) if isinstance(d.get(k), list) else []
     out = _vuota()
-    out["fatti"] = [x for x in d.get("fatti") or [] if isinstance(x, dict) and isinstance(x.get("testo"), str) and x.get("id")]
-    out["voci"] = {k: v for k, v in (d.get("voci") or {}).items() if isinstance(k, str) and isinstance(v, str)}
-    out["scambi"] = [x for x in d.get("scambi") or [] if isinstance(x, dict) and isinstance(x.get("d"), str)]
+    out["fatti"] = [{"id": x["id"], "testo": x["testo"], "persona": _testo(x.get("persona")), "t": _numero(x.get("t")),
+                     "fonte": _testo(x.get("fonte"))}
+                    for x in lista("fatti") if isinstance(x, dict) and isinstance(x.get("testo"), str) and isinstance(x.get("id"), str)]
+    voci = d.get("voci") if isinstance(d.get("voci"), dict) else {}
+    out["voci"] = {k: v for k, v in voci.items() if isinstance(k, str) and isinstance(v, str)}
+    out["scambi"] = [{"t": _numero(x.get("t")), "d": x["d"], "r": _testo(x.get("r")), "v": _testo(x.get("v"))}
+                     for x in lista("scambi") if isinstance(x, dict) and isinstance(x.get("d"), str)]
     return out
 
 
 def _scrivi(d):
     if not impostazioni.scrivibile():
         return False
+    if _stato["rotto"]:                   # never overwrite what could not be read: keep it for the owner
+        try:
+            os.replace(FILE, FILE + ".broken")
+        except OSError:
+            pass
+        _stato["rotto"] = False
     fd, tmp = tempfile.mkstemp(dir=impostazioni.DATA_DIR, prefix=".memory-")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
@@ -84,9 +114,16 @@ def _parole(t):
 
 
 def _simile(a, b):
-    """How much two facts overlap (0..1), by their words."""
+    """How much two facts are the same (0..1): shared words over all their words, so "Anna non è più vegetariana" is
+    not "Anna è vegetariana"."""
     pa, pb = _parole(a), _parole(b)
-    return len(pa & pb) / max(min(len(pa), len(pb)), 1) if pa and pb else float(a.lower() == b.lower())
+    return len(pa & pb) / len(pa | pb) if pa and pb else float(a.lower() == b.lower())
+
+
+def _copre(fatto, richiesta):
+    """How much of what is asked a fact contains (0..1)."""
+    pf, pr = _parole(fatto), _parole(richiesta)
+    return len(pf & pr) / len(pr) if pr else 0.0
 
 
 # ---------- facts
@@ -141,18 +178,18 @@ def elimina(fid):
 
 
 def dimentica(testo):
-    """Forget the facts that match these words best; returns what was forgotten."""
+    """Forget the one fact that matches these words best (the model can ask again for the next one); returns it."""
     testo = _pulito(testo)
     with _lock:
         d = leggi()
-        punti = [(_simile(f["testo"] + " " + f.get("persona", ""), testo), f) for f in d["fatti"]]
-        migliore = max((p for p, _ in punti), default=0)
-        if migliore < 0.5:
+        punti = [((_copre(f["testo"] + " " + f.get("persona", ""), testo), _simile(f["testo"], testo)), f) for f in d["fatti"]]
+        punti = [(p, f) for p, f in punti if p[0] >= 0.5]
+        if not punti:
             return []
-        via = [f for p, f in punti if p >= max(migliore - 0.1, 0.5)]
-        d["fatti"] = [f for f in d["fatti"] if f not in via]
+        via = max(punti, key=lambda pf: pf[0])[1]
+        d["fatti"] = [f for f in d["fatti"] if f is not via]
         _scrivi(d)
-    return [f["testo"] for f in via]
+    return [via["testo"]]
 
 
 def svuota(cosa="tutto"):
@@ -205,6 +242,8 @@ def imposta_voce(chiave, nome):
 def registra_scambio(domanda, risposta):
     if getattr(_tl, "prova", False) or not (ATTIVA and RECENTI and isinstance(domanda, str) and risposta):
         return
+    if SEGRETO.search(domanda) or SEGRETO.search(risposta):
+        return                            # a password said aloud is never kept, not even as an earlier exchange
     with _lock:
         d = leggi()
         d["scambi"] = (d["scambi"] + [{"t": time.time(), "d": _pulito(domanda, 400), "r": _pulito(risposta, 600),

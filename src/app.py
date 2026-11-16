@@ -171,7 +171,8 @@ def impara(domanda, risposta):
     try:
         memoria.registra_scambio(domanda, risposta)
         if memoria.da_imparare(domanda):
-            memoria.impara(domanda, risposta, lambda system, messaggi: llm.chiedi(system, messaggi, [], None, timeout=30))
+            memoria.impara(domanda, risposta, lambda system, messaggi: llm.chiedi(system, messaggi, [], None, timeout=30,
+                                                                                   silenzioso=True))
     except Exception as e:
         log.warning("memory: %s", type(e).__name__)
 
