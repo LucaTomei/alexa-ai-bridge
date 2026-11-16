@@ -17,11 +17,14 @@ test notification and shows the latest ones with their result; tokens and addres
 | `confermate` | an action on several rooms, or on an entity that always asks for a *yes*, ran after your *yes* | ✓ |
 | `bloccate` | the model asked for something forbidden: a lock, a door or gate, the alarm, a script, a technical service, an entity you forbade, also inside an automation | ✓ |
 | `automazioni` | an automation [created by voice](home-assistant.md#automations-by-voice) was created, enabled, disabled or deleted (by voice or from the admin page) | ✓ |
+| `modelli` | a model is unreachable, logged out or out of credit and a [fallback model](providers.md#fallback-models) answers (or none does); a model is back | ✓ |
 | `azioni` | every command sent to Home Assistant, even one light (they can be many) | |
 | `errori` | Alexa could not answer: the model is unreachable, the key is wrong… | |
+| `memoria` | the assistant [learned](memory.md) something new about the people at home | |
 | `pannello` | admin page: a login, too many wrong passwords (the client is blocked), the password changed, settings saved, *log out everywhere* | |
 
-Nothing is ever sent for the **test chat** of the admin page, whose home actions are only simulated.
+Nothing about home actions is ever sent for the **test chat** of the admin page, whose home actions are only
+simulated.
 `NOTIFY_ATTIVE=0` (*Invia notifiche* off) pauses everything without removing the channels.
 
 ## Channels

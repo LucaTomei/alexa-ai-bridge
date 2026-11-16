@@ -54,7 +54,7 @@ def test_tools_and_instructions_when_on(alexa, llm, on):
     alexa.ask("x")
     body = llm.requests[-1]
     nomi = [t["name"] for t in body["tools"]]
-    assert nomi[-3:] == ["crea_automazione", "elenca_automazioni", "gestisci_automazione"]
+    assert [n for n in nomi if "automazion" in n] == ["crea_automazione", "elenca_automazioni", "gestisci_automazione"]
     assert "crea_automazione" in body["messages"][-1]["content"] and "confermato=true" in body["messages"][-1]["content"]
 
 
@@ -62,7 +62,7 @@ def test_tools_need_home_assistant(alexa, llm, on, monkeypatch):
     monkeypatch.setattr(HOME, "ATTIVO", False)
     assert not HOME.automazioni_attive()
     alexa.ask("x")
-    assert [t.get("name") for t in llm.requests[-1]["tools"]] == ["web_search"]
+    assert [t.get("name") for t in llm.requests[-1]["tools"]] == ["web_search", "ricorda", "dimentica"]
 
 
 # ---------- creating

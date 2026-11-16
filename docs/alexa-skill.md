@@ -36,7 +36,8 @@ from the repository), paste it in the JSON Editor of each language, **Save** and
 
 | Intent | Samples | What the service does |
 |---|---|---|
-| `AskIntent` | `{query}` after one of **169 carrier phrases** (186 in English) | sends the question to the model |
+| `AskIntent` | `{query}` after one of **170 carrier phrases** (189 in English) | sends the question to the model |
+| `RicordaIntent`, `TiRicordiIntent`, `DimenticaIntent`, `PresentaIntent` | `{query}` after *ricordati / ricorda*, *ti ricordi*, *dimentica*, *mi chiamo* (*remember*, *do you remember*, *forget*, *my name is*) | puts the opening word back (Alexa removes it) and sends the sentence to the model, for the [memory](memory.md) |
 | `FraseBreveIntent` | `{frase}`, a custom type with **71 short phrases** | sends the phrase to the model, with the conversation |
 | `AttesaIntent` | *allora, hai finito, sei pronto, quindi…* | delivers a pending slow answer |
 | `AMAZON.YesIntent` | built-in | delivers a pending answer, otherwise sends *"sì"* to the model (confirmations) |
@@ -50,7 +51,7 @@ from the repository), paste it in the JSON Editor of each language, **Save** and
 just `{query}`**. There must be at least one word before it, and the user's sentence must start with one of those
 words. Alexa then removes that word from the slot value.
 
-The skill therefore lists 169 openings that cover how people actually start sentences in Italian:
+The skill therefore lists 170 openings that cover how people actually start sentences in Italian:
 
 - questions: *che, chi, come, cosa, perché, quanto, quando, dove, quale, a che ora, c'è, è…*
 - requests: *dimmi, spiegami, raccontami, cerca, consigliami, vorrei, dammi, puoi, per favore…*

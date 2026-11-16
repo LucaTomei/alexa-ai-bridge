@@ -176,7 +176,7 @@ def test_a_failing_channel_never_shows_its_secrets(alexa, llm, ha, web, canali, 
 # ---------- admin page
 def test_admin_tab(client, ha, web, canali):
     d = client.get("/admin/api/notifiche").json
-    assert d["attive"] is True and d["eventi"] == ["confermate", "bloccate", "automazioni"] and d["max_ora"] == 30
+    assert d["attive"] is True and d["eventi"] == ["confermate", "bloccate", "automazioni", "modelli"] and d["max_ora"] == 30
     assert d["tutti"] == list(NOTIF.EVENTI) and d["servizi_ha"] == ["mobile_app_telefono", "persistent_notification"]
     assert all(c["configurato"] for c in d["canali"].values()) and d["ha_scelti"] == ["mobile_app_telefono"]
     assert d["canali"]["ntfy"]["dettaglio"] == "http://127.0.0.1" and d["canali"]["telegram"]["dettaglio"] == "chat 42"
@@ -249,7 +249,7 @@ def test_settings_at_startup(monkeypatch):
         mod = importlib.reload(NOTIF)
         assert mod.ATTIVE is False and mod.SCELTI == {"azioni", "errori"} and mod.MAX_ORA == 5
         assert mod.HA_SERVIZI == ["mobile_app_a", "mobile_app_b"] and mod.GOTIFY_URL == "https://g.example"
-        assert IMP.eventi_notifiche("") == {"confermate", "bloccate", "automazioni"} and IMP.eventi_notifiche("None") == set()
+        assert IMP.eventi_notifiche("") == {"confermate", "bloccate", "automazioni", "modelli"} and IMP.eventi_notifiche("None") == set()
     finally:
         monkeypatch.undo()
         importlib.reload(NOTIF)

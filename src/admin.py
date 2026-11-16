@@ -315,6 +315,7 @@ def stato():
         casa={"configurata": bool(A.casa.HA and A.casa.TOKEN), "attiva": A.casa_attiva(), "url": impostazioni.mascherato(A.casa.HA) or A.casa.HA,
               "automazioni": A.casa.automazioni_attive()},
         adattamenti={k: v for k, v in A.llm.STATO.items()},
+        fornitori=A.llm.descrivi(), memoria={"attiva": A.memoria.ATTIVA, "fatti": len(A.memoria.fatti())},
         attesa=A.ATTESA, in_sospeso=len(A._lavori),
         statistiche={"domande": len(voci), "errori": sum(1 for v in voci if v.get("errore")),
                      "lente": sum(1 for v in voci if (v.get("durata") or 0) > A.ATTESA),
@@ -392,6 +393,8 @@ def chat():
     lav = {"hist": storia + [{"role": "user", "content": testo}], "t": time.time(), "risposta": None, "errore": None}
     L.imposta(d.get("lingua") if d.get("lingua") in L.LINGUE else None)   # the test chat can try either language
     A.casa.azzera_azioni()
+    A.memoria.imposta_persona(None)
+    A.memoria.imposta_prova(False)
     A.casa.imposta_simulazione(d.get("simula", True) is not False)
     try:
         r = A.pulisci(A.ask_llm(lav["hist"], timeout=A.TIMEOUT_LUNGO))
@@ -404,6 +407,9 @@ def chat():
     lav["durata"] = time.time() - lav["t"]
     lav["azioni"] = A.casa.azioni_fatte()
     registra(lav, "admin-chat", "chat")
+    if lav["risposta"]:                    # like Alexa: the memory learns from the test chat too, in the background
+        lingua = L.attuale()
+        threading.Thread(target=lambda: (L.imposta(lingua), A.impara(testo, lav["risposta"])), daemon=True).start()
     nota = ("\n[%s: %s]" % (L.t("azioni"), "; ".join(lav["azioni"]))) if lav["azioni"] else ""
     return jsonify(risposta=lav["risposta"], errore=lav["errore"], durata=round(lav["durata"], 1), azioni=lav["azioni"],
                    lenta=lav["durata"] > A.ATTESA,
@@ -413,12 +419,172 @@ def chat():
 # ---------- settings
 @bp.get("/admin/api/modelli")
 def modelli():
-    """Models offered by the configured endpoint, for the model picker of the settings page."""
+    """Models offered by the configured endpoint (?n=2..5: a fallback one), for the model picker of the settings page."""
     A = _a()
+    n = request.args.get("n", "1")
+    f = A.llm.fornitore(int(n)) if n.isdigit() else None
+    if not f:
+        return jsonify(modelli=[], attuale="", errore=_m("non configurato", "not configured"))
     try:
-        return jsonify(modelli=A.llm.modelli(), attuale=A.llm.MODEL)
+        return jsonify(modelli=A.llm.modelli(f=f), attuale=f.model)
     except Exception as e:
-        return jsonify(modelli=[], attuale=A.llm.MODEL, errore=str(e).split(":")[0][:60])   # e.g. "HTTP 401"
+        return jsonify(modelli=[], attuale=f.model, errore=str(e).split(":")[0][:60])   # e.g. "HTTP 401"
+
+
+# ---------- the models, in the order they are tried
+@bp.get("/admin/api/fornitori")
+def fornitori():
+    A = _a()
+    return jsonify(fornitori=A.llm.descrivi(), pausa=A.llm.PAUSA, controllo=A.llm.CONTROLLO, max=A.llm.RISERVE_MAX,
+                   liberi=[n for n in range(2, A.llm.RISERVE_MAX + 1) if not A.llm.fornitore(n)],
+                   notifica="modelli" in notifiche.SCELTI, notifiche_attive=notifiche.ATTIVE,
+                   canali=any(notifiche.configurati().values()), configurabile=impostazioni.scrivibile())
+
+
+@bp.post("/admin/api/fornitori")
+def fornitori_salva():
+    A = _a()
+    d = request.get_json(silent=True)
+    numero = lambda v: not isinstance(v, bool) and isinstance(v, (int, str))
+    if not isinstance(d, dict) or not numero(d.get("pausa")) or not numero(d.get("controllo")) \
+            or not isinstance(d.get("notifica"), bool) or not isinstance(d.get("attivi"), dict):
+        return _errore("Richiesta non valida.", "Invalid request.")
+    cambi = {"LLM_PAUSA": str(d["pausa"]), "LLM_CONTROLLO": str(d["controllo"])}
+    for n, on in d["attivi"].items():
+        if not (isinstance(n, str) and n.isdigit() and 2 <= int(n) <= A.llm.RISERVE_MAX and isinstance(on, bool)):
+            return _errore("Richiesta non valida.", "Invalid request.")
+        cambi["LLM_%s_ATTIVO" % n] = "1" if on else "0"
+    eventi = [e for e in notifiche.EVENTI if e in notifiche.SCELTI and e != "modelli"] + (["modelli"] if d["notifica"] else [])
+    if set(eventi) != set(notifiche.SCELTI):
+        cambi["NOTIFY_EVENTI"] = ",".join(e for e in notifiche.EVENTI if e in eventi) or "none"
+    corpo, codice = _salva(cambi)
+    return jsonify(corpo), codice
+
+
+@bp.post("/admin/api/fornitori/prova")
+def fornitori_prova():
+    """A short question to this model only: it shows whether it is logged in and has credit (it uses a few tokens)."""
+    A = _a()
+    d = request.get_json(silent=True)
+    n = d.get("n") if isinstance(d, dict) else None
+    f = A.llm.fornitore(n) if isinstance(n, int) and not isinstance(n, bool) else None
+    if not f:
+        return _errore("Modello non configurato.", "Model not configured.", 404)
+    L.imposta(_lingua())
+    t = time.time()
+    try:
+        r = A.llm.chiedi(A.sistema(), [{"role": "user", "content": L.t("prova_modello")}], [], None, timeout=30, solo=f)
+        ok, esito = True, r or _m("(risposta vuota)", "(empty answer)")
+    except Exception as e:
+        ok, esito = False, A.llm.motivo(e)
+    log.info("admin: check of model %d -> %s", f.n, "ok" if ok else "error")
+    return jsonify(ok=ok, esito=esito[:500], durata=round(time.time() - t, 1), fornitori=A.llm.descrivi())
+
+
+# ---------- memory
+def _fatto_pagina(f):
+    return {"id": f["id"], "testo": f["testo"], "persona": f.get("persona", ""), "t": f.get("t"), "fonte": f.get("fonte", "")}
+
+
+@bp.get("/admin/api/memoria")
+def memoria():
+    M = _a().memoria
+    d = M.leggi()
+    return jsonify(attiva=M.ATTIVA, auto=M.AUTO, max=M.MAX, recenti=M.RECENTI, giorni=M.GIORNI, istruzioni=M.ISTRUZIONI,
+                   fatti=[_fatto_pagina(f) for f in reversed(d["fatti"])],
+                   voci=[{"id": k, "nome": v} for k, v in sorted(d["voci"].items(), key=lambda kv: kv[1].lower())],
+                   scambi=[{"t": x.get("t"), "domanda": x["d"], "risposta": x.get("r", ""), "chi": d["voci"].get(x.get("v"), "")}
+                           for x in reversed(d["scambi"])],
+                   configurabile=impostazioni.scrivibile())
+
+
+@bp.post("/admin/api/memoria")
+def memoria_salva():
+    d = request.get_json(silent=True)
+    numero = lambda v: not isinstance(v, bool) and isinstance(v, (int, str))
+    if not isinstance(d, dict) or not isinstance(d.get("attiva"), bool) or not isinstance(d.get("auto"), bool) \
+            or not all(numero(d.get(k)) for k in ("max", "recenti", "giorni")) or not isinstance(d.get("istruzioni"), str):
+        return _errore("Richiesta non valida.", "Invalid request.")
+    corpo, codice = _salva({"MEMORIA": "1" if d["attiva"] else "0", "MEMORIA_AUTO": "1" if d["auto"] else "0",
+                            "MEMORIA_MAX": str(d["max"]), "MEMORIA_RECENTI": str(d["recenti"]), "MEMORIA_GIORNI": str(d["giorni"]),
+                            "MEMORIA_ISTRUZIONI": d["istruzioni"]})
+    return jsonify(corpo), codice
+
+
+def _memoria_scrivibile():
+    if not impostazioni.scrivibile():
+        return _errore("La cartella dei dati non è scrivibile.", "The data folder is not writable.", 409)
+    return None
+
+
+@bp.post("/admin/api/memoria/fatto")
+def memoria_fatto():
+    """Add a fact (without id) or change one."""
+    M = _a().memoria
+    errore = _memoria_scrivibile()
+    if errore:
+        return errore
+    d = request.get_json(silent=True)
+    if not isinstance(d, dict) or not isinstance(d.get("testo"), str) or not isinstance(d.get("persona", ""), str) \
+            or not isinstance(d.get("id", ""), str):
+        return _errore("Richiesta non valida.", "Invalid request.")
+    if M.SEGRETO.search(d["testo"]):
+        return _errore("Password, codici e dati riservati non si salvano in memoria.",
+                       "Passwords, codes and confidential data are not saved in the memory.")
+    if d.get("id"):
+        if not M.modifica(d["id"], d["testo"], d.get("persona", "")):
+            return _errore("Ricordo non trovato o vuoto.", "Fact not found or empty.", 404)
+    else:
+        esito, _ = M.aggiungi(d["testo"], d.get("persona", ""), "pannello")
+        if esito == "vuoto":
+            return _errore("Scrivi il fatto da ricordare.", "Type the fact to remember.")
+    log.info("admin: memory fact %s", "changed" if d.get("id") else "added")
+    return jsonify(ok=True)
+
+
+@bp.post("/admin/api/memoria/elimina")
+def memoria_elimina():
+    M = _a().memoria
+    errore = _memoria_scrivibile()
+    if errore:
+        return errore
+    d = request.get_json(silent=True)
+    if not isinstance(d, dict) or not isinstance(d.get("id"), str):
+        return _errore("Richiesta non valida.", "Invalid request.")
+    if not M.elimina(d["id"]):
+        return _errore("Ricordo non trovato.", "Fact not found.", 404)
+    log.info("admin: memory fact deleted")
+    return jsonify(ok=True)
+
+
+@bp.post("/admin/api/memoria/svuota")
+def memoria_svuota():
+    M = _a().memoria
+    errore = _memoria_scrivibile()
+    if errore:
+        return errore
+    d = request.get_json(silent=True)
+    cosa = d.get("cosa") if isinstance(d, dict) else None
+    if cosa not in ("fatti", "scambi", "voci", "tutto"):
+        return _errore("Richiesta non valida.", "Invalid request.")
+    M.svuota(cosa)
+    log.info("admin: memory cleared (%s)", cosa)
+    return jsonify(ok=True)
+
+
+@bp.post("/admin/api/memoria/voce")
+def memoria_voce():
+    """Rename a recognised voice, or forget it (empty name)."""
+    M = _a().memoria
+    errore = _memoria_scrivibile()
+    if errore:
+        return errore
+    d = request.get_json(silent=True)
+    if not isinstance(d, dict) or not isinstance(d.get("id"), str) or not isinstance(d.get("nome"), str) \
+            or d["id"] not in M.leggi()["voci"]:
+        return _errore("Voce non trovata.", "Voice not found.", 404)
+    M.imposta_voce(d["id"], d["nome"])
+    return jsonify(ok=True)
 
 
 @bp.get("/admin/api/impostazioni")
@@ -449,13 +615,14 @@ def _riavvia(server):
     return False
 
 
-TESTI_LUNGHI = ("SYSTEM_PROMPT", "ISTRUZIONI_TURNO")
+TESTI_LUNGHI = ("SYSTEM_PROMPT", "ISTRUZIONI_TURNO", "MEMORIA_ISTRUZIONI")
 # changing where requests go means re-entering the secret sent there: a stolen session cannot redirect a stored key
 SEGRETO_DI = {"LLM_BASE_URL": "LLM_API_KEY", "HA_URL": "HA_TOKEN", "BRAVE_URL": "BRAVE_API_KEY", "TAVILY_URL": "TAVILY_API_KEY"}
 # optional secrets sent to the same address: when they are set, they follow the same rule
 SEGRETI_OPZIONALI_DI = {"HA_URL": ("HA_AUTOMAZIONI_TOKEN",), "NOTIFY_TELEGRAM_URL": ("NOTIFY_TELEGRAM_TOKEN",),
                         "NOTIFY_NTFY_URL": ("NOTIFY_NTFY_TOKEN",), "NOTIFY_GOTIFY_URL": ("NOTIFY_GOTIFY_TOKEN",),
-                        "NOTIFY_WEBHOOK_URL": ("NOTIFY_WEBHOOK_TOKEN",)}
+                        "NOTIFY_WEBHOOK_URL": ("NOTIFY_WEBHOOK_TOKEN",),
+                        **{"LLM_%d_BASE_URL" % n: ("LLM_%d_API_KEY" % n,) for n in range(2, 6)}}
 
 
 def _pulisci_valore(k, v):

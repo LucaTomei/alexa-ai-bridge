@@ -64,6 +64,39 @@ docker logs alexa-ai-bridge 2>&1 | grep -E "rejected|without text" || echo "no w
 A `tools rejected` warning means the model can't call tools. Answers still work, but there is no home control
 and no client-side search. To get those back, pick a tool-capable model.
 
+## Fallback models
+
+Up to four more models, tried in order when the one before cannot answer: unreachable, logged out (*no auth
+available*), out of credit or tokens, over its rate limit, or the model is gone. For example several
+**CLIProxyAPI** instances with different accounts, or a paid API behind a free one, or a local model as the last
+resort. Set them in the admin page, **Configurazione → Modello 2 (di riserva)** … **Modello 5**, or in `.env`:
+
+```env
+LLM_2_API=openai
+LLM_2_BASE_URL=http://cliproxyapi-2:8317/v1
+LLM_2_API_KEY=...
+LLM_2_MODEL=gpt-5-mini
+```
+
+- A model that fails is **paused** for `LLM_PAUSA` seconds (300): the next questions go straight to the next one.
+  After the pause the main model is tried first again.
+- A bad request that is not about the account (e.g. a malformed message) tries the next model without pausing.
+- When the main model may hang, it never takes all the time: each model gets at most half of what is left, so the
+  next one still has its turn.
+- **Never after a home action**: if a model ran a command and then failed, no other model is asked (it could run it
+  again, and a toggle would undo itself). You hear the error instead.
+- Every model learns on its own what its endpoint accepts (tools, `max_completion_tokens`…). Claude's native web
+  search only works with Claude: a fallback model in the OpenAI format uses SearXNG, Brave or Tavily if configured.
+- Every `LLM_CONTROLLO` minutes (10) a background check reads each model's list (no tokens): one that stops
+  answering is paused before a question finds out.
+- With the `modelli` [notification](notifications.md) (on by default) you hear about it: *"Modello non disponibile:
+  claude-haiku-5-5 (api.anthropic.com): HTTP 429: quota exceeded. Ora risponde gpt-5-mini (cliproxyapi-2:8317)."*,
+  and when it is back.
+
+The **Modelli** tab of the admin page shows them in order with their state (answering, available, paused and why),
+a **Check** button that asks one model a short question (it shows whether it is logged in and has credit), a
+switch to skip one without deleting it, the pause and the check interval.
+
 ## Web search
 
 | `WEB_SEARCH` | What it uses | Needs |

@@ -145,6 +145,48 @@ const TESTI = {
     "not.prova": "Invia una notifica di prova", "not.prova_nessuno": "Configura prima almeno un canale.",
     "not.ultime": "Ultime notifiche", "not.ultime_vuoto": "Ancora nessuna notifica da quando il servizio è partito.",
     "nev.prova": "Prova",
+    "nev.modelli": "Modelli che non rispondono", "nevd.modelli": "Un modello non è raggiungibile, è scollegato o ha finito il credito e risponde il successivo; quando torna disponibile.",
+    "nev.memoria": "Cose imparate", "nevd.memoria": "L'assistente ha salvato in memoria qualcosa di nuovo su chi abita in casa.",
+    "tab.modelli": "Modelli",
+    "sub.modelli": "Il modello principale e quelli di riserva, provati in ordine: se uno non risponde, è scollegato o ha finito i token, risponde il successivo.",
+    "mod.ordine": "In ordine di prova", "mod.ordine_desc": "Un modello che non risponde viene messo in pausa e si passa al successivo; finita la pausa si riprova il principale. Dopo un'azione sulla casa non si cambia mai modello a metà (potrebbe ripeterla).",
+    "mod.principale": "Principale", "mod.riserva": "Riserva · %s", "mod.saltato": "Non usato", "mod.giu": "Non disponibile: %s",
+    "mod.fino": "in pausa fino alle %s", "mod.in_uso": "Sta rispondendo", "mod.disponibile": "Disponibile", "mod.non_provato": "Non ancora usato",
+    "mod.senza_chiave": "senza chiave", "mod.usa": "Usa", "mod.prova": "Prova", "mod.modifica": "Modifica", "mod.ultimo_ok": "ultima risposta %s",
+    "mod.ultimo_errore": "ultimo errore %s", "mod.aggiungi": "Aggiungi un modello di riserva",
+    "mod.aggiungi_desc": "Per esempio un altro CLIProxyAPI con un altro account, o un fornitore diverso: si configura nella Configurazione, gruppo Modello %s (di riserva).",
+    "mod.pieno": "Hai configurato tutti i %s modelli possibili.",
+    "mod.comportamento": "Comportamento", "mod.pausa": "Pausa di un modello che non risponde (secondi)",
+    "mod.pausa_desc": "Per questo tempo viene saltato; 0 lo riprova a ogni domanda.",
+    "mod.controllo": "Controllo in background (minuti)",
+    "mod.controllo_desc": "Ogni quanto verificare che ogni modello sia raggiungibile e la chiave valida: usa l'elenco dei modelli, non consuma token. 0 mai.",
+    "mod.notifica": "Avvisami quando un modello non risponde o torna disponibile",
+    "mod.notifica_desc": "Con i canali della scheda Notifiche.", "mod.nessun_canale": "Nessun canale di notifica configurato: impostalo nella scheda Notifiche.",
+    "mod.notifiche_sospese": "Le notifiche sono sospese nella scheda Notifiche.",
+    "mod.prova_desc": "Prova fa una domanda breve solo a quel modello (pochi token): mostra se è collegato e ha credito.",
+    "card.riserve": "+%s di riserva", "card.riserva_in_uso": "Sta rispondendo il modello di riserva %s",
+    "imp.gruppo_chiuso": "non configurato: apri per aggiungerlo",
+    "opt.SI.1": "Sì", "opt.SI.0": "No", "opt.MEMORIA.1": "Attiva", "opt.MEMORIA.0": "Spenta",
+    "tab.memoria": "Memoria",
+    "sub.memoria": "Quello che l'assistente sa di te e di chi abita con te, imparato dalle conversazioni: lo usa per risponderti meglio. Puoi correggerlo, aggiungere o cancellare qualsiasi cosa.",
+    "mem.generale": "Memoria", "mem.attiva": "Ricorda da una conversazione all'altra",
+    "mem.auto": "Impara da solo dopo ogni risposta",
+    "mem.auto_desc": "Una breve richiesta in background, dopo che Alexa ha già risposto, cerca fatti nuovi (qualche token in più per domanda). Spento: impara solo quando glielo chiedi (\"ricordati che…\") o quando lo decide il modello.",
+    "mem.max": "Fatti ricordati al massimo", "mem.recenti": "Scambi delle conversazioni precedenti da rileggere",
+    "mem.giorni": "Per quanti giorni", "mem.recenti_desc": "Così \"come ti dicevo ieri\" ha senso. 0: nessuno.",
+    "mem.istruzioni": "Cosa ricordare", "mem.istruzioni_ph": "vuoto: fatti duraturi su chi abita in casa (nomi, parentele, gusti, abitudini, orari, compleanni, animali)",
+    "mem.mai": "Password, codici e dati riservati non vengono mai salvati.",
+    "mem.fatti": "Cosa sa (%s)", "mem.nuovo": "Un fatto da ricordare, es. Anna è vegetariana", "mem.persona": "Persona (facoltativo)",
+    "mem.aggiungi": "Aggiungi", "mem.cerca": "Cerca nei ricordi", "mem.nessuno": "Ancora niente. Prova a dire ad Alexa: \"ricordati che il sabato andiamo in piscina\".",
+    "mem.nessuno_filtro": "Nessun ricordo corrisponde.", "mem.modifica": "Modifica", "mem.elimina": "Dimentica", "mem.salva": "Salva", "mem.annulla": "Annulla",
+    "mem.elimina_conferma": "Dimenticare \"%s\"?", "mem.svuota": "Dimentica tutto", "mem.svuota_conferma": "Dimenticare tutto quello che l'assistente sa?",
+    "mem.fonte.voce": "a voce", "mem.fonte.auto": "imparato", "mem.fonte.pannello": "da qui",
+    "mem.voci": "Voci riconosciute",
+    "mem.voci_desc": "Se nell'app Alexa ognuno ha il suo profilo vocale e nella console Alexa la skill ha attiva Skill Personalization (Build → Permissions), l'assistente sa chi sta parlando: chi dice \"sono Anna\" viene ricordato.",
+    "mem.voci_nessuna": "Nessuna voce riconosciuta finora.", "mem.voce_dimentica": "Dimentica",
+    "mem.scambi": "Conversazioni recenti", "mem.scambi_desc": "Le ultime domande e risposte che l'assistente rilegge.",
+    "mem.scambi_nessuno": "Nessuna conversazione salvata.", "mem.scambi_svuota": "Cancella",
+    "mem.salvato": "Salvato.", "mem.dimenticato": "Dimenticato.",
   },
   en: {
     "login.sub": "Admin page", "login.password": "Password", "login.entra": "Log in",
@@ -285,8 +327,59 @@ const TESTI = {
     "not.prova": "Send a test notification", "not.prova_nessuno": "Configure at least one channel first.",
     "not.ultime": "Latest notifications", "not.ultime_vuoto": "No notification yet since the service started.",
     "nev.prova": "Test",
+    "nev.modelli": "Models not answering", "nevd.modelli": "A model is unreachable, logged out or out of credit and the next one answers; when it is back.",
+    "nev.memoria": "Things learned", "nevd.memoria": "The assistant saved something new about the people at home.",
+    "tab.modelli": "Models",
+    "sub.modelli": "The main model and the fallback ones, tried in order: when one does not answer, is logged out or out of tokens, the next one answers.",
+    "mod.ordine": "In the order they are tried", "mod.ordine_desc": "A model that does not answer is paused and the next one is used; after the pause the main one is tried again. After a home action the model is never switched halfway (it could repeat it).",
+    "mod.principale": "Main", "mod.riserva": "Fallback · %s", "mod.saltato": "Not used", "mod.giu": "Not available: %s",
+    "mod.fino": "paused until %s", "mod.in_uso": "Answering", "mod.disponibile": "Available", "mod.non_provato": "Not used yet",
+    "mod.senza_chiave": "no key", "mod.usa": "Use", "mod.prova": "Check", "mod.modifica": "Edit", "mod.ultimo_ok": "last answer %s",
+    "mod.ultimo_errore": "last error %s", "mod.aggiungi": "Add a fallback model",
+    "mod.aggiungi_desc": "For example another CLIProxyAPI with another account, or another provider: it is set in Settings, group Model %s (fallback).",
+    "mod.pieno": "All %s possible models are configured.",
+    "mod.comportamento": "Behaviour", "mod.pausa": "Pause of a model that does not answer (seconds)",
+    "mod.pausa_desc": "It is skipped for this long; 0 tries it again at every question.",
+    "mod.controllo": "Background check (minutes)",
+    "mod.controllo_desc": "How often to check that every model is reachable and its key valid: it uses the model list, no tokens. 0 never.",
+    "mod.notifica": "Tell me when a model stops answering or is back",
+    "mod.notifica_desc": "With the channels of the Notifications tab.", "mod.nessun_canale": "No notification channel is configured: set one in the Notifications tab.",
+    "mod.notifiche_sospese": "Notifications are paused in the Notifications tab.",
+    "mod.prova_desc": "Check asks that model only a short question (a few tokens): it shows whether it is logged in and has credit.",
+    "card.riserve": "+%s fallback", "card.riserva_in_uso": "Fallback model %s is answering",
+    "imp.gruppo_chiuso": "not configured: open to add it",
+    "opt.SI.1": "Yes", "opt.SI.0": "No", "opt.MEMORIA.1": "On", "opt.MEMORIA.0": "Off",
+    "tab.memoria": "Memory",
+    "sub.memoria": "What the assistant knows about you and the people you live with, learned from the conversations: it uses it to answer you better. You can correct, add or delete anything.",
+    "mem.generale": "Memory", "mem.attiva": "Remember from one conversation to the next",
+    "mem.auto": "Learn by itself after every answer",
+    "mem.auto_desc": "A short background request, after Alexa has already answered, looks for new facts (a few more tokens per question). Off: it learns only when you ask (\"remember that…\") or when the model decides.",
+    "mem.max": "Maximum facts remembered", "mem.recenti": "Exchanges from earlier conversations to read again",
+    "mem.giorni": "For how many days", "mem.recenti_desc": "So that \"as I told you yesterday\" makes sense. 0: none.",
+    "mem.istruzioni": "What to remember", "mem.istruzioni_ph": "empty: lasting facts about the people at home (names, relationships, tastes, habits, schedules, birthdays, pets)",
+    "mem.mai": "Passwords, codes and confidential data are never saved.",
+    "mem.fatti": "What it knows (%s)", "mem.nuovo": "A fact to remember, e.g. Anna is vegetarian", "mem.persona": "Person (optional)",
+    "mem.aggiungi": "Add", "mem.cerca": "Search the memory", "mem.nessuno": "Nothing yet. Try telling Alexa: \"remember that on Saturdays we go swimming\".",
+    "mem.nessuno_filtro": "Nothing matches.", "mem.modifica": "Edit", "mem.elimina": "Forget", "mem.salva": "Save", "mem.annulla": "Cancel",
+    "mem.elimina_conferma": "Forget \"%s\"?", "mem.svuota": "Forget everything", "mem.svuota_conferma": "Forget everything the assistant knows?",
+    "mem.fonte.voce": "by voice", "mem.fonte.auto": "learned", "mem.fonte.pannello": "from here",
+    "mem.voci": "Recognised voices",
+    "mem.voci_desc": "If everyone has a voice profile in the Alexa app and the skill has Skill Personalization on in the Alexa console (Build → Permissions), the assistant knows who is speaking: whoever says \"I'm Anna\" is remembered.",
+    "mem.voci_nessuna": "No voice recognised so far.", "mem.voce_dimentica": "Forget",
+    "mem.scambi": "Recent conversations", "mem.scambi_desc": "The last questions and answers the assistant reads again.",
+    "mem.scambi_nessuno": "No conversation saved.", "mem.scambi_svuota": "Clear",
+    "mem.salvato": "Saved.", "mem.dimenticato": "Forgotten.",
   },
 };
+
+// the fallback models have the same menus as the main one
+for (const l of ["it", "en"]) {
+  for (let n = 2; n <= 5; n++) {
+    for (const o of ["", "anthropic", "openai"]) TESTI[l]["opt.LLM_" + n + "_API." + o] = TESTI[l]["opt.LLM_API." + o];
+    for (const o of ["1", "0"]) TESTI[l]["opt.LLM_" + n + "_ATTIVO." + o] = TESTI[l]["opt.SI." + o];
+  }
+  for (const o of ["1", "0"]) TESTI[l]["opt.MEMORIA_AUTO." + o] = TESTI[l]["opt.SI." + o];
+}
 
 let lingua = (() => {
   try { const l = localStorage.getItem("aab-lingua"); if (l === "it" || l === "en") return l; } catch (e) { /* no storage */ }
@@ -319,6 +412,8 @@ function cambiaLingua(l) {
   if (tab === "casa") disegnaCasa();
   if (tab === "automazioni") disegnaAutomazioni();
   if (tab === "notifiche") disegnaNotifiche();
+  if (tab === "modelli") disegnaModelli();
+  if (tab === "memoria") disegnaMemoria();
   if (tab === "sistema") caricaSistema();
   if (tab === "chat" && !conversazione.length) messaggioVuoto(t("chat.vuoto"));
 }
@@ -423,6 +518,8 @@ function vaiA(tab) {
   if (tab === "casa" && !modificheCasa()) caricaCasa();
   if (tab === "automazioni") caricaAutomazioni();
   if (tab === "notifiche" && !modificheNotifiche()) caricaNotifiche();
+  if (tab === "modelli" && !modificheModelli()) caricaModelli();
+  if (tab === "memoria") caricaMemoria(modificheMemoria() > 0);
   if (tab === "sistema") caricaSistema();
   if (tab === "registro") { caricaRegistro(); timerRegistro = setInterval(() => { if ($("#auto-registro").checked) caricaRegistro(); }, 5000); }
   if (tab === "chat") {
@@ -444,6 +541,17 @@ function card(titolo, livello, valore, sotto) {
     sotto ? el("div", { class: "card-sub", text: sotto }) : null);
 }
 
+function cardModello(m, fornitori) {
+  const riserve = fornitori.filter((f) => f.n > 1 && f.attivo), uso = fornitori.find((f) => f.in_uso && f.n > 1);
+  const giu = fornitori.some((f) => f.attivo && f.giu);
+  const sotto = uso ? t("card.riserva_in_uso", uso.n) + " · " + uso.host
+    : (m.api === "anthropic" ? "Anthropic" : t("card.compatibile")) + " · " + m.url + (riserve.length ? " · " + t("card.riserve", riserve.length) : "");
+  const c = card(t("card.modello"), giu || uso || !(m.chiave || !m.url.startsWith("https")) ? "warn" : "ok", uso ? uso.modello : m.nome, sotto);
+  c.classList.add("cliccabile");
+  c.addEventListener("click", () => vaiA("modelli"));
+  return c;
+}
+
 async function caricaStato() {
   try { stato = await api("GET", "stato"); } catch (e) { return; }
   $("#versione").textContent = "v" + stato.versione.replace(/^v/, "");
@@ -452,7 +560,7 @@ async function caricaStato() {
   $("#stato-cards").replaceChildren(
     card(t("card.servizio"), stato.avvisi ? "warn" : "ok", t("card.attivo_da", durataLeggibile(stato.ora - stato.avvio)),
       stato.in_sospeso ? t("card.sospese", stato.in_sospeso) : (stato.avvisi ? t("card.avvisi", stato.avvisi) : t("card.nessun_avviso"))),
-    card(t("card.modello"), m.chiave || !m.url.startsWith("https") ? "ok" : "warn", m.nome, (m.api === "anthropic" ? "Anthropic" : t("card.compatibile")) + " · " + m.url),
+    cardModello(m, stato.fornitori || []),
     card(t("card.web"), w.attiva ? "ok" : (w.backend ? "warn" : ""), webTesto, w.backend && !w.attiva ? t("web.rifiutata") : (w.attiva ? t("web.ok") : t("web.niente"))),
     card(t("card.casa"), c.attiva ? "ok" : (c.configurata ? "warn" : ""), c.attiva ? t("casa.collegato") : (c.configurata ? t("casa.no_strumenti") : t("casa.non_configurato")), c.url || t("casa.imposta")),
   );
@@ -829,22 +937,256 @@ async function salvaNotifiche() {
     { attive: sc.attive, eventi: [...sc.eventi], ha: [...sc.ha], max_ora: sc.max_ora }), caricaNotifiche);
 }
 
+// ---------- models: the main one and the fallback ones
+let fornDati = null, fornScelte = null;
+
+function scelteFornitori(d) {
+  return { pausa: String(d.pausa), controllo: String(d.controllo), notifica: d.notifica,
+    attivi: Object.fromEntries(d.fornitori.filter((f) => f.n > 1).map((f) => [String(f.n), f.attivo])) };
+}
+
+async function caricaModelli() {
+  try { fornDati = await api("GET", "fornitori"); } catch (e) { toast(e.message); return; }
+  fornScelte = scelteFornitori(fornDati);
+  disegnaModelli();
+}
+
+function modificheModelli() {
+  if (!fornDati || !fornScelte) return 0;
+  const p = scelteFornitori(fornDati);
+  return (p.pausa !== fornScelte.pausa) + (p.controllo !== fornScelte.controllo) + (p.notifica !== fornScelte.notifica) +
+    Object.keys(p.attivi).filter((k) => p.attivi[k] !== fornScelte.attivi[k]).length;
+}
+
+function aggiornaBarraModelli() {
+  const n = modificheModelli();
+  $("#mod-savebar").hidden = n === 0;
+  $("#mod-savebar-testo").textContent = testoModifiche(n);
+}
+
+function statoFornitore(f) {
+  if (!f.attivo) return ["", t("mod.saltato")];
+  if (f.giu) return ["bad", t("mod.giu", f.errore || "?") + (f.in_pausa ? " · " + t("mod.fino", quando(f.fino)) : "")];
+  if (f.in_uso) return ["ok", t("mod.in_uso")];
+  if (f.t_ok) return ["ok", t("mod.disponibile")];
+  return ["", t("mod.non_provato")];
+}
+
+function apriGruppo(chiave) {
+  gruppoDaAprire = chiave;
+  vaiA("impostazioni");
+}
+
+function disegnaModelli() {
+  const d = fornDati, sc = fornScelte;
+  if (!d || !sc) return;
+  const dis = !d.configurabile;
+  const riga = (f) => {
+    const [classe, testo] = statoFornitore(f);
+    const esito = el("pre", { class: "esito", hidden: true });
+    const prova = bottone(t("mod.prova"), async (ev) => {
+      ev.target.disabled = true;
+      esito.hidden = false; esito.className = "esito"; esito.textContent = "…";
+      try {
+        const r = await api("POST", "fornitori/prova", { n: f.n });
+        esito.className = "esito " + (r.ok ? "ok" : "bad");
+        esito.textContent = (r.ok ? "✓ " : "✗ ") + r.durata + " s\n" + r.esito;
+        fornDati.fornitori = r.fornitori;
+        setTimeout(disegnaModelli, 4000);
+      } catch (e) { esito.className = "esito bad"; esito.textContent = "✗ " + e.message; }
+      ev.target.disabled = false;
+    });
+    const usa = f.n > 1 ? interruttore(t("mod.usa"), sc.attivi[String(f.n)], (on) => { sc.attivi[String(f.n)] = on; aggiornaBarraModelli(); }) : null;
+    if (usa && dis) usa.querySelector("input").disabled = true;
+    const sotto = [(f.api === "anthropic" ? "Anthropic" : t("card.compatibile")) + " · " + f.host + (f.chiave ? "" : " · " + t("mod.senza_chiave"))];
+    if (f.t_ok) sotto.push(t("mod.ultimo_ok", quando(f.t_ok)));
+    if (f.t_errore && !f.giu) sotto.push(t("mod.ultimo_errore", quando(f.t_errore)) + (f.errore ? ": " + f.errore : ""));
+    return el("div", {},
+      el("div", { class: "canale" },
+        el("div", { class: "canale-info" }, el("b", { text: (f.n === 1 ? t("mod.principale") : t("mod.riserva", f.n)) + " · " + f.modello }),
+          el("div", { text: sotto.join(" · ") })),
+        el("span", { class: "stato-testo " + classe, text: testo }),
+        usa, prova,
+        el("button", { class: "link", type: "button", text: t("mod.modifica"), onclick: () => apriGruppo(f.n === 1 ? "modello" : "riserva" + f.n) })),
+      esito);
+  };
+  const pausa = el("input", { type: "number", class: "numero", min: "0", max: "86400", step: "1", disabled: dis || null,
+    oninput: (e) => { sc.pausa = e.target.value; aggiornaBarraModelli(); } });
+  pausa.value = sc.pausa;
+  const controllo = el("input", { type: "number", class: "numero", min: "0", max: "1440", step: "1", disabled: dis || null,
+    oninput: (e) => { sc.controllo = e.target.value; aggiornaBarraModelli(); } });
+  controllo.value = sc.controllo;
+  const avviso = !d.canali ? t("mod.nessun_canale") : (!d.notifiche_attive ? t("mod.notifiche_sospese") : null);
+  const nota = (chiave) => el("p", { class: "muted small", text: t(chiave) });
+  $("#modelli").replaceChildren(
+    sezione(t("mod.ordine"), nota("mod.ordine_desc"), ...d.fornitori.map(riga), nota("mod.prova_desc"),
+      d.liberi.length
+        ? el("div", {}, el("div", { class: "azioni-sis" }, bottone(t("mod.aggiungi"), () => apriGruppo("riserva" + d.liberi[0]), "primary")),
+          el("p", { class: "muted small", text: t("mod.aggiungi_desc", d.liberi[0]) }))
+        : el("p", { class: "muted small", text: t("mod.pieno", d.max) })),
+    sezione(t("mod.comportamento"),
+      rigaSis(t("mod.pausa"), pausa), nota("mod.pausa_desc"),
+      rigaSis(t("mod.controllo"), controllo), nota("mod.controllo_desc"),
+      el("div", { class: "scelte" }, casella(t("mod.notifica"), t("mod.notifica_desc"), sc.notifica,
+        (on) => { sc.notifica = on; aggiornaBarraModelli(); }, dis)),
+      avviso ? el("p", {}, el("button", { class: "link", type: "button", text: avviso, onclick: () => vaiA("notifiche") })) : null));
+  aggiornaBarraModelli();
+}
+
+async function salvaModelli() {
+  const sc = fornScelte;
+  const attivi = Object.fromEntries(Object.entries(sc.attivi).map(([k, v]) => [k, v]));
+  await salvaERiavvia($("#mod-salva"), () => api("POST", "fornitori",
+    { pausa: sc.pausa, controllo: sc.controllo, notifica: sc.notifica, attivi }), caricaModelli);
+}
+
+// ---------- memory
+let mem = null, memScelte = null, memModifica = null;
+
+function scelteMemoria(d) {
+  return { attiva: d.attiva, auto: d.auto, max: String(d.max), recenti: String(d.recenti), giorni: String(d.giorni), istruzioni: d.istruzioni };
+}
+
+async function caricaMemoria(conserva) {
+  try { mem = await api("GET", "memoria"); } catch (e) { toast(e.message); return; }
+  if (!conserva || !memScelte) memScelte = scelteMemoria(mem);
+  disegnaMemoria();
+}
+
+function modificheMemoria() {
+  if (!mem || !memScelte) return 0;
+  const p = scelteMemoria(mem);
+  return Object.keys(p).filter((k) => p[k] !== memScelte[k]).length;
+}
+
+function aggiornaBarraMemoria() {
+  const n = modificheMemoria();
+  $("#mem-savebar").hidden = n === 0;
+  $("#mem-savebar-testo").textContent = testoModifiche(n);
+}
+
+async function azioneMemoria(percorso, corpo, messaggio) {
+  try { await api("POST", percorso, corpo); if (messaggio) toast(t(messaggio)); } catch (e) { toast(e.message, 6000); return false; }
+  await caricaMemoria(true);
+  return true;
+}
+
+function disegnaMemoria() {
+  const d = mem, sc = memScelte;
+  if (!d || !sc) return;
+  const dis = !d.configurabile;
+  const numero = (chiave, min, max) => {
+    const i = el("input", { type: "number", class: "numero", min, max, step: "1", disabled: dis || null,
+      oninput: (e) => { sc[chiave] = e.target.value; aggiornaBarraMemoria(); } });
+    i.value = sc[chiave];
+    return i;
+  };
+  const sw = (chiave, testo) => {
+    const s = interruttore(testo, sc[chiave], (on) => { sc[chiave] = on; aggiornaBarraMemoria(); });
+    if (dis) s.querySelector("input").disabled = true;
+    return s;
+  };
+  const istruzioni = el("textarea", { class: "mem-istruzioni", disabled: dis || null, placeholder: t("mem.istruzioni_ph"),
+    oninput: (e) => { sc.istruzioni = e.target.value; aggiornaBarraMemoria(); } });
+  istruzioni.value = sc.istruzioni;
+
+  // facts
+  const testo = el("input", { type: "text", maxlength: "300", placeholder: t("mem.nuovo"), disabled: dis || null });
+  const persona = el("input", { type: "text", maxlength: "60", placeholder: t("mem.persona"), class: "mem-persona", disabled: dis || null });
+  const aggiungi = el("form", { class: "mem-nuovo", onsubmit: async (ev) => {
+    ev.preventDefault();
+    if (!testo.value.trim()) return;
+    if (await azioneMemoria("memoria/fatto", { testo: testo.value, persona: persona.value }, "mem.salvato")) { testo.value = ""; persona.value = ""; }
+  } }, testo, persona, el("button", { class: "btn small primary", type: "submit", text: t("mem.aggiungi"), disabled: dis || null }));
+  const filtro = el("input", { type: "search", placeholder: t("mem.cerca"), value: disegnaMemoria.filtro || "",
+    oninput: (e) => { disegnaMemoria.filtro = e.target.value; disegnaFatti(); } });
+  const lista = el("div", { class: "lista" });
+  const disegnaFatti = () => {
+    const q = (disegnaMemoria.filtro || "").trim().toLowerCase();
+    const fatti = d.fatti.filter((f) => !q || (f.testo + " " + f.persona).toLowerCase().includes(q));
+    if (!fatti.length) { lista.replaceChildren(el("p", { class: "vuoto", text: d.fatti.length ? t("mem.nessuno_filtro") : t("mem.nessuno") })); return; }
+    lista.replaceChildren(...fatti.map((f) => {
+      if (memModifica === f.id) {
+        const tx = el("input", { type: "text", maxlength: "300" }), pe = el("input", { type: "text", maxlength: "60", class: "mem-persona", placeholder: t("mem.persona") });
+        tx.value = f.testo; pe.value = f.persona;
+        setTimeout(() => tx.focus(), 0);
+        return el("form", { class: "voce mem-nuovo", onsubmit: async (ev) => {
+          ev.preventDefault();
+          if (await azioneMemoria("memoria/fatto", { id: f.id, testo: tx.value, persona: pe.value }, "mem.salvato")) { memModifica = null; disegnaMemoria(); }
+        } }, tx, pe, el("button", { class: "btn small primary", type: "submit", text: t("mem.salva") }),
+        bottone(t("mem.annulla"), () => { memModifica = null; disegnaFatti(); }, "ghost"));
+      }
+      return el("div", { class: "voce" },
+        el("div", { class: "voce-meta" }, f.persona ? el("span", { class: "chip accent", text: f.persona }) : null,
+          el("span", { class: "chip", text: t("mem.fonte." + f.fonte) }), f.t ? el("time", { text: quando(f.t) }) : null),
+        el("div", { class: "a", text: f.testo }),
+        dis ? null : el("div", { class: "azioni" },
+          el("button", { class: "link", type: "button", text: t("mem.modifica"), onclick: () => { memModifica = f.id; disegnaFatti(); } }),
+          el("button", { class: "link danger", type: "button", text: t("mem.elimina"), onclick: () => {
+            if (confirm(t("mem.elimina_conferma", f.testo))) azioneMemoria("memoria/elimina", { id: f.id }, "mem.dimenticato");
+          } })));
+    }));
+  };
+  disegnaFatti();
+
+  const voci = d.voci.length ? d.voci.map((v) => {
+    const nome = el("input", { type: "text", maxlength: "40", disabled: dis || null, value: v.nome, "aria-label": t("mem.voci") });
+    return el("div", { class: "canale" }, el("div", { class: "canale-info" }, nome),
+      dis ? null : bottone(t("mem.salva"), () => azioneMemoria("memoria/voce", { id: v.id, nome: nome.value }, "mem.salvato")),
+      dis ? null : el("button", { class: "link danger", type: "button", text: t("mem.voce_dimentica"),
+        onclick: () => azioneMemoria("memoria/voce", { id: v.id, nome: "" }, "mem.dimenticato") }));
+  }) : [el("p", { class: "muted small", text: t("mem.voci_nessuna") })];
+
+  const scambi = d.scambi.length ? d.scambi.map((x) => el("div", { class: "voce" },
+    el("div", { class: "voce-meta" }, x.t ? el("time", { text: quando(x.t) }) : null, x.chi ? el("span", { class: "chip accent", text: x.chi }) : null),
+    el("div", { class: "q", text: x.domanda }), el("div", { class: "a", text: x.risposta })))
+    : [el("p", { class: "muted small", text: t("mem.scambi_nessuno") })];
+
+  $("#memoria").replaceChildren(
+    sezione(t("mem.generale"), sw("attiva", t("mem.attiva")), sw("auto", t("mem.auto")), el("p", { class: "muted small", text: t("mem.auto_desc") }),
+      rigaSis(t("mem.max"), numero("max", "1", "1000")),
+      rigaSis(t("mem.recenti"), numero("recenti", "0", "20")), rigaSis(t("mem.giorni"), numero("giorni", "1", "365")),
+      el("p", { class: "muted small", text: t("mem.recenti_desc") }),
+      el("label", { class: "mem-etichetta", text: t("mem.istruzioni") }), istruzioni,
+      el("p", { class: "muted small", text: t("mem.mai") })),
+    sezione(t("mem.fatti", d.fatti.length), aggiungi, filtro, lista,
+      d.fatti.length && !dis ? el("div", { class: "azioni-sis" }, bottone(t("mem.svuota"), () => {
+        if (confirm(t("mem.svuota_conferma"))) azioneMemoria("memoria/svuota", { cosa: "fatti" }, "mem.dimenticato");
+      }, "danger")) : null),
+    sezione(t("mem.voci"), el("p", { class: "muted small", text: t("mem.voci_desc") }), ...voci),
+    sezione(t("mem.scambi"), el("p", { class: "muted small", text: t("mem.scambi_desc") }), el("div", { class: "lista" }, ...scambi),
+      d.scambi.length && !dis ? el("div", { class: "azioni-sis" }, bottone(t("mem.scambi_svuota"),
+        () => azioneMemoria("memoria/svuota", { cosa: "scambi" }, "mem.dimenticato"), "danger")) : null));
+  aggiornaBarraMemoria();
+}
+
+async function salvaMemoria() {
+  const sc = memScelte;
+  await salvaERiavvia($("#mem-salva"), () => api("POST", "memoria", sc), () => { memScelte = null; caricaMemoria(); });
+}
+
 // ---------- settings
-let campi = [], modifiche = {}, configurabile = false, elencoModelli = null;
+let campi = [], modifiche = {}, configurabile = false, elenchiModelli = {}, gruppoDaAprire = null;
 
 // conserva: keep what was changed and not saved yet (switching tab or language must never lose it)
 async function caricaImpostazioni(conserva) {
   const prima = conserva ? { ...modifiche } : {};
   let d;
-  const elenco = api("GET", "modelli").catch((e) => ({ modelli: [], errore: e.message }));
+  const elenco = (n) => api("GET", "modelli?n=" + n).catch((e) => ({ modelli: [], errore: e.message }));
+  const principale = elenco(1);
   try { d = await api("GET", "impostazioni"); } catch (e) { toast(e.message); return; }
-  campi = d.campi; configurabile = d.configurabile; modifiche = {};
+  campi = d.campi; configurabile = d.configurabile; modifiche = {}; elenchiModelli = {};
   $("#impostazioni-avviso").replaceChildren(...(configurabile ? [] : [el("div", { class: "notice" },
     el("strong", { text: t("imp.sola_lettura") }), t("imp.sola_lettura_desc", d.cartella))]));
   disegnaImpostazioni();
   ripristinaModifiche(prima);
-  elencoModelli = await elenco;
-  sceltaModello(elencoModelli);
+  const riserve = [2, 3, 4, 5].filter((n) => campi.some((c) => c.nome === "LLM_" + n + "_BASE_URL" && c.impostato));
+  const elenchi = await Promise.all([principale, ...riserve.map(elenco)]);
+  [1, ...riserve].forEach((n, i) => {
+    const nome = n === 1 ? "LLM_MODEL" : "LLM_" + n + "_MODEL";
+    elenchiModelli[nome] = elenchi[i];
+    sceltaModello(elenchi[i], nome);
+  });
   ripristinaModifiche(prima);
 }
 
@@ -861,30 +1203,30 @@ function ripristinaModifiche(prima) {
 }
 
 // the model field becomes the list of what the provider offers, with "Other…" to type any name
-function sceltaModello(r) {
-  const riga = document.querySelector('[data-campo="LLM_MODEL"] .campo-edit');
-  const c = campi.find((x) => x.nome === "LLM_MODEL");
+function sceltaModello(r, nome = "LLM_MODEL") {
+  const riga = document.querySelector('[data-campo="' + nome + '"] .campo-edit');
+  const c = campi.find((x) => x.nome === nome);
   if (!riga || !c || riga.querySelector(".nota-modelli")) return;
   const elenco = r.modelli || [];
   const nota = el("p", { class: "muted small nota-modelli",
     text: elenco.length ? t("imp.modelli_n", elenco.length) : t("imp.modelli_errore", r.errore || "0") });
   if (!elenco.length || !configurabile) { riga.append(nota); return; }
   const ids = elenco.map((m) => m.id);
-  const s = el("select", { id: "f-LLM_MODEL", onchange: (e) => {
-    if (e.target.value !== "__altro__") { segnaModifica("LLM_MODEL", e.target.value); return; }
-    const i = el("input", { id: "f-LLM_MODEL", type: "text", spellcheck: "false", placeholder: c.valore,
-      oninput: (ev) => segnaModifica("LLM_MODEL", ev.target.value || undefined) });
-    segnaModifica("LLM_MODEL", undefined);      // the menu choice no longer counts: what is typed does
+  const s = el("select", { id: "f-" + nome, onchange: (e) => {
+    if (e.target.value !== "__altro__") { segnaModifica(nome, e.target.value); return; }
+    const i = el("input", { id: "f-" + nome, type: "text", spellcheck: "false", placeholder: c.valore,
+      oninput: (ev) => segnaModifica(nome, ev.target.value || undefined) });
+    segnaModifica(nome, undefined);      // the menu choice no longer counts: what is typed does
     e.target.replaceWith(i);
     i.focus();
   } },
   ids.includes(c.valore) || !c.valore ? [] : [el("option", { value: c.valore, text: c.valore })],
   elenco.map((m) => el("option", { value: m.id, text: m.nome && m.nome !== m.id ? m.nome + " — " + m.id : m.id })),
   el("option", { value: "__altro__", text: t("imp.altro_modello") }));
-  const inSospeso = modifiche.LLM_MODEL;          // typed before the list arrived: keep it
+  const inSospeso = modifiche[nome];          // typed before the list arrived: keep it
   if (typeof inSospeso === "string" && inSospeso && !ids.includes(inSospeso)) s.prepend(el("option", { value: inSospeso, text: inSospeso }));
   s.value = typeof inSospeso === "string" && inSospeso ? inSospeso : c.valore || ids[0];
-  riga.querySelector("#f-LLM_MODEL").replaceWith(s);
+  riga.querySelector("#f-" + nome).replaceWith(s);
   riga.append(nota);
 }
 
@@ -956,8 +1298,12 @@ function disegnaImpostazioni() {
     if (!g) gruppi.push(g = { chiave: c.gruppo, nome: c.nome_gruppo, campi: [] });
     g.campi.push(c);
   }
-  $("#impostazioni-form").replaceChildren(...gruppi.map((g) => el("fieldset", { class: "gruppo" },
-    el("h3", { text: g.nome }),
+  // a fallback model that is not configured stays closed: one click opens it
+  const chiuso = (g) => g.chiave.startsWith("riserva") && g.chiave !== gruppoDaAprire && !g.campi.some((c) => c.impostato && c.tipo !== "select");
+  $("#impostazioni-form").replaceChildren(...gruppi.map((g) => el("fieldset", { class: "gruppo" + (chiuso(g) ? " chiuso" : ""), id: "gruppo-" + g.chiave },
+    chiuso(g) ? el("h3", {}, el("button", { type: "button", class: "apri-gruppo", "aria-expanded": "false",
+      onclick: (e) => { const f = e.target.closest("fieldset"); f.classList.remove("chiuso"); e.currentTarget.setAttribute("aria-expanded", "true"); } },
+      g.nome, el("span", { class: "muted small", text: " · " + t("imp.gruppo_chiuso") }))) : el("h3", { text: g.nome }),
     g.campi.map((c) => el("div", { class: "campo", "data-campo": c.nome },
       el("div", { class: "campo-info" },
         el("label", { for: "f-" + c.nome, text: c.etichetta }),
@@ -975,7 +1321,12 @@ function disegnaImpostazioni() {
           c.tipo === "secret" && c.impostato && configurabile ? el("button", { type: "button", class: "link", text: t("imp.cancella"),
             onclick: () => { document.getElementById("f-" + c.nome).placeholder = t("imp.cancellata"); segnaModifica(c.nome, ""); } }) : null)))))));
   $("#savebar").hidden = true;
-  if (elencoModelli) sceltaModello(elencoModelli);
+  for (const [nome, r] of Object.entries(elenchiModelli)) sceltaModello(r, nome);
+  if (gruppoDaAprire) {
+    const g = document.getElementById("gruppo-" + gruppoDaAprire);
+    gruppoDaAprire = null;
+    if (g) setTimeout(() => g.scrollIntoView({ block: "start", behavior: "smooth" }), 50);
+  }
 }
 
 async function attendiRiavvio(avvioPrima) {
@@ -1200,12 +1551,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#auto-filtro").addEventListener("input", disegnaAutomazioni);
   $("#notif-salva").addEventListener("click", salvaNotifiche);
   $("#notif-annulla").addEventListener("click", () => { notifScelte = scelteDa(notif); disegnaNotifiche(); });
+  $("#mod-salva").addEventListener("click", salvaModelli);
+  $("#mod-annulla").addEventListener("click", () => { fornScelte = scelteFornitori(fornDati); disegnaModelli(); });
+  $("#mem-salva").addEventListener("click", salvaMemoria);
+  $("#mem-annulla").addEventListener("click", () => { memScelte = scelteMemoria(mem); disegnaMemoria(); });
   $("#auto-aggiorna").addEventListener("click", caricaAutomazioni);
   $("#salva").addEventListener("click", salva);
   $("#annulla").addEventListener("click", () => { modifiche = {}; disegnaImpostazioni(); });
   $("#livello").addEventListener("change", caricaRegistro);
   $("#importa-file").addEventListener("change", importa);
-  window.addEventListener("beforeunload", (e) => { if (Object.keys(modifiche).length || modificheCasa() || modificheNotifiche()) e.preventDefault(); });
+  window.addEventListener("beforeunload", (e) => { if (Object.keys(modifiche).length || modificheCasa() || modificheNotifiche() || modificheModelli() || modificheMemoria()) e.preventDefault(); });
   try {
     const s = await api("GET", "sessione");
     if (s.autenticato) { csrf = s.csrf; avvia(); } else mostraLogin();

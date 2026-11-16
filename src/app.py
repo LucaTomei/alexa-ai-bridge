@@ -22,6 +22,7 @@ import llm
 import web_search as web
 import home_tools as casa
 import notifiche
+import memoria
 import admin
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -110,6 +111,8 @@ def richiesta_valida(body, headers, dati):
 
 # ---------- model
 WEB = web.backend(llm.API)          # None | native | searxng | brave | tavily
+# fallback models in the OpenAI format cannot use Claude's native search: they get the client-side one, if configured
+WEB_CLIENT = WEB if WEB != "native" else (web.backend("openai") if any(f.api == "openai" for f in llm.RISERVE) else None)
 HOME_TZ = web.HOME_TZ
 
 try:
@@ -136,13 +139,16 @@ def con_istruzioni(history):
     if h and h[-1]["role"] == "user":
         dove = (L.t("casa_a") % web.HOME_CITY) if web.HOME_CITY else ""
         extra = (L.t("oggi") % adesso()) + dove + (L.t("usa_web") if web_attivo() else "") + \
-            (L.t("usa_casa") if casa_attiva() else "") + (L.t("usa_automazioni") if casa_attiva() and casa.automazioni_attive() else "") + "]"
+            (L.t("usa_casa") if casa_attiva() else "") + (L.t("usa_automazioni") if casa_attiva() and casa.automazioni_attive() else "") + \
+            (L.t("usa_memoria") if memoria.ATTIVA and llm.STATO["strumenti"] else "") + memoria.contesto(history[:-1]) + "]"
         h[-1]["content"] = istruzioni_turno() + "\n" + extra + "\n\n" + h[-1]["content"]
     return h
 
 def esegui_strumento(nome, argomenti):
     if nome == web.NOME_STRUMENTO:
-        return web.cerca(argomenti.get("query", ""), WEB)
+        return web.cerca(argomenti.get("query", ""), WEB if WEB not in (None, "native") else WEB_CLIENT)
+    if nome in memoria.NOMI_STRUMENTI:
+        return memoria.esegui(nome, argomenti)
     return casa.esegui_strumento(nome, argomenti)
 
 def ask_llm(history, timeout=60):
@@ -151,9 +157,23 @@ def ask_llm(history, timeout=60):
     chiesto = isinstance(prima, str) and L.NOTA_AZIONI.sub("", prima).strip().endswith("?")   # "Vuoi che le chiuda tutte?"
     turno = hashlib.sha256(json.dumps(history, sort_keys=True, default=str).encode()).hexdigest()   # same for a retry
     casa.imposta_domanda(ultima if isinstance(ultima, str) else "", chiesto, turno)
-    strumenti = ([web.strumento()] if WEB not in (None, "native") else []) + (casa.strumenti() if casa.ATTIVO else [])
-    return llm.chiedi(sistema(), con_istruzioni(history), strumenti, esegui_strumento,
-                      nativo=web.NATIVO if WEB == "native" else None, timeout=timeout)
+    fatte = len(casa.azioni_fatte())    # actions of this request only: a reused thread may still hold older ones
+    altri = (casa.strumenti() if casa.ATTIVO else []) + memoria.strumenti()
+    strumenti = ([web.strumento()] if WEB not in (None, "native") else []) + altri
+    nativo = web.NATIVO if WEB == "native" else None
+    # a fallback model of the other format: Claude's native search only works with Claude
+    per_api = {"openai": (([web.strumento()] if WEB_CLIENT not in (None, "native") else []) + altri, None)} if WEB == "native" else None
+    return llm.chiedi(sistema(), con_istruzioni(history), strumenti, esegui_strumento, nativo=nativo, timeout=timeout,
+                      irreversibile=lambda: len(casa.azioni_fatte()) > fatte, per_api=per_api)
+
+def impara(domanda, risposta):
+    """After an answer, in the same background thread: keep the exchange and learn what it teaches (memory)."""
+    try:
+        memoria.registra_scambio(domanda, risposta)
+        if memoria.da_imparare(domanda):
+            memoria.impara(domanda, risposta, lambda system, messaggi: llm.chiedi(system, messaggi, [], None, timeout=30))
+    except Exception as e:
+        log.warning("memory: %s", type(e).__name__)
 
 def pulisci(t):
     t = L.NOTA_AZIONI.sub("", t)
@@ -199,6 +219,8 @@ def utente(d):
 def calcola(lav):
     t0 = lav["t"]
     L.imposta(lav.get("lingua"))         # the background thread answers in the language of the question
+    memoria.imposta_persona(lav.get("persona"))
+    memoria.imposta_prova(lav["uid"] == "e2e-test")
     casa.azzera_azioni()
     try:
         r = pulisci(ask_llm(lav["hist"], timeout=TIMEOUT_LUNGO))
@@ -225,10 +247,20 @@ def calcola(lav):
         log.warning("admin: history not saved (%s)", e)
     finally:
         lav["evento"].set()                        # whatever happens, the answer is never stuck
+    if lav["risposta"] and lav["uid"] != "e2e-test":
+        impara(lav["hist"][-1]["content"], lav["risposta"])
 
-def avvia(uid, hist):
+# intents whose opening word Alexa removes but the model needs: it is put back ("ricordati" + "che il sabato...")
+APERTURE = {"RicordaIntent": ("ricordati", "remember"), "TiRicordiIntent": ("ti ricordi", "do you remember"),
+            "DimenticaIntent": ("dimentica", "forget"), "PresentaIntent": ("mi chiamo", "my name is")}
+
+def persona(d):
+    """The personId of the voice Alexa recognised (voice profiles and skill personalization), or None."""
+    return ((d.get("context") or {}).get("System", {}).get("person") or {}).get("personId")
+
+def avvia(uid, hist, chi=None):
     lav = {"hist": hist, "evento": threading.Event(), "risposta": None, "errore": None, "t": time.time(), "uid": uid,
-           "lingua": L.attuale()}
+           "lingua": L.attuale(), "persona": chi}
     with _lock:
         for k in [k for k, v in _lavori.items() if time.time() - v["t"] > CONSERVA]:
             del _lavori[k]
@@ -301,15 +333,17 @@ def gestisci(d, t_req=None):
     if nome == "AMAZON.NoIntent" and not q_sino:
         scarta(uid, lav)
         return risposta(L.t("va_bene"), L.t("cosa_vuoi"), attr)
-    if nome not in ("AskIntent", "FraseBreveIntent") and not q_sino:
+    if nome not in ("AskIntent", "FraseBreveIntent") and nome not in APERTURE and not q_sino:
         return risposta(L.t("non_capito") + L.t("aiuto"), L.t("cosa_vuoi"), attr)
     slots = rq.get("intent", {}).get("slots") or {}
     q = q_sino or (slots.get("query") or {}).get("value") or (slots.get("frase") or {}).get("value")
+    if q and nome in APERTURE and not q_sino:
+        q = APERTURE[nome][1 if L.attuale() == "en" else 0] + " " + q
     if not q:
         return risposta(L.t("ripeti"), L.t("ripeti_breve"), attr)
     if q.strip().lower().strip("?!. ") in PAROLE_ATTESA and in_sospeso:
         return chiedi_risposta(uid, attr, resta())
-    lav = avvia(uid, (attr.get("h") or [])[-MAXH:] + [{"role": "user", "content": q}])
+    lav = avvia(uid, (attr.get("h") or [])[-MAXH:] + [{"role": "user", "content": q}], persona(d))
     if lav["evento"].wait(timeout=max(resta(), 0)):
         return consegna(uid, lav, attr)
     log.info("risposta lenta: la tengo da parte")
@@ -323,6 +357,8 @@ admin.configura(app)
 @app.before_request
 def _lingua_pulita():
     L.imposta(None)        # threads are reused: a request never inherits the language of the previous one
+    memoria.imposta_persona(None)
+    memoria.imposta_prova(False)
 
 @app.post("/alexa")
 def alexa():
@@ -340,6 +376,9 @@ def alexa():
         log.warning("richiesta rifiutata: %s", errore)
         abort(400)
     return jsonify(gestisci(d, t_req))
+
+llm.avvia_controllo()
+
 
 @app.get("/health")
 def health():

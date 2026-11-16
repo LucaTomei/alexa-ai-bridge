@@ -236,7 +236,59 @@
             "as soon as {query}",
             "every day {query}",
             "every evening {query}",
-            "every morning {query}"
+            "every morning {query}",
+            "i'm {query}",
+            "i am {query}",
+            "this is {query}"
+          ]
+        },
+        {
+          "name": "RicordaIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "remember {query}",
+            "keep in mind {query}"
+          ]
+        },
+        {
+          "name": "TiRicordiIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "do you remember {query}"
+          ]
+        },
+        {
+          "name": "DimenticaIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "forget {query}"
+          ]
+        },
+        {
+          "name": "PresentaIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "my name is {query}"
           ]
         },
         {

@@ -25,7 +25,7 @@ def test_pause_turn_is_continued(alexa, llm):
 def test_rejected_web_search_is_switched_off_but_home_tools_stay(alexa, llm):
     llm.reject_tools = {"web_search"}
     assert alexa.said(alexa.ask("x")).startswith("R1 su") and conftest.LLM_MOD.STATO["web_nativo"] is False
-    assert [t["name"] for t in llm.requests[-1]["tools"]] == ["riepilogo_casa", "cerca_in_casa", "esegui_azione"]
+    assert [t["name"] for t in llm.requests[-1]["tools"]] == ["riepilogo_casa", "cerca_in_casa", "esegui_azione", "ricorda", "dimentica"]
     alexa.ask("y")
     assert "web_search" not in [t.get("name") for t in llm.requests[-1]["tools"]]
 

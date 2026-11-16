@@ -31,6 +31,56 @@ CAMPI = [
     ("LLM_EXTRA_JSON", "modello", "text", None,
      ("Campi extra (JSON)", "Aggiunti a ogni richiesta, es. {\"reasoning_effort\": \"low\"}"),
      ("Extra fields (JSON)", "Added to every request, e.g. {\"reasoning_effort\": \"low\"}")),
+    ("LLM_PAUSA", "modello", "number", None,
+     ("Pausa di un modello che non risponde (s)", "Un modello non raggiungibile, scollegato o senza credito viene saltato per questo tempo e risponde il successivo; 0 lo riprova a ogni domanda. Più comodo dalla scheda Modelli."),
+     ("Pause of a model that does not answer (s)", "A model that is unreachable, logged out or out of credit is skipped for this long and the next one answers; 0 tries it again at every question. Easier from the Models tab.")),
+    ("LLM_CONTROLLO", "modello", "number", None,
+     ("Controllo dei modelli (minuti)", "Ogni quanto verificare in background che ogni modello risponda (non consuma token); 0 mai."),
+     ("Model check (minutes)", "How often to check in the background that every model answers (uses no tokens); 0 never.")),
+    ("LLM_2_ATTIVO", "riserva2", "select", ["1", "0"], ("Usa questo modello", "0 lo salta senza cancellarlo."), ("Use this model", "0 skips it without removing it.")),
+    ("LLM_2_API", "riserva2", "select", ["", "anthropic", "openai"],
+     ("Formato API", "anthropic oppure openai (qualsiasi endpoint compatibile, anche CLIProxyAPI). Vuoto: dedotto dall'URL."),
+     ("API format", "anthropic or openai (any compatible endpoint, CLIProxyAPI too). Empty: guessed from the URL.")),
+    ("LLM_2_BASE_URL", "riserva2", "text", None,
+     ("URL base", "Es. http://cliproxyapi:8317/v1. Vuoto: modello non usato. Cambiandolo va reinserita la chiave."),
+     ("Base URL", "E.g. http://cliproxyapi:8317/v1. Empty: model not used. Changing it requires the key again.")),
+    ("LLM_2_API_KEY", "riserva2", "secret", None, ("Chiave API", "Vuota per i modelli locali."), ("API key", "Empty for local models.")),
+    ("LLM_2_MODEL", "riserva2", "text", None, ("Modello", "Nome del modello."), ("Model", "Model name.")),
+    ("LLM_2_EXTRA_JSON", "riserva2", "text", None,
+     ("Campi extra (JSON)", "Aggiunti a ogni richiesta a questo modello."), ("Extra fields (JSON)", "Added to every request to this model.")),
+    ("LLM_3_ATTIVO", "riserva3", "select", ["1", "0"], ("Usa questo modello", "0 lo salta senza cancellarlo."), ("Use this model", "0 skips it without removing it.")),
+    ("LLM_3_API", "riserva3", "select", ["", "anthropic", "openai"],
+     ("Formato API", "anthropic oppure openai (qualsiasi endpoint compatibile, anche CLIProxyAPI). Vuoto: dedotto dall'URL."),
+     ("API format", "anthropic or openai (any compatible endpoint, CLIProxyAPI too). Empty: guessed from the URL.")),
+    ("LLM_3_BASE_URL", "riserva3", "text", None,
+     ("URL base", "Es. http://cliproxyapi:8317/v1. Vuoto: modello non usato. Cambiandolo va reinserita la chiave."),
+     ("Base URL", "E.g. http://cliproxyapi:8317/v1. Empty: model not used. Changing it requires the key again.")),
+    ("LLM_3_API_KEY", "riserva3", "secret", None, ("Chiave API", "Vuota per i modelli locali."), ("API key", "Empty for local models.")),
+    ("LLM_3_MODEL", "riserva3", "text", None, ("Modello", "Nome del modello."), ("Model", "Model name.")),
+    ("LLM_3_EXTRA_JSON", "riserva3", "text", None,
+     ("Campi extra (JSON)", "Aggiunti a ogni richiesta a questo modello."), ("Extra fields (JSON)", "Added to every request to this model.")),
+    ("LLM_4_ATTIVO", "riserva4", "select", ["1", "0"], ("Usa questo modello", "0 lo salta senza cancellarlo."), ("Use this model", "0 skips it without removing it.")),
+    ("LLM_4_API", "riserva4", "select", ["", "anthropic", "openai"],
+     ("Formato API", "anthropic oppure openai (qualsiasi endpoint compatibile, anche CLIProxyAPI). Vuoto: dedotto dall'URL."),
+     ("API format", "anthropic or openai (any compatible endpoint, CLIProxyAPI too). Empty: guessed from the URL.")),
+    ("LLM_4_BASE_URL", "riserva4", "text", None,
+     ("URL base", "Es. http://cliproxyapi:8317/v1. Vuoto: modello non usato. Cambiandolo va reinserita la chiave."),
+     ("Base URL", "E.g. http://cliproxyapi:8317/v1. Empty: model not used. Changing it requires the key again.")),
+    ("LLM_4_API_KEY", "riserva4", "secret", None, ("Chiave API", "Vuota per i modelli locali."), ("API key", "Empty for local models.")),
+    ("LLM_4_MODEL", "riserva4", "text", None, ("Modello", "Nome del modello."), ("Model", "Model name.")),
+    ("LLM_4_EXTRA_JSON", "riserva4", "text", None,
+     ("Campi extra (JSON)", "Aggiunti a ogni richiesta a questo modello."), ("Extra fields (JSON)", "Added to every request to this model.")),
+    ("LLM_5_ATTIVO", "riserva5", "select", ["1", "0"], ("Usa questo modello", "0 lo salta senza cancellarlo."), ("Use this model", "0 skips it without removing it.")),
+    ("LLM_5_API", "riserva5", "select", ["", "anthropic", "openai"],
+     ("Formato API", "anthropic oppure openai (qualsiasi endpoint compatibile, anche CLIProxyAPI). Vuoto: dedotto dall'URL."),
+     ("API format", "anthropic or openai (any compatible endpoint, CLIProxyAPI too). Empty: guessed from the URL.")),
+    ("LLM_5_BASE_URL", "riserva5", "text", None,
+     ("URL base", "Es. http://cliproxyapi:8317/v1. Vuoto: modello non usato. Cambiandolo va reinserita la chiave."),
+     ("Base URL", "E.g. http://cliproxyapi:8317/v1. Empty: model not used. Changing it requires the key again.")),
+    ("LLM_5_API_KEY", "riserva5", "secret", None, ("Chiave API", "Vuota per i modelli locali."), ("API key", "Empty for local models.")),
+    ("LLM_5_MODEL", "riserva5", "text", None, ("Modello", "Nome del modello."), ("Model", "Model name.")),
+    ("LLM_5_EXTRA_JSON", "riserva5", "text", None,
+     ("Campi extra (JSON)", "Aggiunti a ogni richiesta a questo modello."), ("Extra fields (JSON)", "Added to every request to this model.")),
     ("ATTESA_MAX", "tempi", "number", None,
      ("Attesa massima (s)", "Oltre questo tempo Alexa dice \"Ci sto pensando\". Da 1 a 7.5."),
      ("Maximum wait (s)", "Beyond this Alexa says \"Let me think\". From 1 to 7.5.")),
@@ -80,8 +130,8 @@ CAMPI = [
      ("Notifiche", "0 le sospende tutte senza cancellare i canali. Più comodo dalla scheda Notifiche."),
      ("Notifications", "0 pauses them all without removing the channels. Easier from the Notifications tab.")),
     ("NOTIFY_EVENTI", "notifiche", "text", None,
-     ("Eventi", "Separati da virgole: confermate, bloccate, automazioni, azioni, errori, pannello; none per nessuno. Più comodo dalla scheda Notifiche."),
-     ("Events", "Comma separated: confermate, bloccate, automazioni, azioni, errori, pannello; none for none. Easier from the Notifications tab.")),
+     ("Eventi", "Separati da virgole: confermate, bloccate, automazioni, modelli, azioni, errori, memoria, pannello; none per nessuno. Più comodo dalla scheda Notifiche."),
+     ("Events", "Comma separated: confermate, bloccate, automazioni, modelli, azioni, errori, memoria, pannello; none for none. Easier from the Notifications tab.")),
     ("NOTIFY_MAX_ORA", "notifiche", "number", None, ("Notifiche all'ora al massimo", "Oltre, le successive non partono (contro le raffiche)."),
      ("Maximum notifications per hour", "Beyond this the next ones are not sent (against bursts).")),
     ("NOTIFY_HA", "notifiche", "text", None,
@@ -104,6 +154,22 @@ CAMPI = [
      ("Webhook: address", "Receives a JSON POST (title, text, content, message): works with Discord, Slack, n8n, Node-RED.")),
     ("NOTIFY_WEBHOOK_TOKEN", "notifiche", "secret", None, ("Webhook: token", "Facoltativo, inviato come Authorization: Bearer."),
      ("Webhook: token", "Optional, sent as Authorization: Bearer.")),
+    ("MEMORIA", "memoria", "select", ["1", "0"],
+     ("Memoria", "1: l'assistente ricorda chi abita in casa da una conversazione all'altra. Più comodo dalla scheda Memoria."),
+     ("Memory", "1: the assistant remembers the people at home from one conversation to the next. Easier from the Memory tab.")),
+    ("MEMORIA_AUTO", "memoria", "select", ["1", "0"],
+     ("Impara da solo", "1: dopo ogni risposta una breve richiesta in background cerca fatti nuovi da ricordare (qualche token in più); 0: solo quando glielo chiedi o lo decide il modello."),
+     ("Learn by itself", "1: after every answer a short background request looks for new facts to remember (a few more tokens); 0: only when you ask or the model decides.")),
+    ("MEMORIA_MAX", "memoria", "number", None, ("Fatti ricordati al massimo", "Oltre, si dimenticano i più vecchi."),
+     ("Maximum facts remembered", "Beyond this the oldest are forgotten.")),
+    ("MEMORIA_RECENTI", "memoria", "number", None,
+     ("Scambi delle conversazioni precedenti", "Quante domande e risposte delle volte prima il modello rilegge; 0 nessuna."),
+     ("Exchanges from earlier conversations", "How many questions and answers from earlier times the model reads again; 0 none.")),
+    ("MEMORIA_GIORNI", "memoria", "number", None, ("Per quanti giorni", "Gli scambi più vecchi non si rileggono."),
+     ("For how many days", "Older exchanges are not read again.")),
+    ("MEMORIA_ISTRUZIONI", "memoria", "textarea", None,
+     ("Cosa ricordare", "Vuoto: fatti duraturi su chi abita in casa (nomi, parentele, gusti, abitudini, orari, compleanni, animali)."),
+     ("What to remember", "Empty: lasting facts about the people at home (names, relationships, tastes, habits, schedules, birthdays, pets).")),
     ("ADMIN_HISTORY", "pannello", "number", None, ("Domande nello storico", "0 spegne lo storico."),
      ("Questions in the history", "0 turns the history off.")),
     ("SYSTEM_PROMPT", "avanzate", "textarea", None, ("Prompt di sistema", "Vuoto: le regole vocali incluse, nella lingua scelta."),
@@ -117,9 +183,11 @@ CAMPI = [
     ("TAVILY_URL", "avanzate", "text", None, ("Endpoint Tavily", "Vuoto: l'API ufficiale."), ("Tavily endpoint", "Empty: the official API.")),
     ("NOTIFY_TELEGRAM_URL", "avanzate", "text", None, ("Endpoint Telegram", "Vuoto: l'API ufficiale."), ("Telegram endpoint", "Empty: the official API.")),
 ]
-GRUPPI = {"alexa": ("Alexa", "Alexa"), "modello": ("Modello", "Model"), "tempi": ("Tempi", "Timing"),
+GRUPPI = {"alexa": ("Alexa", "Alexa"), "modello": ("Modello", "Model"),
+          **{"riserva%d" % n: ("Modello %d (di riserva)" % n, "Model %d (fallback)" % n) for n in range(2, 6)},
+          "tempi": ("Tempi", "Timing"),
           "web": ("Ricerca web", "Web search"), "luogo": ("Luogo", "Location"), "casa": ("Home Assistant", "Home Assistant"),
-          "notifiche": ("Notifiche", "Notifications"), "pannello": ("Pannello", "Admin page"), "avanzate": ("Avanzate", "Advanced")}
+          "notifiche": ("Notifiche", "Notifications"), "memoria": ("Memoria", "Memory"), "pannello": ("Pannello", "Admin page"), "avanzate": ("Avanzate", "Advanced")}
 NOMI = {c[0] for c in CAMPI}
 TIPO = {c[0]: c[2] for c in CAMPI}
 OPZIONI = {c[0]: c[3] for c in CAMPI}
@@ -128,8 +196,11 @@ PREDEFINITI = {"LLM_MAX_TOKENS": "1024", "ATTESA_MAX": "6", "LLM_TIMEOUT_LUNGO":
                "WEB_MAX": "3", "HOME_TIMEZONE": "Europe/Rome", "HA_MAX_SENZA_CONFERMA": "3", "HTTP_USER_AGENT": "alexa-ai-bridge/1.0",
                "LLM_EXTRA_JSON": "{}", "WEB_SEARCH": "auto", "HA_TOOLS": "1", "LANGUAGE": "auto", "ADMIN_HISTORY": "100",
                "HA_AUTOMAZIONI": "0", "HA_AUTOMAZIONI_MAX": "20", "NOTIFY_ATTIVE": "1", "NOTIFY_MAX_ORA": "30",
-               "NOTIFY_EVENTI": "confermate,bloccate,automazioni", "NOTIFY_TELEGRAM_URL": "https://api.telegram.org",
-               "BRAVE_URL": "https://api.search.brave.com/res/v1/web/search", "TAVILY_URL": "https://api.tavily.com/search"}
+               "NOTIFY_EVENTI": "confermate,bloccate,automazioni,modelli", "NOTIFY_TELEGRAM_URL": "https://api.telegram.org",
+               "BRAVE_URL": "https://api.search.brave.com/res/v1/web/search", "TAVILY_URL": "https://api.tavily.com/search",
+               "LLM_PAUSA": "300", "LLM_CONTROLLO": "10", "MEMORIA": "1", "MEMORIA_AUTO": "1", "MEMORIA_MAX": "100",
+               "MEMORIA_RECENTI": "4", "MEMORIA_GIORNI": "7",
+               **{"LLM_%d_%s" % (n, k): v for n in range(2, 6) for k, v in (("ATTIVO", "1"), ("EXTRA_JSON", "{}"))}}
 # what an empty setting means, when it is not a plain value (Italian, English)
 PREDEFINITI_TESTO = {
     "LLM_API": ("dedotto dall'URL", "guessed from the URL"),
@@ -147,25 +218,32 @@ PREDEFINITI_TESTO = {
     "NOTIFY_HA": ("nessuno", "none"), "NOTIFY_TELEGRAM_TOKEN": ("nessuno", "none"), "NOTIFY_TELEGRAM_CHAT": ("nessuna", "none"),
     "NOTIFY_NTFY_URL": ("nessuno", "none"), "NOTIFY_NTFY_TOKEN": ("nessuno", "none"), "NOTIFY_GOTIFY_URL": ("nessuno", "none"),
     "NOTIFY_GOTIFY_TOKEN": ("nessuno", "none"), "NOTIFY_WEBHOOK_URL": ("nessuno", "none"), "NOTIFY_WEBHOOK_TOKEN": ("nessuno", "none"),
+    "MEMORIA_ISTRUZIONI": ("fatti duraturi su chi abita in casa", "lasting facts about the people at home"),
+    **{"LLM_%d_%s" % (n, k): v for n in range(2, 6) for k, v in (
+        ("API", ("dedotto dall'URL", "guessed from the URL")), ("BASE_URL", ("nessuno: non usato", "none: not used")),
+        ("API_KEY", ("nessuna", "none")), ("MODEL", ("nessuno", "none")))},
 }
 SEGRETI = {c[0] for c in CAMPI if c[2] == "secret"}
 
 # numbers: (minimum, maximum, integer only)
 LIMITI = {"LLM_MAX_TOKENS": (1, 200000, True), "ATTESA_MAX": (1, 7.5, False), "LLM_TIMEOUT_LUNGO": (5, 900, False),
           "WEB_RESULTS": (1, 20, True), "WEB_MAX": (1, 20, True), "HA_MAX_SENZA_CONFERMA": (0, 100, True),
-          "ADMIN_HISTORY": (0, 1000, True), "HA_AUTOMAZIONI_MAX": (1, 200, True), "NOTIFY_MAX_ORA": (1, 1000, True)}
+          "ADMIN_HISTORY": (0, 1000, True), "HA_AUTOMAZIONI_MAX": (1, 200, True), "NOTIFY_MAX_ORA": (1, 1000, True),
+          "LLM_PAUSA": (0, 86400, True), "LLM_CONTROLLO": (0, 1440, True), "MEMORIA_MAX": (1, 1000, True),
+          "MEMORIA_RECENTI": (0, 20, True), "MEMORIA_GIORNI": (1, 365, True)}
 # endpoints the service sends keys and tokens to: only http(s), never file:// or other schemes
 URL = ("LLM_BASE_URL", "HA_URL", "SEARXNG_URL", "BRAVE_URL", "TAVILY_URL", "NOTIFY_TELEGRAM_URL", "NOTIFY_NTFY_URL",
-       "NOTIFY_GOTIFY_URL", "NOTIFY_WEBHOOK_URL")
-# notifications: the events that can send one (the first three are the default)
-EVENTI_NOTIFICHE = ("confermate", "bloccate", "automazioni", "azioni", "errori", "pannello")
+       "NOTIFY_GOTIFY_URL", "NOTIFY_WEBHOOK_URL") + tuple("LLM_%d_BASE_URL" % n for n in range(2, 6))
+# notifications: the events that can send one (the first four are the default)
+EVENTI_NOTIFICHE = ("confermate", "bloccate", "automazioni", "modelli", "azioni", "errori", "memoria", "pannello")
+EVENTI_PREDEFINITI = 4
 
 
 def eventi_notifiche(valore):
     """The chosen events: empty means the default, none (or nessuno) means no event."""
     v = (valore or "").strip().lower()
     if not v:
-        return set(EVENTI_NOTIFICHE[:3])
+        return set(EVENTI_NOTIFICHE[:EVENTI_PREDEFINITI])
     if v in ("none", "nessuno"):
         return set()
     return {x.strip() for x in v.split(",") if x.strip() in EVENTI_NOTIFICHE}

@@ -13,7 +13,7 @@ def test_plain_answer_and_request_shape(alexa, openai):
     assert body["messages"][0] == {"role": "system", "content": APP.sistema()} and body["max_tokens"] == LLM_MOD.MAX_TOKENS
     assert "thinking" not in body
     names = [t["function"]["name"] for t in body["tools"]]
-    assert names == ["cerca_sul_web", "riepilogo_casa", "cerca_in_casa", "esegui_azione"]
+    assert names == ["cerca_sul_web", "riepilogo_casa", "cerca_in_casa", "esegui_azione", "ricorda", "dimentica"]
     assert all(t["type"] == "function" and t["function"]["parameters"]["type"] == "object" for t in body["tools"])
 
 

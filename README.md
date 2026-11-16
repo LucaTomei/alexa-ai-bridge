@@ -56,6 +56,12 @@ These are real conversations in the Alexa developer console simulator, which sen
 - 🤖 **Any model, any provider**: the Anthropic Messages API and the OpenAI-compatible Chat Completions API
   between them cover OpenAI, Gemini, Mistral, Groq, DeepSeek, xAI, OpenRouter, Ollama, LM Studio, vLLM and
   LiteLLM. Switching model means changing three lines in `.env`.
+- 🔁 **Fallback models**: up to four more (another CLIProxyAPI, another provider, a local model), tried in order
+  when one is unreachable, logged out or out of tokens; you get a notification when it happens and when it is back
+  ([details](docs/providers.md#fallback-models)).
+- 🧠 **Memory**: it remembers you and the people you live with from one conversation to the next, learns by
+  itself, knows who is speaking with Alexa voice profiles; everything visible and editable from the admin page,
+  never passwords or codes ([details](docs/memory.md)).
 - 🗣️ **Free-form conversation**: ask anything. Follow-ups like *"and what if I don't have parmesan?"* keep the
   context.
 - ⏱️ **No more "the skill took too long"**:
@@ -206,9 +212,11 @@ All sixteen, with their fixes, are in [docs/lessons-learned.md](docs/lessons-lea
 ```
 ├── src/
 │   ├── app.py              # Alexa endpoint: request verification, conversation, slow answers
-│   ├── llm.py              # Anthropic + OpenAI-compatible adapters, tool loop, graceful degradation
+│   ├── llm.py              # Anthropic + OpenAI-compatible adapters, tool loop, fallback models, graceful degradation
 │   ├── web_search.py       # native search (Claude) or SearXNG / Brave / Tavily (any model)
 │   ├── home_tools.py       # Home Assistant tools with allow-lists and server-side confirmation
+│   ├── memoria.py          # memory: facts, recognised voices, earlier exchanges, learning by itself
+│   ├── notifiche.py        # notifications: Home Assistant app, Telegram, ntfy, Gotify, webhook
 │   ├── lingua.py           # every text of the assistant, in Italian and English
 │   ├── admin.py · admin/   # admin page: status, history, test chat, home rules, settings, system, log
 │   └── impostazioni.py     # settings saved from the admin page, validation

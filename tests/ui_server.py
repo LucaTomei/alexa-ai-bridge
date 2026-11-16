@@ -10,7 +10,8 @@ os.environ.update(SKILL_ID="amzn1.ask.skill.demo", LLM_BASE_URL="https://api.ant
                   HA_TOKEN="demo-secret-token", ADMIN_PASSWORD="demo-password-123", DATA_DIR=sys.argv[2], APP_VERSION="1.0.0",
                   PUBLIC_HOST="alexa.example.org", HA_GRUPPI="cover.tutte", HA_VIETATO=r"^switch\.irrigazione(?:\s|$)",
                   HA_AUTOMAZIONI="1", NOTIFY_HA="mobile_app_telefono", NOTIFY_TELEGRAM_TOKEN="demo-secret-telegram",
-                  NOTIFY_TELEGRAM_CHAT="123456")
+                  NOTIFY_TELEGRAM_CHAT="123456", LLM_2_BASE_URL="http://cliproxyapi:8317/v1", LLM_2_MODEL="gpt-5-mini",
+                  LLM_2_API_KEY="demo-secret-cliproxy", LLM_CONTROLLO="0", MEMORIA_AUTO="1")
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
 import app as A  # noqa: E402
 import admin  # noqa: E402
@@ -80,7 +81,20 @@ notifiche.ULTIME.extend([
     {"t": ora - 900, "evento": "bloccate", "testo": "Bloccato: il modello ha chiesto lock.unlock lock.porta, non è permesso.",
      "esiti": {"ha": "ok", "telegram": "HTTP 401"}}])
 home_tools.stati = lambda: _stati
-A.llm.modelli = lambda timeout=8: [{"id": "claude-haiku-5-5", "nome": "Claude Haiku 5.5"},
-                                   {"id": "claude-sonnet-5-5", "nome": "Claude Sonnet 5.5"}]
+A.llm.modelli = lambda timeout=8, f=None: [{"id": "claude-haiku-5-5", "nome": "Claude Haiku 5.5"},
+                                           {"id": "claude-sonnet-5-5", "nome": "Claude Sonnet 5.5"}] if not f or f.n == 1 else \
+    [{"id": "gpt-5-mini", "nome": ""}, {"id": "gemini-3-flash", "nome": ""}]
+# the main model ran out of credit an hour ago: the fallback one is answering
+A.llm.SALUTE.update({1: {"giu": True, "fino": ora + 240, "errore": "HTTP 429: Quota exhausted for this account", "t_errore": ora - 60,
+                         "t_ok": ora - 3700, "controllo": False},
+                     2: {"giu": False, "fino": 0.0, "errore": None, "t_errore": None, "t_ok": ora - 55, "controllo": False}})
+A.llm.ULTIMO.update(n=2, t=ora - 55)
+import memoria  # noqa: E402
+for testo, persona in [("prende il caffè senza zucchero", "Luca"), ("Anna è la sorella di Luca e vive con lui", "Anna"),
+                       ("il gatto si chiama Miro", ""), ("il sabato mattina vanno in piscina", "")]:
+    memoria.aggiungi(testo, persona, "voce" if persona else "auto")
+memoria.imposta_voce("a1b2c3d4e5f6a7b8", "Luca")
+memoria.imposta_persona(None)
+memoria.registra_scambio("che tempo fa domani", "Domani a Roma sole al mattino.")
 A.log.info("demo: admin page ready")
 A.app.run(host="127.0.0.1", port=int(sys.argv[1]), threaded=True)

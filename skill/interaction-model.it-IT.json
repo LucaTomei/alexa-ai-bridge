@@ -218,7 +218,62 @@
             "appena {query}",
             "se {query}",
             "al tramonto {query}",
-            "all'alba {query}"
+            "all'alba {query}",
+            "io sono {query}"
+          ]
+        },
+        {
+          "name": "RicordaIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "ricordati {query}",
+            "ricorda {query}",
+            "tieni a mente {query}"
+          ]
+        },
+        {
+          "name": "TiRicordiIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "ti ricordi {query}",
+            "ricordi {query}"
+          ]
+        },
+        {
+          "name": "DimenticaIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "dimentica {query}",
+            "dimenticati {query}",
+            "scorda {query}"
+          ]
+        },
+        {
+          "name": "PresentaIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "mi chiamo {query}",
+            "il mio nome è {query}"
           ]
         },
         {

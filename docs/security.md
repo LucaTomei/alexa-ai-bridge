@@ -45,6 +45,8 @@ include a forbidden entity; still, keep locks and alarms out of scenes
 ## Secrets and runtime
 
 - `.env` holds the API key and the Home Assistant token: `chmod 600`, never commit it (`.gitignore`).
+- The [memory](memory.md) (`memory.json` in the data volume, `0600`) never keeps passwords, PINs or codes, and is
+  sent to the model provider with every question: what it knows can be read and deleted from the admin page.
 - The container runs as an unprivileged user, with a 256 MB memory limit and no published port except to localhost.
 - Development-mode skills only answer the developer's Amazon account; Amazon user IDs keep pending answers separate.
 

@@ -350,6 +350,9 @@ All variables go in `.env`. Only `SKILL_ID`, `LLM_BASE_URL` and `LLM_MODEL` are 
 | `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` | – | Endpoint, key (empty for local models) and model ([examples](providers.md)) |
 | `LLM_MAX_TOKENS` | `1024` | Max tokens per answer |
 | `LLM_EXTRA_JSON` | `{}` | Extra fields for every request, e.g. `{"reasoning_effort": "low"}` |
+| `LLM_2_BASE_URL`, `LLM_2_API_KEY`, `LLM_2_MODEL`, `LLM_2_API`, `LLM_2_EXTRA_JSON`, `LLM_2_ATTIVO` (and `LLM_3_…` to `LLM_5_…`) | –, –, –, from the URL, `{}`, `1` | [Fallback models](providers.md#fallback-models), tried in order when the one before does not answer; `ATTIVO=0` skips one |
+| `LLM_PAUSA` | `300` | Seconds a model that does not answer is skipped (`0`: tried again at every question) |
+| `LLM_CONTROLLO` | `10` | Minutes between background checks that every model answers (no tokens used); `0` never |
 | `ATTESA_MAX` | `6.0` | Seconds before "Ci sto pensando"; keep ≤ 7 (Alexa waits about 8 in total) |
 | `LLM_TIMEOUT_LUNGO` | `120` | Max seconds for a background answer |
 | `WEB_SEARCH` | `auto` | `auto`, `native` (Claude only), `searxng`, `brave`, `tavily`, `off` |
@@ -368,12 +371,15 @@ All variables go in `.env`. Only `SKILL_ID`, `LLM_BASE_URL` and `LLM_MODEL` are 
 | `HA_AUTOMAZIONI` | `0` | `1` lets the assistant create, enable, disable and delete Home Assistant automations by voice ([details](home-assistant.md#automations-by-voice)) |
 | `HA_AUTOMAZIONI_TOKEN` | `HA_TOKEN` | Token of a Home Assistant **administrator**, used only to create and delete automations |
 | `HA_AUTOMAZIONI_MAX` | `20` | Maximum number of automations created by voice |
-| `NOTIFY_ATTIVE`, `NOTIFY_EVENTI`, `NOTIFY_MAX_ORA` | `1`, `confermate,bloccate,automazioni`, `30` | [Notifications](notifications.md): on/paused, which events, at most per hour |
+| `NOTIFY_ATTIVE`, `NOTIFY_EVENTI`, `NOTIFY_MAX_ORA` | `1`, `confermate,bloccate,automazioni,modelli`, `30` | [Notifications](notifications.md): on/paused, which events, at most per hour |
 | `NOTIFY_HA` | – | Home Assistant notify services (the phone app: `mobile_app_…`), comma separated |
 | `NOTIFY_TELEGRAM_TOKEN`, `NOTIFY_TELEGRAM_CHAT` (`NOTIFY_TELEGRAM_URL`) | – | Telegram bot token and chat ID (API endpoint, default the official one) |
 | `NOTIFY_NTFY_URL`, `NOTIFY_NTFY_TOKEN` | – | ntfy topic address and optional token |
 | `NOTIFY_GOTIFY_URL`, `NOTIFY_GOTIFY_TOKEN` | – | Gotify server and application token |
 | `NOTIFY_WEBHOOK_URL`, `NOTIFY_WEBHOOK_TOKEN` | – | Webhook receiving a JSON POST, optional Bearer token |
+| `MEMORIA`, `MEMORIA_AUTO` | `1`, `1` | [Memory](memory.md): remember the people at home; learn by itself after every answer |
+| `MEMORIA_MAX`, `MEMORIA_RECENTI`, `MEMORIA_GIORNI` | `100`, `4`, `7` | Facts kept at most; exchanges of earlier conversations read again, and for how many days |
+| `MEMORIA_ISTRUZIONI` | lasting facts about the people at home | What the memory should learn |
 | `SYSTEM_PROMPT`, `ISTRUZIONI_TURNO` | built-in voice rules, in the language of the request | Override the instructions (then in one language only) |
 | `ADMIN_PASSWORD` | – | Turns the [admin page](admin.md) on (12 characters or more) |
 | `ADMIN_HISTORY` | `100` | Questions kept in the admin page history; `0` turns it off |

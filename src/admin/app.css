@@ -295,3 +295,19 @@ main { margin-left: 228px; padding: 30px 40px 60px; max-width: 1140px; min-width
   .chat { height: calc(100vh - 210px); }
 }
 .campo-azioni .chip { white-space: normal; overflow-wrap: anywhere; }
+
+/* models and memory */
+.gruppo.chiuso > .campo { display: none; }
+.apri-gruppo { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; text-align: left; }
+.apri-gruppo:hover { color: var(--accent); }
+.apri-gruppo:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.card.cliccabile { cursor: pointer; }
+.card.cliccabile:hover { border-color: var(--accent); }
+.mem-nuovo { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.mem-nuovo input:first-child { flex: 1 1 260px; min-width: 0; }
+.mem-nuovo .mem-persona { flex: 0 1 180px; min-width: 0; }
+.mem-istruzioni { width: 100%; min-height: 70px; }
+.mem-etichetta { display: block; font-weight: 600; font-size: 13.5px; margin: 12px 0 6px; }
+.voce .azioni { display: flex; gap: 14px; margin-top: 8px; }
+.link.danger { color: var(--bad); }
+#memoria input[type="search"] { width: 100%; margin-bottom: 10px; }

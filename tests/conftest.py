@@ -13,6 +13,7 @@ class FakeLLM:
     def __init__(self):
         self.queue, self.requests, self.paths, self.headers = [], [], [], []
         self.delay, self.reject_tools, self.require_max_completion = 0.0, set(), False
+        self.fail = {}          # path prefix -> (HTTP code, body): a fallback model on /v2, /v3... that fails
 
     def reset(self):
         self.__init__()
@@ -20,6 +21,9 @@ class FakeLLM:
     def handle(self, body, path="/v1/messages", headers=None):
         self.requests.append(body); self.paths.append(path); self.headers.append(dict(headers or {}))
         time.sleep(self.delay)
+        for prefisso, (codice, corpo) in self.fail.items():
+            if path.startswith(prefisso):
+                return codice, corpo
         openai = path.endswith("/chat/completions")
         names = {(t.get("function") or {}).get("name") if openai else t.get("name") for t in body.get("tools", [])}
         if names & self.reject_tools:
@@ -214,7 +218,8 @@ os.environ.update(
     HOME_CITY="Testville", HOME_COUNTRY="IT",
     SEARXNG_URL="http://127.0.0.1:%d" % WEB_PORT, BRAVE_URL="http://127.0.0.1:%d/brave" % WEB_PORT, BRAVE_API_KEY="brave-key",
     TAVILY_URL="http://127.0.0.1:%d/tavily" % WEB_PORT, TAVILY_API_KEY="tvly-key",
-    ADMIN_PASSWORD="test-admin-password", DATA_DIR=tempfile.mkdtemp(prefix="aab-data-"))
+    ADMIN_PASSWORD="test-admin-password", DATA_DIR=tempfile.mkdtemp(prefix="aab-data-"),
+    MEMORIA_AUTO="0", LLM_CONTROLLO="0")      # learning by itself would add a model request to every answer
 atexit.register(shutil.rmtree, os.environ["DATA_DIR"], True)     # nothing is left behind in /tmp after the run
 
 import app as APP  # noqa: E402  (after the environment is ready)
@@ -222,6 +227,7 @@ import home_tools as HOME  # noqa: E402
 import llm as LLM_MOD  # noqa: E402
 import web_search as WEB_MOD  # noqa: E402,F401  (used by the tests through conftest)
 import notifiche as NOTIF  # noqa: E402
+import memoria as MEMORIA  # noqa: E402
 import admin as ADMIN  # noqa: E402,F401
 import impostazioni as IMPOSTAZIONI  # noqa: E402,F401
 WEB_DEFAULT = APP.WEB
@@ -242,6 +248,13 @@ def clean():
     except FileNotFoundError:
         pass
     ADMIN.svuota(); ADMIN._tentativi.clear(); ADMIN.RITARDO = 0
+    LLM_MOD.RISERVE[:] = []; LLM_MOD.SALUTE.clear(); LLM_MOD.ULTIMO.update(n=None, t=None); LLM_MOD.PAUSA = 300
+    MEMORIA.ATTIVA, MEMORIA.AUTO, MEMORIA.MAX, MEMORIA.RECENTI, MEMORIA.GIORNI, MEMORIA.ISTRUZIONI = True, False, 100, 4, 7, ""
+    MEMORIA.imposta_persona(None)
+    try:
+        os.unlink(MEMORIA.FILE)
+    except FileNotFoundError:
+        pass
     NOTIF.attendi(5); NOTIF.ULTIME.clear(); NOTIF._stato["recenti"].clear(); NOTIF._stato["inviate"].clear()
     for k, v in NOTIFICHE_PREDEFINITE.items():
         setattr(NOTIF, k, v)

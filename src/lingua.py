@@ -158,6 +158,66 @@ TESTI = {
     "n_password": ("La password del pannello è stata cambiata.", "The admin page password was changed."),
     "n_impostazioni": ("Impostazioni salvate dal pannello: %s.", "Settings saved from the admin page: %s."),
     "n_esci_ovunque": ("Tutte le sessioni del pannello sono state chiuse.", "Every admin page session was logged out."),
+    # ---- fallback models
+    "n_modello_giu": ("Modello non disponibile: %s. Ora risponde %s.", "Model not available: %s. Now answering: %s."),
+    "n_modelli_giu": ("Nessun modello ha risposto: %s.", "No model answered: %s."),
+    "n_modello_su": ("Modello di nuovo disponibile: %s.", "Model available again: %s."),
+    "n_modello_irraggiungibile": ("Modello non raggiungibile: %s (%s).", "Model not reachable: %s (%s)."),
+    "nessun_modello": ("nessun modello nell'elenco (account non collegato?)", "no model in the list (account logged out?)"),
+    # ---- memory
+    "usa_memoria": (" Hai una memoria: quando qualcuno ti dice qualcosa di se' o di chi vive in casa che vale la pena ricordare "
+                    "(nomi, parentele, gusti, abitudini, orari, compleanni, animali, preferenze su come rispondere) o ti chiede "
+                    "di ricordarlo, salvalo con ricorda, una frase breve per fatto; se ti chiede di dimenticare qualcosa usa "
+                    "dimentica. Usa quello che sai con naturalezza, senza elencarlo e senza dire che lo hai in memoria.",
+                    " You have a memory: when someone tells you something about themselves or the people at home that is worth "
+                    "remembering (names, relationships, tastes, habits, schedules, birthdays, pets, how they like answers) or "
+                    "asks you to remember it, save it with ricorda, one short sentence per fact; if they ask you to forget "
+                    "something use dimentica. Use what you know naturally, without listing it or saying it is in your memory."),
+    "mem_blocco": (" Cosa sai di chi abita in casa: %s.", " What you know about the people at home: %s."),
+    "mem_parla": (" Sta parlando %s.", " %s is speaking."),
+    "mem_sconosciuto": (" Alexa ha riconosciuto la voce di chi parla, ma non sai ancora chi e': se dice il suo nome, salvalo "
+                        "con chi_parla.",
+                        " Alexa recognised the voice of who is speaking, but you do not know who it is yet: if they say their "
+                        "name, save it with chi_parla."),
+    "mem_recenti": (" Conversazioni precedenti, dalla piu' vecchia (domanda -> tua risposta): %s.",
+                    " Earlier conversations, oldest first (question -> your answer): %s."),
+    "ricorda_desc": ("Salva nella memoria un fatto da ricordare nelle prossime conversazioni su chi abita in casa (mai password, "
+                     "codici o dati riservati).",
+                     "Save in the memory a fact to remember in the next conversations about the people at home (never "
+                     "passwords, codes or confidential data)."),
+    "ricorda_fatto_desc": ("una frase breve e autonoma, es. 'Luca prende il caffe' senza zucchero'",
+                           "one short self-contained sentence, e.g. 'Luca takes his coffee without sugar'"),
+    "ricorda_persona_desc": ("il nome della persona a cui si riferisce, se c'e'", "the name of the person it is about, if any"),
+    "dimentica_desc": ("Dimentica i fatti della memoria che corrispondono a queste parole.",
+                       "Forget the facts in the memory that match these words."),
+    "chi_parla_desc": ("Associa la voce di chi sta parlando (riconosciuta da Alexa) al suo nome, quando lo dice.",
+                       "Link the voice of who is speaking (recognised by Alexa) to their name, when they say it."),
+    "mem_salvato": ("Salvato in memoria.", "Saved in the memory."),
+    "mem_gia": ("Era gia' in memoria.", "It was already in the memory."),
+    "mem_vietato": ("Non salvato: password, codici e dati riservati non si salvano mai.",
+                    "Not saved: passwords, codes and confidential data are never saved."),
+    "mem_dimenticato": ("Dimenticato: %s.", "Forgotten: %s."),
+    "mem_non_trovato": ("Niente del genere in memoria.", "Nothing like that in the memory."),
+    "mem_voce": ("Ora la voce di chi parla e' associata a %s.", "The voice of who is speaking is now linked to %s."),
+    "mem_prova": ("Prova automatica: niente salvato.", "Automatic test: nothing saved."),
+    "mem_spenta": ("La memoria e' spenta.", "The memory is off."),
+    "mem_cosa": ("fatti duraturi su chi abita in casa: nomi, parentele, gusti, abitudini, orari, compleanni, animali, "
+                 "preferenze su come rispondere",
+                 "lasting facts about the people at home: names, relationships, tastes, habits, schedules, birthdays, pets, "
+                 "how they like answers"),
+    "mem_estrai_system": ("Estrai fatti da ricordare da una conversazione. Rispondi solo con un array JSON, senza altro testo.",
+                          "Extract facts worth remembering from a conversation. Answer only with a JSON array, nothing else."),
+    "mem_estrai": ("Cosa ricordare: %s. Mai password, codici, dati di salute o riservati; niente fatti del momento (il meteo, "
+                   "una luce accesa), niente domande generiche.\n\nGia' in memoria (id: fatto):\n%s\n\nUltimo scambio:\n"
+                   "%sDomanda: %s\nRisposta: %s\n\nRispondi con un array JSON dei fatti nuovi che questo scambio insegna, "
+                   "ognuno {\"fatto\": \"frase breve\", \"persona\": \"nome o vuoto\", \"sostituisce\": \"id di un fatto "
+                   "superato o vuoto\"}. Se non c'e' niente di nuovo: [].",
+                   "What to remember: %s. Never passwords, codes, health or confidential data; no passing facts (the weather, "
+                   "a light that is on), no general questions.\n\nAlready in the memory (id: fact):\n%s\n\nLast exchange:\n"
+                   "%sQuestion: %s\nAnswer: %s\n\nAnswer with a JSON array of the new facts this exchange teaches, each "
+                   "{\"fatto\": \"short sentence\", \"persona\": \"name or empty\", \"sostituisce\": \"id of a fact it "
+                   "replaces or empty\"}. If there is nothing new: []."),
+    "n_memoria": ("Ho imparato: %s", "Learned: %s"),
     # ---- automations created by voice
     "usa_automazioni": (" Puoi anche creare automazioni di Home Assistant con crea_automazione: trova prima gli entity_id con "
                         "cerca_in_casa, poi chiama crea_automazione senza confermato, leggi all'utente il riepilogo che ricevi e "

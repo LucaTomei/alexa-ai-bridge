@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.4.0
+
+**Interaction model: changed** (new intents for the memory: *ricordati, ti ricordi, dimentica, mi chiamo* in Italian,
+*remember, do you remember, forget, my name is* in English; new openings *io sono* / *I'm, I am, this is*). Paste
+the new `skill/interaction-model.*.json` in the Alexa console (or download them from the admin page, **Sistema**),
+then **Save** and **Build**. No change needed in `.env`. To let the assistant know who is speaking, also switch on
+**Build → Permissions → Skill Personalization** ([details](docs/memory.md#recognising-voices)).
+
+- **Fallback models** ([details](docs/providers.md#fallback-models)): up to four more models (`LLM_2_*` …
+  `LLM_5_*`), e.g. more CLIProxyAPI instances with other accounts, or other providers, tried in order.
+  - A model that is unreachable, logged out, out of credit or tokens, over its rate limit or without the model is
+    paused for `LLM_PAUSA` seconds (300) and the next one answers at once; then the main one is tried again.
+  - A model that hangs never takes all the time: the next one still has its turn.
+  - Never a second model after a home action (it could run it again).
+  - A background check every `LLM_CONTROLLO` minutes (10) reads each model's list, without using tokens.
+  - New notification event `modelli`, **on by default**: a model stops answering (and which one answers now), none
+    answers, a model is back. If you saved the events from the Notifications tab before, tick it there.
+- **New Models tab**: the models in order with their state (answering, available, paused and why, last answer), a
+  *check* button for each, a switch to skip one, the pause, the check interval and the notification.
+- **Memory** ([details](docs/memory.md)), on by default: the assistant remembers you and the people you live with.
+  - Facts saved when you say something worth remembering or ask (*"ricordati che…"*), forgotten on request; with
+    `MEMORIA_AUTO` it also learns by itself after every answer (a short background request, a few tokens).
+  - It reads again the last exchanges of earlier conversations (`MEMORIA_RECENTI`, `MEMORIA_GIORNI`).
+  - With Alexa voice profiles it knows who is speaking and learns their name (*"mi chiamo Anna"*).
+  - Never passwords, PINs, codes or similar; kept only in the data volume.
+- **New Memory tab**: what it knows, fact by fact (search, edit, add, forget one or all), the recognised voices,
+  the exchanges it reads again, and every setting, including what it should remember (`MEMORIA_ISTRUZIONI`).
+- New notification event `memoria` (off by default): the assistant learned something new.
+- New settings, all editable from the page: `LLM_PAUSA`, `LLM_CONTROLLO`, `LLM_2_*` … `LLM_5_*` (`BASE_URL`,
+  `API_KEY`, `MODEL`, `API`, `EXTRA_JSON`, `ATTIVO`), `MEMORIA`, `MEMORIA_AUTO`, `MEMORIA_MAX`, `MEMORIA_RECENTI`,
+  `MEMORIA_GIORNI`, `MEMORIA_ISTRUZIONI`. Fallback models that are not configured stay folded in **Configurazione**.
+- `scripts/e2e.py` lists the fallback models, checks that each one is reachable and never changes the memory.
+
 ## 1.3.0
 
 **Interaction model: unchanged** (nothing to do in the Alexa console). No change needed in `.env`: nothing is sent

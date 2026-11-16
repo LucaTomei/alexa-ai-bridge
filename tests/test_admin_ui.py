@@ -50,8 +50,8 @@ def visibile(dom, id_):
 def test_overview(url):
     dom = apri(url, "panoramica")
     assert visibile(dom, "shell") and not visibile(dom, "login") and visibile(dom, "tab-panoramica")
-    assert dom.count('class="card"') == 4 and dom.count('class="stat"') == 5
-    assert "claude-haiku-5-5" in dom and "v1.0.0" in dom and "Attivo da 2 giorni" in dom
+    assert len(re.findall(r'class="card(?: cliccabile)?"', dom)) == 4 and dom.count('class="stat"') == 5
+    assert "gpt-5-mini" in dom and "v1.0.0" in dom and "Attivo da 2 giorni" in dom
 
 
 def test_conversations(url):
@@ -64,13 +64,14 @@ def test_conversations(url):
 def test_settings_without_secrets(url):
     dom = apri(url, "impostazioni")
     assert visibile(dom, "tab-impostazioni") and 'data-campo="LLM_MODEL"' in dom and 'data-campo="HA_VIETATO"' in dom
-    assert dom.count('class="gruppo"') == 9 and "Lingua dell'assistente" in dom and 'data-campo="NOTIFY_WEBHOOK_URL"' in dom
+    assert dom.count('class="gruppo"') == 11 and dom.count('class="gruppo chiuso"') == 3 and "Lingua dell'assistente" in dom and 'data-campo="NOTIFY_WEBHOOK_URL"' in dom
     assert "demo-secret-key" not in dom and "demo-secret-token" not in dom and "demo-password-123" not in dom
-    assert "demo-secret-telegram" not in dom
+    assert "demo-secret-telegram" not in dom and "demo-secret-cliproxy" not in dom
+    assert 'id="f-LLM_2_MODEL"' in dom and "gemini-3-flash" in dom and "Modello 3 (di riserva)" in dom
 
 
-@pytest.mark.parametrize("scheda", ["panoramica", "conversazioni", "chat", "casa", "automazioni", "notifiche", "impostazioni", "sistema",
-                                    "registro"])
+@pytest.mark.parametrize("scheda", ["panoramica", "conversazioni", "chat", "modelli", "casa", "automazioni", "notifiche", "memoria",
+                                    "impostazioni", "sistema", "registro"])
 def test_phone_width_has_no_sideways_scroll(url, scheda):
     r = subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--no-sandbox", "--no-first-run", "--window-size=500,900",
                         "--virtual-time-budget=8000", "--dump-dom", "%s/demo-frame/360/%s" % (url, scheda)],
@@ -105,11 +106,30 @@ def test_automations_tab(url):
 
 def test_notifications_tab(url):
     dom = apri(url, "notifiche")
-    assert visibile(dom, "tab-notifiche") and dom.count('class="scelta"') == 6 + 3       # six events, three notify services
+    assert visibile(dom, "tab-notifiche") and dom.count('class="scelta"') == 8 + 3       # eight events, three notify services
     for testo in ("Quando avvisarti", "Tentativi bloccati", "notify.mobile_app_tablet", "chat 123456", "Non configurato",
                   "Invia una notifica di prova", "Telegram · HTTP 401", "Eseguito dopo il tuo sì"):
         assert testo in dom, testo
     assert "demo-secret-telegram" not in dom and "demo-secret-token" not in dom
+
+
+def test_models_tab(url):
+    dom = apri(url, "modelli")
+    assert visibile(dom, "tab-modelli") and dom.count('class="canale"') == 2
+    for testo in ("Principale · claude-haiku-5-5", "Riserva · 2 · gpt-5-mini", "Non disponibile: HTTP 429: Quota exhausted",
+                  "Sta rispondendo", "cliproxyapi:8317", "Aggiungi un modello di riserva", "Avvisami quando un modello"):
+        assert testo in dom, testo
+    assert "demo-secret" not in dom
+    dom = apri(url, "panoramica")
+    assert "Sta rispondendo il modello di riserva 2" in dom and "gpt-5-mini" in dom
+
+
+def test_memory_tab(url):
+    dom = apri(url, "memoria")
+    assert visibile(dom, "tab-memoria") and dom.count('class="voce"') == 4 + 1      # four facts, one exchange
+    for testo in ("Cosa sa (4)", "prende il caffè senza zucchero", "Anna è la sorella di Luca", "imparato", "a voce",
+                  "Voci riconosciute", 'value="Luca"', "che tempo fa domani", "Impara da solo"):
+        assert testo in dom, testo
 
 
 def test_system_tab(url):
@@ -123,7 +143,9 @@ def test_system_tab(url):
     ("panoramica", ("Overview", "Up for 2 days", "Checks", "In the history")),
     ("casa", ("Never controllable (entity type)", "Forbidden by you", "Always ask for a yes")),
     ("automazioni", ("Automations by voice are on", "No longer in Home Assistant", "never run", "Delete")),
-    ("notifiche", ("When to tell you", "Blocked attempts", "Home Assistant app", "Send a test notification")),
+    ("notifiche", ("When to tell you", "Blocked attempts", "Home Assistant app", "Send a test notification", "Models not answering")),
+    ("modelli", ("In the order they are tried", "Fallback · 2", "Answering", "Add a fallback model")),
+    ("memoria", ("What it knows (4)", "Recognised voices", "Learn by itself", "by voice")),
     ("impostazioni", ("Assistant language", "API key", "Admin page")),
     ("sistema", ("Download en-US", "Change the admin page password", "Network and publishing")),
 ])

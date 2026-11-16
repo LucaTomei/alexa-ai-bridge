@@ -66,7 +66,12 @@ def stato(e):
 def fatto(dom):
     return [x for x in TOOLS if x[0] == "esegui_azione" and x[1].get("dominio") == dom and x[2].startswith("Fatto")]
 
-print("model:", A.llm.MODEL, "(%s API)" % A.llm.API, "| language:", A.L.LINGUA, "| web search:", A.WEB, "| home tools:", C.ATTIVO, "| threshold:", A.ATTESA, "s\n")
+print("model:", A.llm.MODEL, "(%s API)" % A.llm.API, "| language:", A.L.LINGUA, "| web search:", A.WEB, "| home tools:", C.ATTIVO, "| threshold:", A.ATTESA, "s")
+print("fallback models:", ", ".join("%d %s%s" % (f.n, f.nome, "" if f.attivo else " (skipped)") for f in A.llm.RISERVE) or "none",
+      "| memory:", ("on, %d facts (read only during this check)" % len(A.memoria.fatti())) if A.memoria.ATTIVA else "off", "\n")
+for f in A.llm.fornitori():
+    ok, perche = A.llm.controlla(f)
+    esito("model %d %s reachable" % (f.n, f.nome), ok is not False, perche)
 r = req({"type": "LaunchRequest"}); esito("launch", detto(r) == T("benvenuto"), detto(r))
 r, t, l = domanda(F["ore"]); esito("simple question (%.1f s%s)" % (t, ", slow" if l else ""), bool(detto(r)) and detto(r) != T("fallita"), detto(r))
 if A.WEB:

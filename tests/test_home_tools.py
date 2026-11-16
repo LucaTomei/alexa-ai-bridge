@@ -83,7 +83,7 @@ def test_user_agent_is_not_python_urllib(ha):
 def test_tools_off_without_token(monkeypatch, alexa, llm):
     monkeypatch.setattr(HOME, "ATTIVO", False)
     alexa.ask("x")
-    assert [t.get("name") for t in llm.requests[-1]["tools"]] == ["web_search"]
+    assert [t.get("name") for t in llm.requests[-1]["tools"]] == ["web_search", "ricorda", "dimentica"]
 
 
 def test_empty_answer_after_an_action_is_not_retried(alexa, llm, ha):
