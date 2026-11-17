@@ -141,6 +141,7 @@ const TESTI = {
     "not.configurato": "Configurato", "not.non_configurato": "Non configurato", "not.configura": "Configura",
     "not.servizi": "Servizi notify di Home Assistant: scegli dove mandarle (l'app sul telefono si chiama mobile_app_…).",
     "not.servizi_nessuno": "Home Assistant non ha servizi notify: installa l'app Home Assistant sul telefono e accedi.",
+    "not.servizi_titolo": "Dove mandarle in Home Assistant", "not.altri_servizi": "Altri servizi notify (%s): altoparlanti Echo, notifiche persistenti…",
     "not.servizi_errore": "Elenco dei servizi non disponibile (%s).", "not.ha_non_configurato": "Serve Home Assistant (URL e token) nella Configurazione.",
     "not.prova": "Invia una notifica di prova", "not.prova_nessuno": "Configura prima almeno un canale.",
     "not.ultime": "Ultime notifiche", "not.ultime_vuoto": "Ancora nessuna notifica da quando il servizio è partito.",
@@ -323,6 +324,7 @@ const TESTI = {
     "not.configurato": "Configured", "not.non_configurato": "Not configured", "not.configura": "Configure",
     "not.servizi": "Home Assistant notify services: choose where to send them (the phone app is called mobile_app_…).",
     "not.servizi_nessuno": "Home Assistant has no notify service: install the Home Assistant app on your phone and log in.",
+    "not.servizi_titolo": "Where to send them in Home Assistant", "not.altri_servizi": "Other notify services (%s): Echo speakers, persistent notifications…",
     "not.servizi_errore": "Service list not available (%s).", "not.ha_non_configurato": "Home Assistant (URL and token) is needed in Settings.",
     "not.prova": "Send a test notification", "not.prova_nessuno": "Configure at least one channel first.",
     "not.ultime": "Latest notifications", "not.ultime_vuoto": "No notification yet since the service started.",
@@ -873,6 +875,11 @@ function casella(etichetta, descrizione, acceso, cambia, disabilitata) {
   return el("label", { class: "scelta" }, i, el("div", {}, el("b", { text: etichetta }), descrizione ? el("span", { text: descrizione }) : null));
 }
 
+function area(nome, nodo) {
+  nodo.classList.add("area-" + nome);
+  return nodo;
+}
+
 function disegnaNotifiche() {
   const n = notif, sc = notifScelte;
   if (!n || !sc) return;
@@ -901,9 +908,18 @@ function disegnaNotifiche() {
   if (!n.ha_configurato) servizi = el("p", { class: "muted small", text: t("not.ha_non_configurato") });
   else if (n.servizi_ha === null) servizi = el("p", { class: "muted small", text: t("not.servizi_errore", n.errore_ha || "?") });
   else {
+    // the phone apps first; the other services (Echo speakers, persistent notifications…) folded, open if one is chosen
     const nomi = [...new Set([...n.servizi_ha, ...sc.ha])].sort();
+    const scelte = (lista) => el("div", { class: "scelte servizi" },
+      lista.map((s) => casella("notify." + s, null, sc.ha.has(s), (on) => { if (on) sc.ha.add(s); else sc.ha.delete(s); }, dis)));
+    const telefoni = nomi.filter((s) => s.startsWith("mobile_app_")), altri = nomi.filter((s) => !s.startsWith("mobile_app_"));
+    let piega = null;
+    if (altri.length) {
+      piega = el("details", { class: "altri-servizi" }, el("summary", { text: t("not.altri_servizi", altri.length) }), scelte(altri));
+      piega.open = !telefoni.length || altri.some((s) => sc.ha.has(s));
+    }
     servizi = el("div", {}, el("p", { class: "muted small", text: nomi.length ? t("not.servizi") : t("not.servizi_nessuno") }),
-      el("div", { class: "scelte" }, nomi.map((s) => casella("notify." + s, null, sc.ha.has(s), (on) => { if (on) sc.ha.add(s); else sc.ha.delete(s); }, dis))));
+      telefoni.length ? scelte(telefoni) : null, piega);
   }
   const canale = (c) => {
     const k = n.canali[c];
@@ -920,14 +936,15 @@ function disegnaNotifiche() {
     : [el("p", { class: "muted small", text: t("not.ultime_vuoto") })];
 
   $("#notifiche").replaceChildren(
-    sezione(t("not.generale"), attive,
-      rigaSis(t("not.max"), max), el("p", { class: "muted small", text: t("not.max_desc") })),
-    sezione(t("not.eventi"), el("div", { class: "scelte" }, n.tutti.map((e) =>
-      casella(t("nev." + e), t("nevd." + e), sc.eventi.has(e), (on) => { if (on) sc.eventi.add(e); else sc.eventi.delete(e); }, dis)))),
-    sezione(t("not.canali"), el("p", { class: "muted small", text: t("not.canali_desc") }),
-      ...["ha", "telegram", "ntfy", "gotify", "webhook"].map(canale), servizi,
-      el("div", { class: "azioni-sis" }, provaBtn), configurati ? null : el("p", { class: "muted small", text: t("not.prova_nessuno") }), esito),
-    sezione(t("not.ultime"), el("div", { class: "lista" }, ...ultime)));
+    area("generale", sezione(t("not.generale"), attive,
+      rigaSis(t("not.max"), max), el("p", { class: "muted small", text: t("not.max_desc") }))),
+    area("eventi", sezione(t("not.eventi"), el("div", { class: "scelte" }, n.tutti.map((e) =>
+      casella(t("nev." + e), t("nevd." + e), sc.eventi.has(e), (on) => { if (on) sc.eventi.add(e); else sc.eventi.delete(e); }, dis))))),
+    area("canali", sezione(t("not.canali"), el("p", { class: "muted small", text: t("not.canali_desc") }),
+      ...["ha", "telegram", "ntfy", "gotify", "webhook"].map(canale),
+      el("div", { class: "azioni-sis" }, provaBtn), configurati ? null : el("p", { class: "muted small", text: t("not.prova_nessuno") }), esito)),
+    area("servizi", sezione(t("not.servizi_titolo"), servizi)),
+    area("ultime", sezione(t("not.ultime"), el("div", { class: "lista" }, ...ultime))));
   aggiornaBarraNotifiche();
 }
 

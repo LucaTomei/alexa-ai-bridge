@@ -106,7 +106,11 @@ def test_automations_tab(url):
 
 def test_notifications_tab(url):
     dom = apri(url, "notifiche")
-    assert visibile(dom, "tab-notifiche") and dom.count('class="scelta"') == 8 + 3       # eight events, three notify services
+    assert visibile(dom, "tab-notifiche") and dom.count('class="scelta"') == 8 + 4       # eight events, four notify services
+    # the phone apps in sight, the other services folded (none of them is chosen)
+    piega = re.search(r'<details class="altri-servizi"[^>]*>', dom)
+    assert piega and "open" not in piega.group(0) and "Altri servizi notify (2)" in dom
+    assert dom.index("notify.mobile_app_tablet") < piega.start() < dom.index("notify.persistent_notification")
     for testo in ("Quando avvisarti", "Tentativi bloccati", "notify.mobile_app_tablet", "chat 123456", "Non configurato",
                   "Invia una notifica di prova", "Telegram · HTTP 401", "Eseguito dopo il tuo sì"):
         assert testo in dom, testo

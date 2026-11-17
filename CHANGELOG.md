@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.3
+
+Interaction model and `.env`: no change.
+
+Admin page, **Notifiche** tab, laid out again:
+
+- The Home Assistant services have their own card, *Dove mandarle in Home Assistant*, under the general settings: the
+  phone apps (`mobile_app_…`) in sight, the other services (Echo speakers, persistent notifications…) folded, and
+  opened by themselves when one of them is chosen. A long list no longer stretches the channels card.
+- Long service names wrap inside their card instead of overflowing it.
+- *Ultime notifiche* spans the whole width below, with no empty space above it; two columns on a narrow screen, one
+  on the phone.
+
 ## 1.4.2
 
 Interaction model and `.env`: no change.

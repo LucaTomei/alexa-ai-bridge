@@ -224,6 +224,24 @@ main { margin-left: 228px; padding: 30px 40px 60px; max-width: 1140px; min-width
 .scelta input { margin-top: 3px; flex: none; width: auto; }
 .scelta b { display: block; font-weight: 600; font-size: 14px; }
 .scelta span { color: var(--muted); font-size: 13px; }
+.scelta > div { min-width: 0; overflow-wrap: anywhere; }
+/* notifications: settings and services on the left, events and channels beside them, the latest below */
+.notifiche { grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: auto 1fr auto; grid-template-areas: "generale eventi canali" "servizi eventi canali" "ultime ultime ultime"; }
+.notifiche > .area-generale { grid-area: generale; }
+.notifiche > .area-eventi { grid-area: eventi; }
+.notifiche > .area-canali { grid-area: canali; }
+.notifiche > .area-servizi { grid-area: servizi; }
+.notifiche > .area-ultime { grid-area: ultime; }
+.scelte.servizi { gap: 8px; }
+.scelte.servizi b { font-weight: 500; font-size: 13.5px; }
+.altri-servizi { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
+.altri-servizi summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.altri-servizi .scelte { margin-top: 10px; }
+@media (max-width: 1250px) {
+  .notifiche { grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto 1fr auto; grid-template-areas: "generale eventi" "canali eventi" "servizi eventi" "ultime ultime"; }
+}
 .canale { display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap; padding: 10px 0;
   border-top: 1px solid var(--border); }
 .canale:first-of-type { border-top: 0; }
@@ -292,6 +310,8 @@ main { margin-left: 228px; padding: 30px 40px 60px; max-width: 1140px; min-width
   .riga { grid-template-columns: 1fr; gap: 2px; }
   .riga-sis { grid-template-columns: 1fr; gap: 2px; }
   .sistema { grid-template-columns: 1fr; }
+  .notifiche { grid-template-areas: none; grid-template-rows: none; }
+  .notifiche > [class*="area-"] { grid-area: auto; }
   .chat { height: calc(100vh - 210px); }
 }
 .campo-azioni .chip { white-space: normal; overflow-wrap: anywhere; }

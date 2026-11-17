@@ -74,7 +74,8 @@ home_tools._registro_cambia(lambda d: d.update({
                           "riassunto": "quando Clima salone diventa off: climate.turn_on Clima salone"}}))
 home_tools.permessi_automazioni = lambda: True
 import notifiche  # noqa: E402
-notifiche.servizi_ha = lambda: ["mobile_app_telefono", "mobile_app_tablet", "persistent_notification"]
+notifiche.servizi_ha = lambda: ["mobile_app_telefono", "mobile_app_tablet", "persistent_notification",
+                                 "alexa_media_echo_show_5_seconda_generazione_della_cucina"]
 notifiche.ULTIME.extend([
     {"t": ora - 1795, "evento": "confermate", "testo": "Eseguito dopo il tuo sì: cover.close_cover su Tutte le tapparelle.",
      "esiti": {"ha": "ok", "telegram": "ok"}},
