@@ -28,8 +28,21 @@ everything off (nothing is read, saved or sent) without deleting what was saved.
 Alexa tells a skill who is speaking only when:
 
 1. everyone at home has a **voice profile** in the Alexa app (*More → Settings → Your Profile → Voice ID*);
-2. the skill has **personalization** on: Alexa developer console, your skill → **Build** → **Permissions** →
-   switch on **Skill Personalization** (or add the permission `alexa::person_id:read` to the manifest).
+2. the skill has **personalization** on: Alexa developer console, your skill → **Build** → **Permissions** (left
+   menu, below *Account Linking*) → switch on **Skills Personalization** only, the other permissions stay off
+   (or add the permission `alexa::person_id:read` to the manifest);
+
+   ![Build → Permissions, Skills Personalization on](images/alexa-console-personalization.png)
+
+3. the skill is built again: **Custom → Interaction Model → JSON Editor** → **Build skill**, and wait for
+   *Build successful*.
+
+Then each person says once *"Alexa, apri cervellone"* … *"mi chiamo Anna"* (*"Alexa, open big brain"* … *"my name is
+Anna"*). The name appears in the admin page, **Memoria** tab, among the voices.
+
+To try it in the console first: **Test** tab → tick **Personalization** at the top and choose a profile, then type
+the same two sentences. The request then carries `context.System.person.personId`; without it (personalization off,
+or a voice Alexa does not recognise) the skill answers as before, for the whole household.
 
 Alexa then sends an anonymous ID for each recognised voice; the service keeps only a hash of it, with the name you
 say. Without voice profiles, or for a voice it does not recognise, the memory still works for the whole household.

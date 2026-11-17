@@ -237,6 +237,10 @@ How to talk to it:
 - if an answer takes longer, Alexa says *"Ci sto pensando"*: say *"allora?"* a few seconds later;
 - *"basta"*, *"stop"* or *"grazie"* close the skill.
 
+Optional: to let the assistant know **who** is speaking (its [memory](memory.md) then knows each person at home),
+switch on **Build → Permissions → Skills Personalization** and build the skill again
+([details](memory.md#recognising-voices)).
+
 ## 6. Web search for non-Claude models (optional)
 
 Claude searches the web natively, nothing to do. Every other model needs a search backend: the free option is the

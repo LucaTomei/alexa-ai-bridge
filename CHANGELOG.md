@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.4.2
+
+Interaction model and `.env`: no change.
+
+- Recognising voices: step-by-step guide with a screenshot of the Alexa console (**Build → Permissions → Skills
+  Personalization**, then build the skill again), and how to try it in the console's Test tab
+  ([details](docs/memory.md#recognising-voices)). The setup guide points to it.
+- Admin page, **Memoria** tab: the permission is called by its name in the console, *Skills Personalization*.
+
 ## 1.4.1
 
 **Interaction model: changed** (the openings *io sono* and *I'm, I am, this is* added in 1.4.0 are removed: Alexa
